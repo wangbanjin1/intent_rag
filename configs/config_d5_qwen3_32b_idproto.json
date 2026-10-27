@@ -1,0 +1,53 @@
+{
+  "embedder": {
+    "backend": "qwen",
+    "model": "text-embedding-v3",
+    "dim": 1024,
+    "api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "api_key_env": "BAILIAN_API_KEY",
+    "cache_path": "data/embed_cache_d5.json"
+  },
+  "llm": {
+    "model": "qwen3-32b",
+    "api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "api_key_env": "BAILIAN_API_KEY",
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "timeout": 60,
+    "max_retries": 4
+  },
+  "retriever": {
+    "top_k": 5,
+    "pool_n": 50,
+    "alpha": 0.3,
+    "case_bank_path": "data/case_bank_train_d5.jsonl"
+  },
+  "correction_demo": {
+    "enabled": true,
+    "n": 2
+  },
+  "agent_context": {
+    "enabled": true
+  },
+  "status_prompt": {
+    "enabled": true
+  },
+  "status_tracking": {
+    "enabled": true
+  },
+  "confirm_rule": {
+    "enabled": true
+  },
+  "disambiguation_rule": {
+    "enabled": true
+  },
+  "correction_rule": {
+    "enabled": true
+  },
+  "record_rule": {
+    "enabled": true
+  },
+  "intent_id_protocol": {
+    "enabled": true
+  }
+}

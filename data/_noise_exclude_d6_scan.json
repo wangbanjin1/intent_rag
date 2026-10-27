@@ -1,0 +1,20 @@
+{
+ "note": "客观规则噪声清单(find_noise.py R1-R4), session_eval 默认剔除; --include_noise 关闭",
+ "n_scanned": 237,
+ "session_ids": [
+  "S-000106",
+  "S-000210",
+  "S-000228"
+ ],
+ "reasons": {
+  "S-000106": [
+   "R5-A 用户说第二条=candidates[1]=R-U0106-006, GT 却选了 R-U0106-002"
+  ],
+  "S-000210": [
+   "R5-A 用户说第二条=candidates[1]=R-U0210-003, GT 却选了 R-U0210-002"
+  ],
+  "S-000228": [
+   "R5-A 用户说第一条=candidates[0]=R-U0228-001, GT 却选了 R-U0228-002"
+  ]
+ }
+}

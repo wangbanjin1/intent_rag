@@ -1,0 +1,24 @@
+{
+  "format_id": "semi_261022",
+  "version": 1,
+  "description": "261022 卡片：goal/constraints/sla/lifetime/context 五键",
+  "key_roles": {
+    "goal": "goal",
+    "constraints": "constraints",
+    "sla.max_latency_ms": "latency_ms",
+    "lifetime.start_timestamp": "time_start",
+    "lifetime.end_timestamp": "time_end",
+    "lifetime.duration_min": "duration_min",
+    "context": "identity"
+  },
+  "identity_map": {
+    "application_name": "application_name",
+    "service_name": "service_name"
+  },
+  "required_roles": [
+    "goal",
+    "latency_ms",
+    "time_start",
+    "time_end"
+  ]
+}
