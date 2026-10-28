@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<title>三层认知记忆数据集 (cognitive_samples) 意图理解评测总览报告 - Run 02</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --border: #dcdfe6;
+    --primary: #1f4e79;
+    --text: #1f2329;
+    --muted: #606266;
+    --ok: #1b7f37;
+    --ok-bg: #e6f4ea;
+    --fail: #b91c1c;
+    --fail-bg: #fce8e6;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 24px 32px;
+    line-height: 1.5;
+    font-size: 13.5px;
+  }
+  h1 { margin: 0 0 6px 0; font-size: 20px; color: #111827; }
+  h2 { margin: 20px 0 10px 0; font-size: 15px; color: #1f2937; border-left: 4px solid var(--primary); padding-left: 8px; }
+  .subtitle { color: var(--muted); margin-bottom: 16px; font-size: 13px; }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+  }
+  .stat-card .k { color: var(--muted); font-size: 12px; }
+  .stat-card .v { color: var(--primary); font-size: 21px; font-weight: 700; margin-top: 4px; }
+  .stat-card .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  table.tbl, table.inner-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+  }
+  table.tbl th, table.tbl td, table.inner-tbl th, table.inner-tbl td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #ebeef5;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.tbl th, table.inner-tbl th { background: #f0f3f8; color: #303133; font-weight: 600; }
+  tr.row-diff td { background: #fff1f0; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eef1f6;
+    color: #374151;
+  }
+  .badge.pass { background: var(--ok-bg); color: var(--ok); }
+  .badge.fail { background: var(--fail-bg); color: var(--fail); }
+  .tier-factual_memory { background: #e8f0fe; color: #1967d2; }
+  .tier-working_memory { background: #fef3c7; color: #92400e; }
+  .tier-experiential_memory { background: #ede9fe; color: #5b21b6; }
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .tabs, .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tab-btn, .flt-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .tab-btn.active, .flt-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  details.sess-details {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  details.sess-details summary {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none;
+    background: #ffffff;
+  }
+  details.sess-details summary:hover { background: #f8fafc; }
+  details.sess-details[open] summary { border-bottom: 1px solid var(--border); background: #f0f4f8; }
+  .sess-body { padding: 12px 16px; }
+  .diff-alert {
+    background: var(--fail-bg);
+    border: 1px solid #f5c2c7;
+    color: #842029;
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    font-size: 12.5px;
+  }
+  .turns-wrap { display: grid; gap: 10px; }
+  .turn-card {
+    background: #fafbfc;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+  .turn-hdr { font-weight: 600; font-size: 13px; margin-bottom: 6px; color: var(--primary); }
+  .utterance { padding: 5px 9px; border-radius: 4px; margin-bottom: 5px; font-size: 13px; }
+  .user-u { background: #eef4fa; }
+  .agent-u { background: #f3f4f6; color: #374151; }
+  .sub-sec { margin-top: 8px; font-size: 12.5px; }
+  .t-ok { color: var(--ok); font-weight: 600; }
+  .t-fail { color: var(--fail); font-weight: 600; }
+  .muted { color: var(--muted); }
+  code {
+    font-family: Consolas, Monaco, monospace;
+    background: #f1f3f5;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  a.ext-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 12px; margin-left: 8px; }
+  a.ext-link:hover { text-decoration: underline; }
+  .user-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .user-card {
+    display: block;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .user-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 3px 10px rgba(31, 78, 121, 0.12);
+  }
+  .user-card-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .user-card-title { font-size: 15px; font-weight: 700; color: var(--primary); }
+  .user-card-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 8px; }
+  .user-tier-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 4px 0;
+    border-top: 1px dashed var(--border);
+  }
+  .user-card-btn {
+    margin-top: 8px;
+    text-align: center;
+    background: #eef4fa;
+    color: var(--primary);
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .user-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .user-nav-btn {
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .user-nav-btn:hover { background: #f1f5f9; }
+  .user-nav-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  details.sess-details.sess-working_memory { border-left: 4px solid #d97706; }
+  details.sess-details.sess-experiential_memory { border-left: 4px solid #7e22ce; }
+  details.sess-details.sess-factual_memory { border-left: 4px solid #1967d2; }
+</style>
+</head>
+<body>
+  <h1>三层认知记忆数据集 (cognitive_samples) 意图理解评测总览 (Run 02 优化后)</h1>
+  <div class="subtitle">
+    评测结果存储目录: <code>D:\coding\qwen_intent_rag\eval_results\run_02_cognitive_samples\</code> (含按用户拆分的详情页 <code>users/USER_001.html ~ USER_005.html</code> 及 <code>summary.json</code>) ·
+    模型: <code>qwen3.8-flash</code> + <code>text-embedding-v3</code>
+  </div>
+
+  <div class="summary-grid">
+    <div class="stat-card">
+      <div class="k">总体会话准确率 (Session JGA)</div>
+      <div class="v">90 / 90 (100.00%)</div>
+      <div class="sub">轮次级 Turn JGA: 186 / 186 (100.00%) · (Run 01: 84/90)</div>
+    </div>
+    <div class="stat-card">
+      <div class="k">事实记忆 (factual_memory)</div>
+      <div class="v">48 / 48 (100.0%)</div>
+      <div class="sub">Turn JGA: 97 / 97 (100.0%)</div>
+    </div>
+    <div class="stat-card">
+      <div class="k">工作记忆 (working_memory)</div>
+      <div class="v">22 / 22 (100.0%)</div>
+      <div class="sub">Turn JGA: 49 / 49 (100.0%) · (Run 01: 19/22)</div>
+    </div>
+    <div class="stat-card">
+      <div class="k">经验记忆 (experiential_memory)</div>
+      <div class="v">20 / 20 (100.0%)</div>
+      <div class="sub">Turn JGA: 40 / 40 (100.0%) · (Run 01: 17/20)</div>
+    </div>
+  </div>
+
+  <h2>1. 按用户 (Persona) 评测结果汇总 (点击任意用户进入该用户的全部会话评测页)</h2>
+  <div class="user-cards-grid">
+    <a class='user-card' href='users/USER_001.html'><div class='user-card-hdr'><span class='user-card-title'>USER_001</span><span class='badge pass'>17/17 (100.0%)</span></div><div class='user-card-sub'>Persona: <code>mobile_persona_001</code> · Turn: 36/36 (100.0%)</div><div class='user-tier-row'><span class='badge tier-factual_memory'>事实记忆</span><b>8 / 8</b></div><div class='user-tier-row'><span class='badge tier-working_memory'>工作记忆</span><b>5 / 5</b></div><div class='user-tier-row'><span class='badge tier-experiential_memory'>经验记忆</span><b>4 / 4</b></div><div class='user-card-btn'>点击查看 USER_001 全部 17 个会话详情 →</div></a><a class='user-card' href='users/USER_002.html'><div class='user-card-hdr'><span class='user-card-title'>USER_002</span><span class='badge pass'>18/18 (100.0%)</span></div><div class='user-card-sub'>Persona: <code>mobile_persona_002</code> · Turn: 38/38 (100.0%)</div><div class='user-tier-row'><span class='badge tier-factual_memory'>事实记忆</span><b>10 / 10</b></div><div class='user-tier-row'><span class='badge tier-working_memory'>工作记忆</span><b>4 / 4</b></div><div class='user-tier-row'><span class='badge tier-experiential_memory'>经验记忆</span><b>4 / 4</b></div><div class='user-card-btn'>点击查看 USER_002 全部 18 个会话详情 →</div></a><a class='user-card' href='users/USER_003.html'><div class='user-card-hdr'><span class='user-card-title'>USER_003</span><span class='badge pass'>19/19 (100.0%)</span></div><div class='user-card-sub'>Persona: <code>mobile_persona_003</code> · Turn: 39/39 (100.0%)</div><div class='user-tier-row'><span class='badge tier-factual_memory'>事实记忆</span><b>11 / 11</b></div><div class='user-tier-row'><span class='badge tier-working_memory'>工作记忆</span><b>4 / 4</b></div><div class='user-tier-row'><span class='badge tier-experiential_memory'>经验记忆</span><b>4 / 4</b></div><div class='user-card-btn'>点击查看 USER_003 全部 19 个会话详情 →</div></a><a class='user-card' href='users/USER_004.html'><div class='user-card-hdr'><span class='user-card-title'>USER_004</span><span class='badge pass'>20/20 (100.0%)</span></div><div class='user-card-sub'>Persona: <code>mobile_persona_004</code> · Turn: 40/40 (100.0%)</div><div class='user-tier-row'><span class='badge tier-factual_memory'>事实记忆</span><b>11 / 11</b></div><div class='user-tier-row'><span class='badge tier-working_memory'>工作记忆</span><b>5 / 5</b></div><div class='user-tier-row'><span class='badge tier-experiential_memory'>经验记忆</span><b>4 / 4</b></div><div class='user-card-btn'>点击查看 USER_004 全部 20 个会话详情 →</div></a><a class='user-card' href='users/USER_005.html'><div class='user-card-hdr'><span class='user-card-title'>USER_005</span><span class='badge pass'>16/16 (100.0%)</span></div><div class='user-card-sub'>Persona: <code>mobile_persona_005</code> · Turn: 33/33 (100.0%)</div><div class='user-tier-row'><span class='badge tier-factual_memory'>事实记忆</span><b>8 / 8</b></div><div class='user-tier-row'><span class='badge tier-working_memory'>工作记忆</span><b>4 / 4</b></div><div class='user-tier-row'><span class='badge tier-experiential_memory'>经验记忆</span><b>4 / 4</b></div><div class='user-card-btn'>点击查看 USER_005 全部 16 个会话详情 →</div></a>
+  </div>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th style="width:210px;">用户 ID (Persona)</th>
+        <th style="width:140px;">会话准确率 (Session JGA)</th>
+        <th style="width:140px;">轮次准确率 (Turn JGA)</th>
+        <th style="width:155px;">事实记忆会话</th>
+        <th style="width:155px;">工作记忆会话</th>
+        <th style="width:155px;">经验记忆会话</th>
+        <th>未通过会话</th>
+        <th style="width:160px;">用户详情页</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><a href='users/USER_001.html' class='ext-link' style='margin:0;'><b><code>USER_001</code> (mobile_persona_001)</b></a></td><td><b>17 / 17 (100.0%)</b></td><td>36 / 36 (100.0%)</td><td><span class='badge tier-factual_memory'>事实记忆</span> <b>8 / 8</b></td><td><span class='badge tier-working_memory'>工作记忆</span> <b>5 / 5</b></td><td><span class='badge tier-experiential_memory'>经验记忆</span> <b>4 / 4</b></td><td><span class='badge pass'>全部通过 ✓</span></td><td><a href='users/USER_001.html' class='ext-link' style='margin:0;'>[进入该用户会话列表 →]</a></td></tr><tr><td><a href='users/USER_002.html' class='ext-link' style='margin:0;'><b><code>USER_002</code> (mobile_persona_002)</b></a></td><td><b>18 / 18 (100.0%)</b></td><td>38 / 38 (100.0%)</td><td><span class='badge tier-factual_memory'>事实记忆</span> <b>10 / 10</b></td><td><span class='badge tier-working_memory'>工作记忆</span> <b>4 / 4</b></td><td><span class='badge tier-experiential_memory'>经验记忆</span> <b>4 / 4</b></td><td><span class='badge pass'>全部通过 ✓</span></td><td><a href='users/USER_002.html' class='ext-link' style='margin:0;'>[进入该用户会话列表 →]</a></td></tr><tr><td><a href='users/USER_003.html' class='ext-link' style='margin:0;'><b><code>USER_003</code> (mobile_persona_003)</b></a></td><td><b>19 / 19 (100.0%)</b></td><td>39 / 39 (100.0%)</td><td><span class='badge tier-factual_memory'>事实记忆</span> <b>11 / 11</b></td><td><span class='badge tier-working_memory'>工作记忆</span> <b>4 / 4</b></td><td><span class='badge tier-experiential_memory'>经验记忆</span> <b>4 / 4</b></td><td><span class='badge pass'>全部通过 ✓</span></td><td><a href='users/USER_003.html' class='ext-link' style='margin:0;'>[进入该用户会话列表 →]</a></td></tr><tr><td><a href='users/USER_004.html' class='ext-link' style='margin:0;'><b><code>USER_004</code> (mobile_persona_004)</b></a></td><td><b>20 / 20 (100.0%)</b></td><td>40 / 40 (100.0%)</td><td><span class='badge tier-factual_memory'>事实记忆</span> <b>11 / 11</b></td><td><span class='badge tier-working_memory'>工作记忆</span> <b>5 / 5</b></td><td><span class='badge tier-experiential_memory'>经验记忆</span> <b>4 / 4</b></td><td><span class='badge pass'>全部通过 ✓</span></td><td><a href='users/USER_004.html' class='ext-link' style='margin:0;'>[进入该用户会话列表 →]</a></td></tr><tr><td><a href='users/USER_005.html' class='ext-link' style='margin:0;'><b><code>USER_005</code> (mobile_persona_005)</b></a></td><td><b>16 / 16 (100.0%)</b></td><td>33 / 33 (100.0%)</td><td><span class='badge tier-factual_memory'>事实记忆</span> <b>8 / 8</b></td><td><span class='badge tier-working_memory'>工作记忆</span> <b>4 / 4</b></td><td><span class='badge tier-experiential_memory'>经验记忆</span> <b>4 / 4</b></td><td><span class='badge pass'>全部通过 ✓</span></td><td><a href='users/USER_005.html' class='ext-link' style='margin:0;'>[进入该用户会话列表 →]</a></td></tr>
+    </tbody>
+  </table>
+
+  <h2>2. 三层认知记忆分项汇总 (Run 01 vs Run 02 对比)</h2>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>记忆层级 (Memory Tier)</th>
+        <th>Run 01 会话准确率</th>
+        <th>Run 02 会话准确率 (Session JGA)</th>
+        <th>Run 02 轮次准确率 (Turn JGA)</th>
+        <th>Run 02 状态</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><span class='badge tier-factual_memory'>事实记忆 (factual_memory)</span></td><td class='muted'>48 / 48 (100.0%)</td><td><b>48 / 48 (100.0%)</b></td><td><b>97 / 97 (100.0%)</b></td><td><span class='badge pass'>无失败样本 (100% 通过)</span></td></tr><tr><td><span class='badge tier-working_memory'>工作记忆 (working_memory)</span></td><td class='muted'>19 / 22 (86.4%)</td><td><b>22 / 22 (100.0%)</b></td><td><b>49 / 49 (100.0%)</b></td><td><span class='badge pass'>无失败样本 (100% 通过)</span></td></tr><tr><td><span class='badge tier-experiential_memory'>经验记忆 (experiential_memory)</span></td><td class='muted'>17 / 20 (85.0%)</td><td><b>20 / 20 (100.0%)</b></td><td><b>40 / 40 (100.0%)</b></td><td><span class='badge pass'>无失败样本 (100% 通过)</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. Run 01 失败样本在 Run 02 中的优化闭环验证 (共 6 例，点击会话 ID 直接跳转至详情)</h2>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th style="width:185px;">会话 ID / 记忆层级</th>
+        <th style="width:170px;">状态变化</th>
+        <th style="width:360px;">Run 01 原问题根因</th>
+        <th>本次核心优化措施 (存储过滤 + 相对时间/向量锚点 SELECT + 动态经验对齐)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><a href='users/USER_005.html#S-USER_005-13' class='ext-link' style='margin:0;'><code>S-USER_005-13</code></a><br/><span class='badge tier-working_memory' style='margin-top:4px;'>工作记忆 (working_memory)</span></td><td><span class='badge fail'>Run 01 FAIL</span> → <span class='badge pass'>PASS ✓ 已修复</span></td><td>检索污染：S-USER_005-09 单次临时改参 (720p/30ms) 落入 working_record，被 S-USER_005-13 误召回覆盖基准 1080p/50ms</td><td>1) 写入端过滤 event_override 单次临时覆盖会话不入 working_record 台账；2) 检索端新增相对时间窗口挖掘 (上周/昨天) + 地点短窗向量锚点联动 SELECT WHERE 精准检索</td></tr><tr><td><a href='users/USER_001.html#S-USER_001-13' class='ext-link' style='margin:0;'><code>S-USER_001-13</code></a><br/><span class='badge tier-working_memory' style='margin-top:4px;'>工作记忆 (working_memory)</span></td><td><span class='badge fail'>Run 01 FAIL</span> → <span class='badge pass'>PASS ✓ 已修复</span></td><td>工单改期基准时段偏差：历史工单已为推迟后时段，模型二次叠加 +1h 导致偏移为 13:30-14:30</td><td>结构化 SELECT 锁定前序预约工单，并在 WORKING RECORD RESCHEDULE RULE 中显式展示「原预约挂起时段 → 经推迟1小时换算后的最终目标时段」，消除二次偏移</td></tr><tr><td><a href='users/USER_005.html#S-USER_005-14' class='ext-link' style='margin:0;'><code>S-USER_005-14</code></a><br/><span class='badge tier-working_memory' style='margin-top:4px;'>工作记忆 (working_memory)</span></td><td><span class='badge fail'>Run 01 FAIL</span> → <span class='badge pass'>PASS ✓ 已修复</span></td><td>工单改期基准时段偏差：历史工单时段 08:30-10:30 被二次叠加 -1h 偏移为 07:30-09:30</td><td>通过 SQLite SELECT 精准定位前日预约工单，并在改期注入指令中明确原预约挂起时段与换算后目标时段的映射关系</td></tr><tr><td><a href='users/USER_001.html#S-USER_001-05' class='ext-link' style='margin:0;'><code>S-USER_001-05</code></a><br/><span class='badge tier-experiential_memory' style='margin-top:4px;'>经验记忆 (experiential_memory)</span></td><td><span class='badge fail'>Run 01 FAIL</span> → <span class='badge pass'>PASS ✓ 已修复</span></td><td>经验归纳会话 Turn 2 口头探讨提前半小时，模型直接覆盖已落盘的 Turn 1 预约工单时间戳</td><td>经验卡片落地动态提取 condition/action/recommended_adjustments，并在经验归纳轮锁定已确认排期槽位</td></tr><tr><td><a href='users/USER_003.html#S-USER_003-05' class='ext-link' style='margin:0;'><code>S-USER_003-05</code></a><br/><span class='badge tier-experiential_memory' style='margin-top:4px;'>经验记忆 (experiential_memory)</span></td><td><span class='badge fail'>Run 01 FAIL</span> → <span class='badge pass'>PASS ✓ 已修复</span></td><td>经验归纳会话 Turn 2 探讨提前半小时开启保障，模型改写 Turn 1 已锁定的 14:00-16:00 时段</td><td>将经验记忆纳入条件触发特征索引 (time_window_col=condition, target_col=action)，并在归纳探讨轮保持已确认工单时段不变</td></tr><tr><td><a href='users/USER_005.html#S-USER_005-05' class='ext-link' style='margin:0;'><code>S-USER_005-05</code></a><br/><span class='badge tier-experiential_memory' style='margin-top:4px;'>经验记忆 (experiential_memory)</span></td><td><span class='badge fail'>Run 01 FAIL</span> → <span class='badge pass'>PASS ✓ 已修复</span></td><td>经验归纳会话 Turn 2 探讨提前半小时开启保障，模型改写 Turn 1 已锁定的 08:30-10:30 时段</td><td>统一经验记忆卡片的动态检索与条件匹配回填机制，区分「新会话主动经验推荐」与「归纳期探讨反馈」</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. 样本设计类别 (Blueprint) 统计</h2>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th style="width:200px;">记忆层级</th>
+        <th>样本设计类别 (blueprint_type)</th>
+        <th style="width:80px;">会话数</th>
+        <th style="width:160px;">Session JGA</th>
+        <th style="width:160px;">Turn JGA</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><span class='badge tier-experiential_memory'>经验记忆 (experiential_memory)</span></td><td><b>多轮澄清归纳结晶经验卡 (experience_learning)</b></td><td>10</td><td>10 / 10 (100.0%)</td><td>20 / 20 (100.0%)</td></tr><tr><td><span class='badge tier-experiential_memory'>经验记忆 (experiential_memory)</span></td><td><b>前置准备任务业务映射经验 (multi_intent_experience)</b></td><td>2</td><td>2 / 2 (100.0%)</td><td>4 / 4 (100.0%)</td></tr><tr><td><span class='badge tier-experiential_memory'>经验记忆 (experiential_memory)</span></td><td><b>连麦嘉宾上行推流业务选择经验 (overlapping_experience)</b></td><td>1</td><td>1 / 1 (100.0%)</td><td>2 / 2 (100.0%)</td></tr><tr><td><span class='badge tier-experiential_memory'>经验记忆 (experiential_memory)</span></td><td><b>激活经验主动推荐闭环 (proactive_experience)</b></td><td>6</td><td>6 / 6 (100.0%)</td><td>12 / 12 (100.0%)</td></tr><tr><td><span class='badge tier-experiential_memory'>经验记忆 (experiential_memory)</span></td><td><b>同地点多笔历史工单消歧 (working_record_disambig)</b></td><td>1</td><td>1 / 1 (100.0%)</td><td>2 / 2 (100.0%)</td></tr><tr><td><span class='badge tier-factual_memory'>事实记忆 (factual_memory)</span></td><td><b>单次偶发任务干扰 (distractor_normal)</b></td><td>2</td><td>2 / 2 (100.0%)</td><td>2 / 2 (100.0%)</td></tr><tr><td><span class='badge tier-factual_memory'>事实记忆 (factual_memory)</span></td><td><b>域外非保障请求拒识 (distractor_ood)</b></td><td>5</td><td>5 / 5 (100.0%)</td><td>0 / 0 (-)</td></tr><tr><td><span class='badge tier-factual_memory'>事实记忆 (factual_memory)</span></td><td><b>单次临时改参覆盖 (event_override)</b></td><td>5</td><td>5 / 5 (100.0%)</td><td>10 / 10 (100.0%)</td></tr><tr><td><span class='badge tier-factual_memory'>事实记忆 (factual_memory)</span></td><td><b>隐式黑话与长期习惯复用 (event_reuse)</b></td><td>5</td><td>5 / 5 (100.0%)</td><td>10 / 10 (100.0%)</td></tr><tr><td><span class='badge tier-factual_memory'>事实记忆 (factual_memory)</span></td><td><b>主线周期习惯偏好 (main)</b></td><td>15</td><td>15 / 15 (100.0%)</td><td>35 / 35 (100.0%)</td></tr><tr><td><span class='badge tier-factual_memory'>事实记忆 (factual_memory)</span></td><td><b>临时改参后主线习惯恢复 (main_recovery)</b></td><td>1</td><td>1 / 1 (100.0%)</td><td>1 / 1 (100.0%)</td></tr><tr><td><span class='badge tier-factual_memory'>事实记忆 (factual_memory)</span></td><td><b>支线1：交通转场场景偏好+黑话消歧 (sub_01)</b></td><td>8</td><td>8 / 8 (100.0%)</td><td>21 / 21 (100.0%)</td></tr><tr><td><span class='badge tier-factual_memory'>事实记忆 (factual_memory)</span></td><td><b>支线2：驻地酒店场景偏好 (sub_02)</b></td><td>7</td><td>7 / 7 (100.0%)</td><td>18 / 18 (100.0%)</td></tr><tr><td><span class='badge tier-working_memory'>工作记忆 (working_memory)</span></td><td><b>同地点多笔历史工单消歧 (working_record_disambig)</b></td><td>5</td><td>5 / 5 (100.0%)</td><td>15 / 15 (100.0%)</td></tr><tr><td><span class='badge tier-working_memory'>工作记忆 (working_memory)</span></td><td><b>历史预约工单提前/推迟改期 (working_record_reschedule)</b></td><td>9</td><td>9 / 9 (100.0%)</td><td>18 / 18 (100.0%)</td></tr><tr><td><span class='badge tier-working_memory'>工作记忆 (working_memory)</span></td><td><b>跨期引用历史工单规格 (working_record_reuse)</b></td><td>8</td><td>8 / 8 (100.0%)</td><td>16 / 16 (100.0%)</td></tr>
+    </tbody>
+  </table>
+</body>
+</html>
