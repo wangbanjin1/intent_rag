@@ -3,12 +3,14 @@ from __future__ import annotations
 import copy
 import html
 import json
+import shutil
 from pathlib import Path
 from typing import Any, Dict, List
 
 SOURCE_REPORT_JSON = Path(r"D:\coding\memory_system\test\e2e_cognitive_samples_report.json")
 EVAL_RUN_DIR = Path(r"D:\coding\qwen_intent_rag\eval_results\run_01_cognitive_samples")
 SESSIONS_DIR = EVAL_RUN_DIR / "sessions"
+USERS_DIR = EVAL_RUN_DIR / "users"
 
 EVAL_SLOTS = [
     "application_name",
@@ -434,7 +436,6 @@ def render_slot_cmp_html(eval_details: List[Dict[str, Any]]) -> str:
 
 
 def render_session_body_html(s: Dict[str, Any], uid: str) -> str:
-    sid = s["session_id"]
     tier = s.get("memory_tier", "factual_memory")
     role = s["memory_role"]
     tpl = s["template_id"]
@@ -665,49 +666,366 @@ COMMON_CSS = """
   }
   a.ext-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 12px; margin-left: 8px; }
   a.ext-link:hover { text-decoration: underline; }
+  .user-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .user-card {
+    display: block;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .user-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 3px 10px rgba(31, 78, 121, 0.12);
+  }
+  .user-card-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .user-card-title { font-size: 15px; font-weight: 700; color: var(--primary); }
+  .user-card-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 8px; }
+  .user-tier-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 4px 0;
+    border-top: 1px dashed var(--border);
+  }
+  .user-card-btn {
+    margin-top: 8px;
+    text-align: center;
+    background: #eef4fa;
+    color: var(--primary);
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .user-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .user-nav-btn {
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .user-nav-btn:hover { background: #f1f5f9; }
+  .user-nav-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  details.sess-details.sess-working_memory { border-left: 4px solid #d97706; }
+  details.sess-details.sess-experiential_memory { border-left: 4px solid #7e22ce; }
+  details.sess-details.sess-factual_memory { border-left: 4px solid #1967d2; }
 """
 
 
-def write_per_session_files(data: Dict[str, Any]) -> None:
-    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
-    for u in data.get("users", []):
+def compute_user_tier_stats(u: Dict[str, Any]) -> Dict[str, Dict[str, int]]:
+    stats = {
+        "factual_memory": {"s_ok": 0, "s_tot": 0, "t_ok": 0, "t_tot": 0},
+        "working_memory": {"s_ok": 0, "s_tot": 0, "t_ok": 0, "t_tot": 0},
+        "experiential_memory": {"s_ok": 0, "s_tot": 0, "t_ok": 0, "t_tot": 0},
+    }
+    for s in u.get("sessions", []):
+        tier = s.get("memory_tier", "factual_memory")
+        stats.setdefault(tier, {"s_ok": 0, "s_tot": 0, "t_ok": 0, "t_tot": 0})
+        stats[tier]["s_tot"] += 1
+        if s["session_pass"]:
+            stats[tier]["s_ok"] += 1
+        stats[tier]["t_ok"] += s["turn_ok_count"]
+        stats[tier]["t_tot"] += s["turn_total_count"]
+    return stats
+
+
+def write_per_user_files(data: Dict[str, Any]) -> None:
+    USERS_DIR.mkdir(parents=True, exist_ok=True)
+    users: List[Dict[str, Any]] = data.get("users", [])
+
+    for u in users:
         uid = u["user_id"]
         p_dir = u["persona_dir"]
-        for s in u.get("sessions", []):
-            sid = s["session_id"]
-            # 1) Save standalone session JSON
-            s_json_path = SESSIONS_DIR / f"{sid}.json"
-            s_json_path.write_text(json.dumps(s, ensure_ascii=False, indent=2), encoding="utf-8")
+        t_stats = compute_user_tier_stats(u)
+        f_stat = t_stats["factual_memory"]
+        w_stat = t_stats["working_memory"]
+        e_stat = t_stats["experiential_memory"]
+        fail_cnt = u["session_total"] - u["session_ok"]
 
-            # 2) Save standalone session HTML
+        # 1) Save standalone user JSON
+        (USERS_DIR / f"{uid}.json").write_text(json.dumps(u, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        # 2) Top navigation across users
+        nav_links = [
+            "<a href='../index.html' class='user-nav-btn'>← 返回全量汇总首页 (index.html)</a>"
+        ]
+        for other_u in users:
+            other_uid = other_u["user_id"]
+            act = "active" if other_uid == uid else ""
+            nav_links.append(
+                f"<a href='{esc(other_uid)}.html' class='user-nav-btn {act}'>"
+                f"{esc(other_uid)} ({other_u['session_ok']}/{other_u['session_total']})"
+                f"</a>"
+            )
+
+        # 3) Session overview table + expandable session detail cards
+        overview_rows = []
+        sess_items = []
+        for idx, s in enumerate(u.get("sessions", []), 1):
+            sid = s["session_id"]
+            tier = s.get("memory_tier", "factual_memory")
+            role = s["memory_role"]
+            tpl = s["template_id"]
+            bp = s["blueprint_type"]
+            env = s["environment"]
+            ref_t = s["reference_time"]
             s_pass = s["session_pass"]
-            pass_badge = "<span class='badge pass'>PASS ✓</span>" if s_pass else "<span class='badge fail'>FAIL ✗</span>"
+            finfo = FAIL_SESSIONS.get(sid)
+            status_badge = (
+                f"<span class='badge pass'>PASS ✓ ({s['turn_ok_count']}/{s['turn_total_count']})</span>"
+                if s_pass
+                else f"<span class='badge fail'>FAIL ✗ ({esc(','.join(finfo['wrong_fields'] if finfo else []))}) · {s['turn_ok_count']}/{s['turn_total_count']}</span>"
+            )
+
+            first_utt = s["turns"][0].get("user_utterance", "") if s.get("turns") else ""
+            raw_hits_total = sum(
+                (t.get("memory_trace") or {}).get("raw_hit_count", 0)
+                for t in s.get("turns", [])
+            )
+
+            overview_rows.append(
+                f"<tr class='ov-row' data-tier='{esc(tier)}' data-fail='{'0' if s_pass else '1'}' "
+                f"onclick=\"jumpToSession('{esc(sid)}')\" style='cursor:pointer;'>"
+                f"<td>{idx}</td>"
+                f"<td><a href='#{esc(sid)}' class='ext-link' style='margin:0;' onclick='event.stopPropagation(); jumpToSession(\"{esc(sid)}\");'><code>{esc(sid)}</code></a></td>"
+                f"<td><span class='badge tier-{esc(tier)}'>{esc(TIER_CN.get(tier, tier))}</span></td>"
+                f"<td><span class='badge'>{esc(ROLE_CN.get(role, role))}</span></td>"
+                f"<td><b>{esc(BLUEPRINT_CN.get(bp, bp))}</b></td>"
+                f"<td><code>{esc(tpl)}</code> · {esc(env)} · {esc(ref_t)}</td>"
+                f"<td>{esc(first_utt)}</td>"
+                f"<td>{raw_hits_total} 条</td>"
+                f"<td>{status_badge}</td>"
+                f"</tr>"
+            )
+
             body_html = render_session_body_html(s, uid)
-            page_html = f"""<!DOCTYPE html>
+            sess_items.append(
+                f"<details id='{esc(sid)}' class='sess-details sess-{esc(tier)}' data-tier='{esc(tier)}' data-fail='{'0' if s_pass else '1'}' {'open' if not s_pass else ''}>"
+                f"<summary>"
+                f"<div>"
+                f"<b>#{idx:02d} · <code>{esc(sid)}</code></b> · "
+                f"<span class='badge tier-{esc(tier)}'>{esc(TIER_CN.get(tier, tier))}</span> · "
+                f"<span class='badge'>{esc(ROLE_CN.get(role, role))}</span> · "
+                f"设计类别: <b>{esc(BLUEPRINT_CN.get(bp, bp))}</b> · "
+                f"模板 <code>{esc(tpl)}</code> · {esc(env)} · {esc(ref_t)}"
+                f"</div>"
+                f"<div>{status_badge}</div>"
+                f"</summary>"
+                f"<div class='sess-body'>{body_html}</div>"
+                f"</details>"
+            )
+
+        user_html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"/>
-<title>{esc(sid)} 样本评测详情</title>
+<title>{esc(uid)} ({esc(p_dir)}) 会话评测详情</title>
 <style>{COMMON_CSS}</style>
 </head>
 <body>
-  <div style="margin-bottom:12px;"><a href="../index.html" class="ext-link">← 返回总览报告 (index.html)</a> · <a href="{esc(sid)}.json" class="ext-link">查看原始 JSON ({esc(sid)}.json)</a></div>
-  <h1>样本 {esc(sid)} ({esc(p_dir)} / {esc(uid)}) 评测详情 {pass_badge}</h1>
-  <div class="subtitle">Turn 通过数: {s['turn_ok_count']} / {s['turn_total_count']} · 耗时: {s.get('elapsed_sec', 0)}s</div>
-  <div style="background:#fff; border:1px solid var(--border); border-radius:6px; padding:16px;">
-    {body_html}
+  <div class="user-nav">
+    {''.join(nav_links)}
   </div>
+
+  <h1>用户 {esc(uid)} ({esc(p_dir)}) 会话评测详情</h1>
+  <div class="subtitle">
+    汇总该用户的全部 {u['session_total']} 个会话评测结果（已标注 <b>事实记忆 / 工作记忆 / 经验记忆</b> 及具体会话设计类别），点击表中任意会话或下方折叠栏可查看实际对话、每轮记忆检索结果与 GT/Pred 意图对比。
+  </div>
+
+  <div class="summary-grid">
+    <div class="stat-card">
+      <div class="k">{esc(uid)} 会话准确率 (Session JGA)</div>
+      <div class="v">{u['session_ok']} / {u['session_total']} ({(u['session_ok']/u['session_total']*100):.1f}%)</div>
+      <div class="sub">轮次级 Turn JGA: {u['turn_ok']} / {u['turn_total']} ({(u['turn_ok']/u['turn_total']*100):.1f}%)</div>
+    </div>
+    <div class="stat-card">
+      <div class="k"><span class="badge tier-factual_memory">事实记忆 (factual_memory)</span></div>
+      <div class="v">{f_stat['s_ok']} / {f_stat['s_tot']} ({(f_stat['s_ok']/f_stat['s_tot']*100 if f_stat['s_tot'] else 0):.1f}%)</div>
+      <div class="sub">Turn JGA: {f_stat['t_ok']} / {f_stat['t_tot']}</div>
+    </div>
+    <div class="stat-card">
+      <div class="k"><span class="badge tier-working_memory">工作记忆 (working_memory)</span></div>
+      <div class="v">{w_stat['s_ok']} / {w_stat['s_tot']} ({(w_stat['s_ok']/w_stat['s_tot']*100 if w_stat['s_tot'] else 0):.1f}%)</div>
+      <div class="sub">Turn JGA: {w_stat['t_ok']} / {w_stat['t_tot']}</div>
+    </div>
+    <div class="stat-card">
+      <div class="k"><span class="badge tier-experiential_memory">经验记忆 (experiential_memory)</span></div>
+      <div class="v">{e_stat['s_ok']} / {e_stat['s_tot']} ({(e_stat['s_ok']/e_stat['s_tot']*100 if e_stat['s_tot'] else 0):.1f}%)</div>
+      <div class="sub">Turn JGA: {e_stat['t_ok']} / {e_stat['t_tot']}</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="filters">
+      <button class="flt-btn active" onclick="filterUserSessions('all', this)">全部会话 ({u['session_total']})</button>
+      <button class="flt-btn" onclick="filterUserSessions('factual_memory', this)">事实记忆 ({f_stat['s_tot']})</button>
+      <button class="flt-btn" onclick="filterUserSessions('working_memory', this)">工作记忆 ({w_stat['s_tot']})</button>
+      <button class="flt-btn" onclick="filterUserSessions('experiential_memory', this)">经验记忆 ({e_stat['s_tot']})</button>
+      <button class="flt-btn" onclick="filterUserSessions('fail', this)">仅看失败会话 ({fail_cnt})</button>
+      <button class="flt-btn" onclick="toggleAllDetails(true)">全部展开</button>
+      <button class="flt-btn" onclick="toggleAllDetails(false)">全部收起</button>
+    </div>
+  </div>
+
+  <h2>1. {esc(uid)} 会话列表 (点击任意会话跳转并展开详情)</h2>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th style="width:36px;">#</th>
+        <th style="width:125px;">会话 ID</th>
+        <th style="width:190px;">记忆层级 (事实/工作/经验)</th>
+        <th style="width:170px;">会话角色</th>
+        <th style="width:240px;">样本设计类别 (blueprint_type)</th>
+        <th style="width:220px;">模板 / 环境 / 时间</th>
+        <th>首轮用户话术</th>
+        <th style="width:75px;">检索条数</th>
+        <th style="width:140px;">评测结果</th>
+      </tr>
+    </thead>
+    <tbody>
+      {''.join(overview_rows)}
+    </tbody>
+  </table>
+
+  <h2>2. {esc(uid)} 逐会话评测详情 (实际对话 · 记忆检索结果 · GT vs Pred 意图对比)</h2>
+  {''.join(sess_items)}
+
+<script>
+function filterUserSessions(mode, btn) {{
+  document.querySelectorAll('.flt-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('tr.ov-row').forEach(row => {{
+    if (mode === 'all') row.style.display = '';
+    else if (mode === 'fail') row.style.display = row.dataset.fail === '1' ? '' : 'none';
+    else row.style.display = row.dataset.tier === mode ? '' : 'none';
+  }});
+  document.querySelectorAll('details.sess-details').forEach(card => {{
+    if (mode === 'all') {{
+      card.style.display = 'block';
+    }} else if (mode === 'fail') {{
+      card.style.display = card.dataset.fail === '1' ? 'block' : 'none';
+      if (card.dataset.fail === '1') card.open = true;
+    }} else {{
+      card.style.display = card.dataset.tier === mode ? 'block' : 'none';
+    }}
+  }});
+}}
+function toggleAllDetails(openState) {{
+  document.querySelectorAll('details.sess-details').forEach(d => {{
+    if (d.style.display !== 'none') d.open = openState;
+  }});
+}}
+function jumpToSession(sid) {{
+  const el = document.getElementById(sid);
+  if (el) {{
+    el.style.display = 'block';
+    el.open = true;
+    el.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+  }}
+}}
+if (window.location.hash) {{
+  const targetId = window.location.hash.substring(1);
+  setTimeout(() => jumpToSession(targetId), 100);
+}}
+</script>
 </body>
 </html>
 """
-            (SESSIONS_DIR / f"{sid}.html").write_text(page_html, encoding="utf-8")
+        (USERS_DIR / f"{uid}.html").write_text(user_html, encoding="utf-8")
 
 
 def render_master_index_html(data: Dict[str, Any]) -> str:
     users: List[Dict[str, Any]] = data.get("users", [])
     by_bp: Dict[str, Dict[str, int]] = data.get("by_blueprint", {})
 
-    # 1. 三层记忆汇总表
+    # 1. 按用户 (USER_001 ~ USER_005) 汇总卡片与表格
+    user_cards_html = []
+    user_table_rows = []
+    for u in users:
+        uid = u["user_id"]
+        p_dir = u["persona_dir"]
+        s_ok, s_tot = u["session_ok"], u["session_total"]
+        t_ok, t_tot = u["turn_ok"], u["turn_total"]
+        s_rate = f"{(s_ok / s_tot * 100):.1f}%" if s_tot else "-"
+        t_rate = f"{(t_ok / t_tot * 100):.1f}%" if t_tot else "-"
+        ut = compute_user_tier_stats(u)
+        f_st, w_st, e_st = ut["factual_memory"], ut["working_memory"], ut["experiential_memory"]
+
+        failed_sids = [
+            f"<a href='users/{esc(uid)}.html#{esc(s['session_id'])}' class='ext-link' style='margin:0;'><code>{esc(s['session_id'])}</code></a>"
+            for s in u.get("sessions", [])
+            if not s["session_pass"]
+        ]
+        fail_str = "、".join(failed_sids) if failed_sids else "<span class='badge pass'>全部通过</span>"
+        card_badge = (
+            f"<span class='badge pass'>{s_ok}/{s_tot} ({s_rate})</span>"
+            if s_ok == s_tot
+            else f"<span class='badge fail'>{s_ok}/{s_tot} ({s_rate})</span>"
+        )
+
+        user_cards_html.append(
+            f"<a class='user-card' href='users/{esc(uid)}.html'>"
+            f"<div class='user-card-hdr'>"
+            f"<span class='user-card-title'>{esc(uid)}</span>"
+            f"{card_badge}"
+            f"</div>"
+            f"<div class='user-card-sub'>Persona: <code>{esc(p_dir)}</code> · Turn: {t_ok}/{t_tot} ({t_rate})</div>"
+            f"<div class='user-tier-row'>"
+            f"<span class='badge tier-factual_memory'>事实记忆</span>"
+            f"<b>{f_st['s_ok']} / {f_st['s_tot']}</b>"
+            f"</div>"
+            f"<div class='user-tier-row'>"
+            f"<span class='badge tier-working_memory'>工作记忆</span>"
+            f"<b>{w_st['s_ok']} / {w_st['s_tot']}</b>"
+            f"</div>"
+            f"<div class='user-tier-row'>"
+            f"<span class='badge tier-experiential_memory'>经验记忆</span>"
+            f"<b>{e_st['s_ok']} / {e_st['s_tot']}</b>"
+            f"</div>"
+            f"<div class='user-card-btn'>点击查看 {esc(uid)} 全部 {s_tot} 个会话详情 →</div>"
+            f"</a>"
+        )
+
+        user_table_rows.append(
+            f"<tr>"
+            f"<td><a href='users/{esc(uid)}.html' class='ext-link' style='margin:0;'><b><code>{esc(uid)}</code> ({esc(p_dir)})</b></a></td>"
+            f"<td><b>{s_ok} / {s_tot} ({s_rate})</b></td>"
+            f"<td>{t_ok} / {t_tot} ({t_rate})</td>"
+            f"<td><span class='badge tier-factual_memory'>事实记忆</span> <b>{f_st['s_ok']} / {f_st['s_tot']}</b></td>"
+            f"<td><span class='badge tier-working_memory'>工作记忆</span> <b>{w_st['s_ok']} / {w_st['s_tot']}</b></td>"
+            f"<td><span class='badge tier-experiential_memory'>经验记忆</span> <b>{e_st['s_ok']} / {e_st['s_tot']}</b></td>"
+            f"<td>{fail_str}</td>"
+            f"<td><a href='users/{esc(uid)}.html' class='ext-link' style='margin:0;'>[进入该用户会话列表 →]</a></td>"
+            f"</tr>"
+        )
+
+    # 2. 三层记忆汇总表
     tier_rows = []
     for t_key, note in (
         ("factual_memory", "无失败样本"),
@@ -721,20 +1039,21 @@ def render_master_index_html(data: Dict[str, Any]) -> str:
         t_rate = f"{(t_ok / t_tot * 100):.1f}%" if t_tot else "-"
         tier_rows.append(
             f"<tr>"
-            f"<td><b>{esc(TIER_CN.get(t_key, t_key))}</b></td>"
+            f"<td><span class='badge tier-{esc(t_key)}'>{esc(TIER_CN.get(t_key, t_key))}</span></td>"
             f"<td>{s_ok} / {s_tot} (<b>{s_rate}</b>)</td>"
             f"<td>{t_ok} / {t_tot} (<b>{t_rate}</b>)</td>"
             f"<td class='muted'>{esc(note)}</td>"
             f"</tr>"
         )
 
-    # 2. 6 个失败样本归因表
+    # 3. 6 个失败样本归因表 (点击会话 ID 跳转到对应用户的会话锚点)
     diff_rows = []
     for sid, finfo in FAIL_SESSIONS.items():
+        uid_part = sid.split("-")[1]
         diff_rows.append(
             f"<tr>"
-            f"<td><a href='sessions/{esc(sid)}.html' class='ext-link' style='margin:0;'><code>{esc(sid)}</code></a><br/>"
-            f"<span class='muted'>Turn {esc(finfo['failed_turns'])} · 槽位: <code>{esc(', '.join(finfo['wrong_fields']))}</code></span></td>"
+            f"<td><a href='users/{esc(uid_part)}.html#{esc(sid)}' class='ext-link' style='margin:0;'><code>{esc(sid)}</code></a><br/>"
+            f"<span class='muted'>所属用户: <code>{esc(uid_part)}</code> · Turn {esc(finfo['failed_turns'])} · 槽位: <code>{esc(', '.join(finfo['wrong_fields']))}</code></span></td>"
             f"<td><span class='badge fail'>{esc(finfo['category'])}</span></td>"
             f"<td><b>Pred:</b> <code>{esc(json.dumps(finfo['pred'], ensure_ascii=False))}</code><br/>"
             f"<b>GT:</b> <code>{esc(json.dumps(finfo['gt'], ensure_ascii=False))}</code></td>"
@@ -742,7 +1061,7 @@ def render_master_index_html(data: Dict[str, Any]) -> str:
             f"</tr>"
         )
 
-    # 3. 子场景类别 (Blueprint) 统计表
+    # 4. 子场景类别 (Blueprint) 统计表
     bp_rows = []
     for bp_key, st in sorted(by_bp.items()):
         s_ok, s_tot = st.get("session_ok", 0), st.get("sessions", 0)
@@ -760,64 +1079,6 @@ def render_master_index_html(data: Dict[str, Any]) -> str:
             f"</tr>"
         )
 
-    # 4. 5 个 Persona 的样本折叠面板 (点击展开详情 + 支持跳转独立子文件)
-    tabs_html = []
-    panels_html = []
-    for i, u in enumerate(users):
-        active_cls = "active" if i == 0 else ""
-        uid = u["user_id"]
-        p_dir = u["persona_dir"]
-        s_ok, s_tot = u["session_ok"], u["session_total"]
-        t_ok, t_tot = u["turn_ok"], u["turn_total"]
-        tabs_html.append(
-            f"<button class='tab-btn {active_cls}' onclick=\"switchTab('user-{i}', this)\">"
-            f"{esc(p_dir)} ({esc(uid)}) · Session {s_ok}/{s_tot} · Turn {t_ok}/{t_tot}"
-            f"</button>"
-        )
-
-        sess_items = []
-        for idx, s in enumerate(u.get("sessions", []), 1):
-            sid = s["session_id"]
-            tier = s.get("memory_tier", "factual_memory")
-            role = s["memory_role"]
-            tpl = s["template_id"]
-            bp = s["blueprint_type"]
-            env = s["environment"]
-            ref_t = s["reference_time"]
-            s_pass = s["session_pass"]
-            finfo = FAIL_SESSIONS.get(sid)
-            status_badge = (
-                f"<span class='badge pass'>PASS ✓ ({s['turn_ok_count']}/{s['turn_total_count']})</span>"
-                if s_pass
-                else f"<span class='badge fail'>FAIL ✗ ({esc(','.join(finfo['wrong_fields'] if finfo else []))}) · {s['turn_ok_count']}/{s['turn_total_count']}</span>"
-            )
-            body_html = render_session_body_html(s, uid)
-            sess_items.append(
-                f"<details class='sess-details' data-tier='{esc(tier)}' data-fail='{'0' if s_pass else '1'}'>"
-                f"<summary>"
-                f"<div>"
-                f"<b>#{idx:02d} · <code>{esc(sid)}</code></b> · "
-                f"<span class='badge tier-{esc(tier)}'>{esc(TIER_CN.get(tier, tier))}</span> · "
-                f"<span class='badge'>{esc(ROLE_CN.get(role, role))}</span> · "
-                f"设计类别: <b>{esc(BLUEPRINT_CN.get(bp, bp))}</b> · "
-                f"模板 <code>{esc(tpl)}</code> · {esc(env)} · {esc(ref_t)}"
-                f"</div>"
-                f"<div>"
-                f"{status_badge}"
-                f"<a href='sessions/{esc(sid)}.html' target='_blank' class='ext-link' onclick='event.stopPropagation();'>[打开单样本页 ↗]</a>"
-                f"<a href='sessions/{esc(sid)}.json' target='_blank' class='ext-link' onclick='event.stopPropagation();'>[JSON]</a>"
-                f"</div>"
-                f"</summary>"
-                f"<div class='sess-body'>{body_html}</div>"
-                f"</details>"
-            )
-
-        panels_html.append(
-            f"<div id='user-{i}' class='tab-panel {active_cls}'>"
-            f"{''.join(sess_items)}"
-            f"</div>"
-        )
-
     return f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -828,7 +1089,7 @@ def render_master_index_html(data: Dict[str, Any]) -> str:
 <body>
   <h1>三层认知记忆数据集 (cognitive_samples) 意图理解评测总览</h1>
   <div class="subtitle">
-    评测结果存储目录: <code>D:\\coding\\qwen_intent_rag\\eval_results\\run_01_cognitive_samples\\</code> (含 <code>summary.json</code> 及 <code>sessions/</code> 下 90 个单样本 HTML/JSON) ·
+    评测结果存储目录: <code>D:\\coding\\qwen_intent_rag\\eval_results\\run_01_cognitive_samples\\</code> (含按用户汇总拆分的详情页 <code>users/USER_001.html ~ USER_005.html</code> 及 <code>summary.json</code>) ·
     模型: <code>{esc(data.get('intent_model'))}</code> + <code>{esc(data.get('embedding_model'))}</code>
   </div>
 
@@ -855,7 +1116,30 @@ def render_master_index_html(data: Dict[str, Any]) -> str:
     </div>
   </div>
 
-  <h2>1. 三层认知记忆分项汇总</h2>
+  <h2>1. 按用户 (Persona) 评测结果汇总 (点击任意用户进入该用户的全部会话评测页)</h2>
+  <div class="user-cards-grid">
+    {''.join(user_cards_html)}
+  </div>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th style="width:210px;">用户 ID (Persona)</th>
+        <th style="width:140px;">会话准确率 (Session JGA)</th>
+        <th style="width:140px;">轮次准确率 (Turn JGA)</th>
+        <th style="width:155px;">事实记忆会话</th>
+        <th style="width:155px;">工作记忆会话</th>
+        <th style="width:155px;">经验记忆会话</th>
+        <th>未通过会话 (点击直达)</th>
+        <th style="width:160px;">用户详情页</th>
+      </tr>
+    </thead>
+    <tbody>
+      {''.join(user_table_rows)}
+    </tbody>
+  </table>
+
+  <h2>2. 三层认知记忆分项汇总</h2>
   <table class="tbl">
     <thead>
       <tr>
@@ -870,11 +1154,11 @@ def render_master_index_html(data: Dict[str, Any]) -> str:
     </tbody>
   </table>
 
-  <h2>2. 失败样本错误归因 (共 6 例，点击会话 ID 可打开独立详情页)</h2>
+  <h2>3. 失败样本错误归因 (共 6 例，点击会话 ID 直接跳转至对应用户的该会话位置)</h2>
   <table class="tbl">
     <thead>
       <tr>
-        <th style="width:160px;">会话 ID / 失败轮次</th>
+        <th style="width:170px;">会话 ID / 所属用户</th>
         <th style="width:190px;">归因类型</th>
         <th style="width:360px;">模型预测 (Pred) vs 真值 (GT)</th>
         <th>具体原因</th>
@@ -885,7 +1169,7 @@ def render_master_index_html(data: Dict[str, Any]) -> str:
     </tbody>
   </table>
 
-  <h2>3. 样本设计类别 (Blueprint) 统计</h2>
+  <h2>4. 样本设计类别 (Blueprint) 统计</h2>
   <table class="tbl">
     <thead>
       <tr>
@@ -900,52 +1184,6 @@ def render_master_index_html(data: Dict[str, Any]) -> str:
       {''.join(bp_rows)}
     </tbody>
   </table>
-
-  <h2>4. 全量 90 个样本评测详情 (点击任意行展开对话、记忆检索与 GT/Pred 对比，或点击右侧打开独立页)</h2>
-  <div class="toolbar">
-    <div class="tabs">
-      {''.join(tabs_html)}
-    </div>
-    <div class="filters">
-      <button class="flt-btn active" onclick="filterCards('all', this)">全部会话 (90)</button>
-      <button class="flt-btn" onclick="filterCards('fail', this)">仅看失败会话 (6)</button>
-      <button class="flt-btn" onclick="filterCards('factual_memory', this)">事实记忆 (48)</button>
-      <button class="flt-btn" onclick="filterCards('working_memory', this)">工作记忆 (22)</button>
-      <button class="flt-btn" onclick="filterCards('experiential_memory', this)">经验记忆 (20)</button>
-      <button class="flt-btn" onclick="toggleAllDetails(true)">全部展开</button>
-      <button class="flt-btn" onclick="toggleAllDetails(false)">全部收起</button>
-    </div>
-  </div>
-
-  {''.join(panels_html)}
-
-<script>
-function switchTab(panelId, btn) {{
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(panelId).classList.add('active');
-  btn.classList.add('active');
-}}
-function filterCards(mode, btn) {{
-  document.querySelectorAll('.flt-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('details.sess-details').forEach(card => {{
-    if (mode === 'all') {{
-      card.style.display = 'block';
-    }} else if (mode === 'fail') {{
-      card.style.display = card.dataset.fail === '1' ? 'block' : 'none';
-      if (card.dataset.fail === '1') card.open = true;
-    }} else {{
-      card.style.display = card.dataset.tier === mode ? 'block' : 'none';
-    }}
-  }});
-}}
-function toggleAllDetails(openState) {{
-  document.querySelectorAll('.tab-panel.active details.sess-details').forEach(d => {{
-    if (d.style.display !== 'none') d.open = openState;
-  }});
-}}
-</script>
 </body>
 </html>
 """
@@ -955,14 +1193,17 @@ def main() -> None:
     raw_data = json.loads(SOURCE_REPORT_JSON.read_text(encoding="utf-8"))
     run1_data = restore_run1_data(raw_data)
 
+    if SESSIONS_DIR.exists():
+        shutil.rmtree(SESSIONS_DIR)
+
     EVAL_RUN_DIR.mkdir(parents=True, exist_ok=True)
     # 1. 保存本次评测完整 JSON
     summary_json_path = EVAL_RUN_DIR / "summary.json"
     summary_json_path.write_text(json.dumps(run1_data, ensure_ascii=False, indent=2), encoding="utf-8")
     SOURCE_REPORT_JSON.write_text(json.dumps(run1_data, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # 2. 生成 sessions/ 下的 90 个单样本 HTML 与 JSON
-    write_per_session_files(run1_data)
+    # 2. 生成 users/ 下的 5 个用户详情 HTML 与 JSON
+    write_per_user_files(run1_data)
 
     # 3. 生成总览大 HTML (index.html)
     master_html = render_master_index_html(run1_data)
@@ -971,7 +1212,7 @@ def main() -> None:
     # 同步更新 test/e2e_cognitive_samples_report.html
     Path(r"D:\coding\memory_system\test\e2e_cognitive_samples_report.html").write_text(master_html, encoding="utf-8")
     print(f"Generated master index: {index_html_path}")
-    print(f"Generated 90 session HTML+JSON files in: {SESSIONS_DIR}")
+    print(f"Generated 5 per-user HTML+JSON files in: {USERS_DIR}")
 
 
 if __name__ == "__main__":
