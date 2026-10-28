@@ -1,0 +1,1650 @@
+{
+  "session_id": "S-USER_004-17",
+  "reference_time": "2026年11月02日20时00分",
+  "memory_tier": "factual_memory",
+  "template_id": "T2-1",
+  "memory_role": "evidence_session",
+  "blueprint_type": "sub_02",
+  "environment": "驻地酒店商务中心",
+  "memory_action": "establish_sub_storyline_2",
+  "session_pass": true,
+  "session_gt": {
+    "腾讯会议/会议": {
+      "application_name": "腾讯会议",
+      "service_name": "会议",
+      "resolution": "1080p",
+      "rtt": "80ms",
+      "start_timestamp": "2026年11月02日20时15分",
+      "end_timestamp": "2026年11月02日21时45分",
+      "duration": "90min"
+    }
+  },
+  "session_pred": {
+    "腾讯会议/会议": {
+      "application_name": "腾讯会议",
+      "service_name": "会议",
+      "resolution": "1080p",
+      "rtt": "80ms",
+      "start_timestamp": "2026年11月02日20时15分",
+      "end_timestamp": "2026年11月02日21时45分",
+      "duration": "90min"
+    }
+  },
+  "session_diffs": "ok_session",
+  "turn_ok_count": 3,
+  "turn_total_count": 3,
+  "turns": [
+    {
+      "turn": 1,
+      "user_utterance": "你好，需要给腾讯会议会议做一个网络保障，时间是今天20时15分开始。",
+      "agent_utterance": "收到，已为您锁定腾讯会议会议保障，时间从20时15分开始。请问您需要保障的清晰度、时延上限和预计持续时长分别是多少呢？",
+      "memory_trace": {
+        "turn": 1,
+        "query": "你好，需要给腾讯会议会议做一个网络保障，时间是今天20时15分开始。",
+        "reference_time": "2026年11月02日20时00分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 10,
+        "major_hits": [],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_8134E0C375B2",
+            "subtype": "periodic_preference",
+            "memory_key": "20:00-22:00 | douyin:openlive",
+            "status": "reinforced",
+            "score": 0.852555,
+            "time_window": "20:00-22:00",
+            "value": "douyin:openlive"
+          }
+        ],
+        "service_hits": [],
+        "expression_hits": [],
+        "working_hits": [
+          {
+            "memory_id": "MEM_0CF9CC1B0C54",
+            "memory_key": "REC_USER_004_20260914_01",
+            "record_id": "REC_USER_004_20260914_01",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.7382
+          },
+          {
+            "memory_id": "MEM_907E24AFFAE8",
+            "memory_key": "REC_USER_004_20260916_02",
+            "record_id": "REC_USER_004_20260916_02",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "720p",
+            "rtt": "100ms",
+            "score": 0.733118
+          },
+          {
+            "memory_id": "MEM_079CED7E8775",
+            "memory_key": "REC_USER_004_20260918_03",
+            "record_id": "REC_USER_004_20260918_03",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.722938
+          },
+          {
+            "memory_id": "MEM_93007E118A97",
+            "memory_key": "REC_USER_004_20260921_04",
+            "record_id": "REC_USER_004_20260921_04",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.719375
+          },
+          {
+            "memory_id": "MEM_2F3CC1DCD281",
+            "memory_key": "REC_USER_004_20261012_08",
+            "record_id": "REC_USER_004_20261012_08",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.708806
+          },
+          {
+            "memory_id": "MEM_6F83000CCA4F",
+            "memory_key": "REC_USER_004_20260925_05",
+            "record_id": "REC_USER_004_20260925_05",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.70048
+          },
+          {
+            "memory_id": "MEM_CF141D010FD1",
+            "memory_key": "REC_USER_004_20261016_10",
+            "record_id": "REC_USER_004_20261016_10",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.694075
+          },
+          {
+            "memory_id": "MEM_446A9B621A5F",
+            "memory_key": "REC_USER_004_20261026_14",
+            "record_id": "REC_USER_004_20261026_14",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.69328
+          },
+          {
+            "memory_id": "MEM_3E9E0BFCA06B",
+            "memory_key": "REC_USER_004_20261023_13",
+            "record_id": "REC_USER_004_20261023_13",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.686255
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": null
+      },
+      "llm_raw": "# summary: 用户新建腾讯会议/会议保障，时间今天20时15分开始，无结束或时长信息，无画质/时延要求。\n# 身份判定: 与已有意图无关, 新建\n# intent: new\nstate.application_name = \"腾讯会议\"\nstate.service_name = \"会议\"\nstate.timestamp = find_timestamp(start=\"2026年11月02日20时15分\")",
+      "preds": {
+        "腾讯会议/会议": {
+          "application_name": "腾讯会议",
+          "service_name": "会议",
+          "resolution": null,
+          "rtt": null,
+          "start_timestamp": "2026年11月02日20时15分",
+          "end_timestamp": null,
+          "duration": null
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 1,
+          "intent_key": "腾讯会议/会议",
+          "gt": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": null,
+            "rtt": null,
+            "start_timestamp": "2026年11月02日20时15分",
+            "end_timestamp": null,
+            "duration": null
+          },
+          "pred": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": null,
+            "rtt": null,
+            "start_timestamp": "2026年11月02日20时15分",
+            "end_timestamp": null,
+            "duration": null
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户新建腾讯会议/会议保障，时间今天20时15分开始，无结束或时长信息，无画质/时延要求。\n# 身份判定: 与已有意图无关, 新建\n# intent: new\nstate.application_name = \"腾讯会议\"\nstate.service_name = \"会议\"\nstate.timestamp = find_timestamp(start=\"2026年11月02日20时15分\")"
+        }
+      ],
+      "turn_pass": true
+    },
+    {
+      "turn": 2,
+      "user_utterance": "好的，画质用1080p，时延80ms以内，预计持续90min（到21时45分）。以后我说‘画面高质感’，画质就是1080p。以后只要我处于【驻地酒店休息区】，就按老规矩来：腾讯会议会议、1080p、80ms以内，帮我把这个习惯记好，别掉链子。",
+      "agent_utterance": "收到，已为您登记老规矩习惯。确认按1080p、80ms以内立即为您开通本次保障吗？",
+      "memory_trace": {
+        "turn": 2,
+        "query": "好的，画质用1080p，时延80ms以内，预计持续90min（到21时45分）。以后我说‘画面高质感’，画质就是1080p。以后只要我处于【驻地酒店休息区】，就按老规矩来：腾讯会议会议、1080p、80ms以内，帮我把这个习惯记好，别掉链子。",
+        "reference_time": "2026年11月02日20时00分",
+        "has_memory_trigger": true,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 10,
+        "major_hits": [],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_8134E0C375B2",
+            "subtype": "periodic_preference",
+            "memory_key": "20:00-22:00 | douyin:openlive",
+            "status": "reinforced",
+            "score": 0.855473,
+            "time_window": "20:00-22:00",
+            "value": "douyin:openlive"
+          }
+        ],
+        "service_hits": [],
+        "expression_hits": [
+          {
+            "memory_id": "MEM_9C5652842241",
+            "memory_key": "能认清人脸",
+            "alias": "能认清人脸",
+            "target": "720p",
+            "application": "wechat",
+            "business": "video_call",
+            "scene": "大巴转场途中",
+            "score": 0.720238
+          }
+        ],
+        "working_hits": [
+          {
+            "memory_id": "MEM_907E24AFFAE8",
+            "memory_key": "REC_USER_004_20260916_02",
+            "record_id": "REC_USER_004_20260916_02",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "720p",
+            "rtt": "100ms",
+            "score": 0.708791
+          },
+          {
+            "memory_id": "MEM_0CF9CC1B0C54",
+            "memory_key": "REC_USER_004_20260914_01",
+            "record_id": "REC_USER_004_20260914_01",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.707437
+          },
+          {
+            "memory_id": "MEM_079CED7E8775",
+            "memory_key": "REC_USER_004_20260918_03",
+            "record_id": "REC_USER_004_20260918_03",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.706208
+          },
+          {
+            "memory_id": "MEM_93007E118A97",
+            "memory_key": "REC_USER_004_20260921_04",
+            "record_id": "REC_USER_004_20260921_04",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.70073
+          },
+          {
+            "memory_id": "MEM_6F83000CCA4F",
+            "memory_key": "REC_USER_004_20260925_05",
+            "record_id": "REC_USER_004_20260925_05",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.690346
+          },
+          {
+            "memory_id": "MEM_2F3CC1DCD281",
+            "memory_key": "REC_USER_004_20261012_08",
+            "record_id": "REC_USER_004_20261012_08",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.689878
+          },
+          {
+            "memory_id": "MEM_CF141D010FD1",
+            "memory_key": "REC_USER_004_20261016_10",
+            "record_id": "REC_USER_004_20261016_10",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.673622
+          },
+          {
+            "memory_id": "MEM_446A9B621A5F",
+            "memory_key": "REC_USER_004_20261026_14",
+            "record_id": "REC_USER_004_20261026_14",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.67339
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": null
+      },
+      "llm_raw": "# summary: 用户补充腾讯会议/会议的画质1080p、时延80ms、时长90min(至21时45分)。无指代歧义，直接赋值。\n# 身份判定: 更新已有意图 I1 (腾讯会议/会议)\n# intent: I1\nstate.resolution = \"1080p\"\nstate.rtt = \"80ms\"\nstate.timestamp = find_timestamp(start=\"2026年11月02日20时15分\", end=\"2026年11月02日21时45分\", duration=\"90min\")",
+      "preds": {
+        "腾讯会议/会议": {
+          "application_name": "腾讯会议",
+          "service_name": "会议",
+          "resolution": "1080p",
+          "rtt": "80ms",
+          "start_timestamp": "2026年11月02日20时15分",
+          "end_timestamp": "2026年11月02日21时45分",
+          "duration": "90min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 2,
+          "intent_key": "腾讯会议/会议",
+          "gt": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "80ms",
+            "start_timestamp": "2026年11月02日20时15分",
+            "end_timestamp": "2026年11月02日21时45分",
+            "duration": "90min"
+          },
+          "pred": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "80ms",
+            "start_timestamp": "2026年11月02日20时15分",
+            "end_timestamp": "2026年11月02日21时45分",
+            "duration": "90min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户补充腾讯会议/会议的画质1080p、时延80ms、时长90min(至21时45分)。无指代歧义，直接赋值。\n# 身份判定: 更新已有意图 I1 (腾讯会议/会议)\n# intent: I1\nstate.resolution = \"1080p\"\nstate.rtt = \"80ms\"\nstate.timestamp = find_timestamp(start=\"2026年11月02日20时15分\", end=\"2026年11月02日21时45分\", duration=\"90min\")"
+        }
+      ],
+      "turn_pass": true
+    },
+    {
+      "turn": 3,
+      "user_utterance": "对，确认直接开通。",
+      "agent_utterance": "好的，已为您成功受理腾讯会议会议网络保障（1080p / 时延≤80ms），祝您使用愉快！",
+      "memory_trace": {
+        "turn": 3,
+        "query": "对，确认直接开通。",
+        "reference_time": "2026年11月02日20时00分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 10,
+        "major_hits": [
+          {
+            "memory_id": "MEM_D4C8BAF81EE3",
+            "subtype": "scene_preference",
+            "memory_key": "影视传媒数字创作基地 | douyin | openlive",
+            "paired_periodic_key": "20:00-22:00 | douyin:openlive",
+            "status": "reinforced",
+            "score": 0.912546,
+            "resolved_slots": {
+              "application_name": "抖音",
+              "service_name": "开直播",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "20:00-22:00",
+              "scene": "影视传媒数字创作基地",
+              "start_timestamp": "2026年11月02日20时00分",
+              "end_timestamp": "2026年11月02日22时00分",
+              "duration": "120min"
+            },
+            "structured_match": "[向量锚点吸附: 能认清人脸(cos=0.4205)->720p, 影视传媒数字创作基地(cos=0.4476)->douyin|openlive] [指针跳: periodic_preference[20:00-22:00] -> douyin|openlive; periodic_preference[douyin|openlive] -> 20:00-22:00] SELECT WHERE application=douyin AND business=openlive AND scene=影视传媒数字创作基地"
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_8134E0C375B2",
+            "subtype": "periodic_preference",
+            "memory_key": "20:00-22:00 | douyin:openlive",
+            "status": "reinforced",
+            "score": 0.908391,
+            "time_window": "20:00-22:00",
+            "value": "douyin:openlive"
+          }
+        ],
+        "service_hits": [],
+        "expression_hits": [
+          {
+            "memory_id": "MEM_9C5652842241",
+            "memory_key": "能认清人脸",
+            "alias": "能认清人脸",
+            "target": "720p",
+            "application": "wechat",
+            "business": "video_call",
+            "scene": "大巴转场途中",
+            "score": 0.885623
+          }
+        ],
+        "working_hits": [
+          {
+            "memory_id": "MEM_079CED7E8775",
+            "memory_key": "REC_USER_004_20260918_03",
+            "record_id": "REC_USER_004_20260918_03",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.87181
+          },
+          {
+            "memory_id": "MEM_0CF9CC1B0C54",
+            "memory_key": "REC_USER_004_20260914_01",
+            "record_id": "REC_USER_004_20260914_01",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.866441
+          },
+          {
+            "memory_id": "MEM_93007E118A97",
+            "memory_key": "REC_USER_004_20260921_04",
+            "record_id": "REC_USER_004_20260921_04",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.866015
+          },
+          {
+            "memory_id": "MEM_907E24AFFAE8",
+            "memory_key": "REC_USER_004_20260916_02",
+            "record_id": "REC_USER_004_20260916_02",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "720p",
+            "rtt": "100ms",
+            "score": 0.857199
+          },
+          {
+            "memory_id": "MEM_6F83000CCA4F",
+            "memory_key": "REC_USER_004_20260925_05",
+            "record_id": "REC_USER_004_20260925_05",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.848586
+          },
+          {
+            "memory_id": "MEM_446A9B621A5F",
+            "memory_key": "REC_USER_004_20261026_14",
+            "record_id": "REC_USER_004_20261026_14",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.828569
+          },
+          {
+            "memory_id": "MEM_6255EBB3B85C",
+            "memory_key": "REC_USER_004_20260928_06",
+            "record_id": "REC_USER_004_20260928_06",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.825325
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "抖音",
+          "service_name": "开直播",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "20:00-22:00",
+          "scene": "影视传媒数字创作基地",
+          "start_timestamp": "2026年11月02日20时00分",
+          "end_timestamp": "2026年11月02日22时00分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户确认开通当前意图 I1 (腾讯会议/会议)，无字段变更，仅状态流转。\n# 身份判定: 对应已有意图 I1\n# intent: I1",
+      "preds": {
+        "腾讯会议/会议": {
+          "application_name": "腾讯会议",
+          "service_name": "会议",
+          "resolution": "1080p",
+          "rtt": "80ms",
+          "start_timestamp": "2026年11月02日20时15分",
+          "end_timestamp": "2026年11月02日21时45分",
+          "duration": "90min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 3,
+          "intent_key": "腾讯会议/会议",
+          "gt": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "80ms",
+            "start_timestamp": "2026年11月02日20时15分",
+            "end_timestamp": "2026年11月02日21时45分",
+            "duration": "90min"
+          },
+          "pred": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "80ms",
+            "start_timestamp": "2026年11月02日20时15分",
+            "end_timestamp": "2026年11月02日21时45分",
+            "duration": "90min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户确认开通当前意图 I1 (腾讯会议/会议)，无字段变更，仅状态流转。\n# 身份判定: 对应已有意图 I1\n# intent: I1"
+        }
+      ],
+      "turn_pass": true
+    }
+  ],
+  "extracted_events": [
+    {
+      "event_id": "EVT_B73B02DCE1A2",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "scene_preference",
+      "memory_key_fields": {
+        "scene": "驻地酒店休息区",
+        "application": "tencent_meeting",
+        "business": "meeting"
+      },
+      "content": {
+        "scene": "驻地酒店休息区",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "resolution": "1080p",
+        "latency": "80ms",
+        "validity": "long_term",
+        "note": "场景参数覆写：驻地酒店休息区 下使用 tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_004-17",
+      "evidence_turns": [
+        1,
+        2
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-11-02T20:00:00Z",
+      "owner_type": "user",
+      "user_id": "USER_004",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_95CCE8434201",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "periodic_preference",
+      "memory_key_fields": {
+        "condition": "20:15-21:45",
+        "value": "tencent_meeting:meeting"
+      },
+      "content": {
+        "condition": "20:15-21:45",
+        "value": "tencent_meeting:meeting",
+        "time_window": "20:15-21:45",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "validity": "long_term",
+        "note": "周期时间路由：20:15-21:45 -> tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_004-17",
+      "evidence_turns": [
+        1,
+        2
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-11-02T20:00:00Z",
+      "owner_type": "user",
+      "user_id": "USER_004",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_D4B6BCBA6ACB",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "scene_preference",
+      "memory_key_fields": {
+        "scene": "驻地酒店休息区",
+        "application": "tencent_meeting",
+        "business": "meeting"
+      },
+      "content": {
+        "scene": "驻地酒店休息区",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "resolution": "1080p",
+        "latency": "80ms",
+        "validity": "long_term",
+        "note": "场景参数覆写：驻地酒店休息区 下使用 tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_004-17",
+      "evidence_turns": [
+        2
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-11-02T20:00:00Z",
+      "owner_type": "user",
+      "user_id": "USER_004",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_37748ECD047A",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "periodic_preference",
+      "memory_key_fields": {
+        "condition": "20:15-21:45",
+        "value": "tencent_meeting:meeting"
+      },
+      "content": {
+        "condition": "20:15-21:45",
+        "value": "tencent_meeting:meeting",
+        "time_window": "20:15-21:45",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "validity": "long_term",
+        "note": "周期时间路由：20:15-21:45 -> tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_004-17",
+      "evidence_turns": [
+        2
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-11-02T20:00:00Z",
+      "owner_type": "user",
+      "user_id": "USER_004",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_11D74FCE6483",
+      "event_type": "EXPRESSION_ALIAS",
+      "subtype": "expression",
+      "memory_key_fields": {
+        "alias": "画面高质感"
+      },
+      "content": {
+        "alias": "画面高质感",
+        "source_expression": "画面高质感",
+        "target": "1080p",
+        "validity": "long_term",
+        "note": "表达映射：「画面高质感」-> 1080p",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "scene": "驻地酒店休息区",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_004-17",
+      "evidence_turns": [
+        2
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-11-02T20:00:00Z",
+      "owner_type": "user",
+      "user_id": "USER_004",
+      "agent_id": "",
+      "tenant_id": "default"
+    }
+  ],
+  "ebbinghaus_decay": {
+    "expired_candidates": [],
+    "degraded_reinforced": []
+  },
+  "memory_snapshot": [
+    {
+      "memory_id": "MEM_3D135CE4BEBE",
+      "subtype": "experience",
+      "memory_key": "EXP_CALENDAR_HOLIDAY_EXCEPTION_01 | time_scheduling",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 1.0,
+      "stability": 1.88,
+      "content": {
+        "experience_id": "EXP_CALENDAR_HOLIDAY_EXCEPTION_01",
+        "domain": "time_scheduling",
+        "strategy_type": "holiday_avoidance",
+        "title": "周期例行排期遇法定节假日自动顺延经验",
+        "description": "每周例行安排的周会意图保障单如果恰逢国家法定节假日（如2026年10月01日至10月07日国庆节放假），直接按原定休假日开通会导致空跑扣费。",
+        "condition": "周期例行周会意图保障单排期撞上国庆法定节假日（如2026年10月05日）",
+        "action": "将 start_timestamp 与 end_timestamp 的日期从 2026年10月05日 顺延改为节后首个工作日 2026年10月08日，时刻与 duration 不变",
+        "trigger_conditions": {
+          "keywords": [
+            "国庆节",
+            "国庆假期",
+            "中秋节",
+            "元旦",
+            "春节",
+            "法定假日",
+            "放假",
+            "例行周会",
+            "10月5日",
+            "10月05日"
+          ]
+        },
+        "recommended_adjustments": {
+          "action": "将2026年10月05日顺延至节后首个工作日2026年10月08日（时刻与时长不变）",
+          "strategy": "节假日排期避让"
+        },
+        "event_time": "2026-09-28T19:45:00Z",
+        "source_session_id": "S-USER_004-06"
+      },
+      "description": "经验卡片 [time_scheduling/EXP_CALENDAR_HOLIDAY_EXCEPTION_01] - 周期例行排期遇法定节假日自动顺延经验"
+    },
+    {
+      "memory_id": "MEM_7941327724CD",
+      "subtype": "experience",
+      "memory_key": "EXP_MULTI_INTENT_PARTITION_01 | intent_disambiguation",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 1.0,
+      "stability": 1.88,
+      "content": {
+        "experience_id": "EXP_MULTI_INTENT_PARTITION_01",
+        "domain": "intent_disambiguation",
+        "strategy_type": "app_service_selection_experience",
+        "title": "直播前私下跟搭档对词与看镜头机位（使用微信视频通话而非抖音开直播）经验",
+        "condition": "用户提出在正式直播前先跟搭档/同事对一下抖音直播的词和镜头机位（字面带有‘抖音直播’字眼，但属于开播前私下双人对词看机位）",
+        "action": "识别私下对词看机位的真实通信载体为微信视频通话而非公开抖音开直播，主动将 application_name 设为微信、service_name 设为视频通话",
+        "trigger_conditions": {
+          "location_keywords": [
+            "热身区",
+            "休息点",
+            "现场",
+            "街区",
+            "采访点",
+            "直播",
+            "外场",
+            "展区"
+          ],
+          "task_keywords": [
+            "对词",
+            "镜头",
+            "机位",
+            "试镜",
+            "搭档",
+            "彩排"
+          ]
+        },
+        "recommended_adjustments": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "preserve_user_quality_and_time": true
+        },
+        "event_time": "2026-10-16T12:15:00Z",
+        "source_session_id": "S-USER_004-10"
+      },
+      "description": "经验卡片 [intent_disambiguation/EXP_MULTI_INTENT_PARTITION_01] - 直播前私下跟搭档对词与看镜头机位（使用微信视频通话而非抖音开直播）经验"
+    },
+    {
+      "memory_id": "MEM_20285EEC9D39",
+      "subtype": "expression",
+      "memory_key": "画面高质感",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "alias": "画面高质感",
+        "source_expression": "画面高质感",
+        "target": "1080p",
+        "validity": "long_term",
+        "note": "表达映射：「画面高质感」-> 1080p",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "scene": "驻地酒店休息区",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议"
+      },
+      "description": "个性化表达映射：「画面高质感」表示 1080p (target=1080p) - 表达映射：「画面高质感」-> 1080p"
+    },
+    {
+      "memory_id": "MEM_9C5652842241",
+      "subtype": "expression",
+      "memory_key": "能认清人脸",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "alias": "能认清人脸",
+        "target": "720p",
+        "note": "表达映射：「能认清人脸」-> 720p",
+        "validity": "long_term",
+        "application": "wechat",
+        "business": "video_call",
+        "scene": "大巴转场途中",
+        "app_cn": "微信",
+        "service_cn": "视频通话"
+      },
+      "description": "个性化表达映射：「能认清人脸」表示 720p (target=720p) - 表达映射：「能认清人脸」-> 720p"
+    },
+    {
+      "memory_id": "MEM_F2DB3F9F4210",
+      "subtype": "expression",
+      "memory_key": "顺畅推流",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "alias": "顺畅推流",
+        "target": "50ms",
+        "note": "表达映射：「顺畅推流」-> 50ms",
+        "validity": "long_term",
+        "application": "douyin",
+        "business": "openlive",
+        "scene": "影视传媒数字创作基地",
+        "app_cn": "抖音",
+        "service_cn": "开直播"
+      },
+      "description": "个性化表达映射：「顺畅推流」表示 50ms (target=50ms) - 表达映射：「顺畅推流」-> 50ms"
+    },
+    {
+      "memory_id": "MEM_1340352387E6",
+      "subtype": "periodic_preference",
+      "memory_key": "18:45-19:45 | wechat:video_call",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.3901,
+      "stability": 1.0,
+      "content": {
+        "condition": "18:45-19:45",
+        "value": "wechat:video_call",
+        "time_window": "18:45-19:45",
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "validity": "long_term",
+        "note": "周期时间路由：18:45-19:45 -> wechat (video_call)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：18:45-19:45 -> wechat:video_call (time_window=18:45-19:45, value=wechat:video_call) - 周期时间路由：18:45-19:45 -> wechat (video_call)"
+    },
+    {
+      "memory_id": "MEM_8134E0C375B2",
+      "subtype": "periodic_preference",
+      "memory_key": "20:00-22:00 | douyin:openlive",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 4,
+      "positive_votes": 4,
+      "reuse_count": 3,
+      "retention": 0.8962,
+      "stability": 2.56,
+      "content": {
+        "condition": "20:00-22:00",
+        "value": "douyin:openlive",
+        "time_window": "20:00-22:00",
+        "application": "douyin",
+        "business": "openlive",
+        "app_cn": "抖音",
+        "service_cn": "开直播",
+        "validity": "long_term",
+        "note": "周期时间路由：20:00-22:00 -> douyin (openlive)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：20:00-22:00 -> douyin:openlive (time_window=20:00-22:00, value=douyin:openlive) - 周期时间路由：20:00-22:00 -> douyin (openlive)"
+    },
+    {
+      "memory_id": "MEM_45E7FB9DCDAD",
+      "subtype": "periodic_preference",
+      "memory_key": "20:15-21:45 | tencent_meeting:meeting",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.55,
+      "content": {
+        "condition": "20:15-21:45",
+        "value": "tencent_meeting:meeting",
+        "time_window": "20:15-21:45",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "validity": "long_term",
+        "note": "周期时间路由：20:15-21:45 -> tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：20:15-21:45 -> tencent_meeting:meeting (time_window=20:15-21:45, value=tencent_meeting:meeting) - 周期时间路由：20:15-21:45 -> tencent_meeting (meeting)"
+    },
+    {
+      "memory_id": "MEM_EEC3E04ECCE4",
+      "subtype": "scene_preference",
+      "memory_key": "大巴转场途中 | wechat | video_call",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.3901,
+      "stability": 1.0,
+      "content": {
+        "scene": "大巴转场途中",
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "resolution": "720p",
+        "latency": "100ms",
+        "validity": "long_term",
+        "note": "场景参数覆写：大巴转场途中 下使用 wechat (video_call)",
+        "declaration_mode": "explicit"
+      },
+      "description": "场景偏好：大巴转场途中 下使用 wechat (video_call) (resolution=720p, latency=100ms) - 场景参数覆写：大巴转场途中 下使用 wechat (video_call)"
+    },
+    {
+      "memory_id": "MEM_D4C8BAF81EE3",
+      "subtype": "scene_preference",
+      "memory_key": "影视传媒数字创作基地 | douyin | openlive",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 4,
+      "positive_votes": 4,
+      "reuse_count": 3,
+      "retention": 0.8962,
+      "stability": 2.56,
+      "content": {
+        "scene": "影视传媒数字创作基地",
+        "application": "douyin",
+        "business": "openlive",
+        "resolution": "1080p",
+        "latency": "50ms",
+        "app_cn": "抖音",
+        "service_cn": "开直播",
+        "validity": "long_term",
+        "declaration_mode": "explicit",
+        "note": "场景参数覆写：影视传媒数字创作基地 下使用 douyin (openlive)"
+      },
+      "description": "场景偏好：影视传媒数字创作基地 下使用 douyin (openlive) (resolution=1080p, latency=50ms) - 场景参数覆写：影视传媒数字创作基地 下使用 douyin (openlive)"
+    },
+    {
+      "memory_id": "MEM_A6D287AC0905",
+      "subtype": "scene_preference",
+      "memory_key": "驻地酒店休息区 | tencent_meeting | meeting",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.55,
+      "content": {
+        "scene": "驻地酒店休息区",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "resolution": "1080p",
+        "latency": "80ms",
+        "validity": "long_term",
+        "note": "场景参数覆写：驻地酒店休息区 下使用 tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "description": "场景偏好：驻地酒店休息区 下使用 tencent_meeting (meeting) (resolution=1080p, latency=80ms) - 场景参数覆写：驻地酒店休息区 下使用 tencent_meeting (meeting)"
+    },
+    {
+      "memory_id": "MEM_AFAACC241431",
+      "subtype": "service_to_app",
+      "memory_key": "meeting",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "business": "meeting",
+        "application": "tencent_meeting",
+        "validity": "long_term",
+        "note": "跨会话归纳路由指针：meeting 默认使用 tencent_meeting（累计 2 次观测）"
+      },
+      "description": "业务默认应用：meeting 默认使用 tencent_meeting - 跨会话归纳路由指针：meeting 默认使用 tencent_meeting（累计 2 次观测）"
+    },
+    {
+      "memory_id": "MEM_8140A67C8961",
+      "subtype": "service_to_app",
+      "memory_key": "openlive",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.6376,
+      "stability": 1.0,
+      "content": {
+        "business": "openlive",
+        "application": "douyin",
+        "validity": "long_term",
+        "note": "跨会话归纳路由指针：openlive 默认使用 douyin（累计 2 次观测）"
+      },
+      "description": "业务默认应用：openlive 默认使用 douyin - 跨会话归纳路由指针：openlive 默认使用 douyin（累计 2 次观测）"
+    },
+    {
+      "memory_id": "MEM_0CF9CC1B0C54",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20260914_01",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 4,
+      "positive_votes": 4,
+      "reuse_count": 3,
+      "retention": 1.0,
+      "stability": 2.56,
+      "content": {
+        "record_id": "REC_USER_004_20260914_01",
+        "session_id": "S-USER_004-01",
+        "created_at": "2026年09月14日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月14日20时00分",
+        "end_timestamp": "2026年09月14日22时00分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-30T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20260914_01] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_907E24AFFAE8",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20260916_02",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20260916_02",
+        "session_id": "S-USER_004-02",
+        "created_at": "2026年09月16日18时30分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "720p",
+        "rtt": "100ms",
+        "start_timestamp": "2026年09月16日18时45分",
+        "end_timestamp": "2026年09月16日19时45分",
+        "duration": "60min",
+        "location": "大巴跨城转场高速公路",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-16T18:30:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20260916_02] (resolution=720p)"
+    },
+    {
+      "memory_id": "MEM_079CED7E8775",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20260918_03",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20260918_03",
+        "session_id": "S-USER_004-03",
+        "created_at": "2026年09月18日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月18日20时00分",
+        "end_timestamp": "2026年09月18日22时00分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-18T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20260918_03] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_93007E118A97",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20260921_04",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20260921_04",
+        "session_id": "S-USER_004-04",
+        "created_at": "2026年09月21日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月21日20时00分",
+        "end_timestamp": "2026年09月21日22时00分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-21T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20260921_04] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_6F83000CCA4F",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20260925_05",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20260925_05",
+        "session_id": "S-USER_004-05",
+        "created_at": "2026年09月25日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月08日20时00分",
+        "end_timestamp": "2026年10月08日22时00分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-25T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20260925_05] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_6255EBB3B85C",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20260928_06",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20260928_06",
+        "session_id": "S-USER_004-06",
+        "created_at": "2026年09月28日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月08日20时00分",
+        "end_timestamp": "2026年10月08日22时00分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-28T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20260928_06] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_CC344E492557",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20261009_07",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20261009_07",
+        "session_id": "S-USER_004-07",
+        "created_at": "2026年10月09日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月09日20时00分",
+        "end_timestamp": "2026年10月09日23时00分",
+        "duration": "180min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-09T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20261009_07] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_2F3CC1DCD281",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20261012_08",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20261012_08",
+        "session_id": "S-USER_004-08",
+        "created_at": "2026年10月12日12时15分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月12日12时30分",
+        "end_timestamp": "2026年10月12日14时30分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-12T12:15:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20261012_08] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_47FF2E9D5BC4",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20261014_09",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20261014_09",
+        "session_id": "S-USER_004-09",
+        "created_at": "2026年10月14日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "720p",
+        "rtt": "30ms",
+        "start_timestamp": "2026年10月14日20时00分",
+        "end_timestamp": "2026年10月14日22时00分",
+        "duration": "120min",
+        "location": "沿海暴雨强对流前沿现场",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-14T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20261014_09] (resolution=720p)"
+    },
+    {
+      "memory_id": "MEM_CF141D010FD1",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20261016_10",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20261016_10",
+        "session_id": "S-USER_004-10",
+        "created_at": "2026年10月16日12时15分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月16日12时30分",
+        "end_timestamp": "2026年10月16日14时30分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-16T12:15:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20261016_10] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_DD69174AEE2D",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20261019_11",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20261019_11",
+        "session_id": "S-USER_004-11",
+        "created_at": "2026年10月19日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月19日20时00分",
+        "end_timestamp": "2026年10月19日22时00分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-19T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20261019_11] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_11E9815623FD",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20261021_12",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20261021_12",
+        "session_id": "S-USER_004-12",
+        "created_at": "2026年10月21日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月21日20时00分",
+        "end_timestamp": "2026年10月21日22时00分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-21T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20261021_12] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_3E9E0BFCA06B",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20261023_13",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 1.0,
+      "stability": 1.88,
+      "content": {
+        "record_id": "REC_USER_004_20261023_13",
+        "session_id": "S-USER_004-13",
+        "created_at": "2026年10月23日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月23日20时00分",
+        "end_timestamp": "2026年10月23日22时00分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "rescheduled",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-23T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20261023_13] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_446A9B621A5F",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20261026_14",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 1.0,
+      "stability": 1.88,
+      "content": {
+        "record_id": "REC_USER_004_20261026_14",
+        "session_id": "S-USER_004-14",
+        "created_at": "2026年10月26日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月26日20时00分",
+        "end_timestamp": "2026年10月26日22时00分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "rescheduled",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-26T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20261026_14] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_EFB549340CC6",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20261030_16",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20261030_16",
+        "session_id": "S-USER_004-16",
+        "created_at": "2026年10月30日19时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月30日20时00分",
+        "end_timestamp": "2026年10月30日22时00分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-30T19:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20261030_16] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_1436E3621125",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_004_20261102_17",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_004_20261102_17",
+        "session_id": "S-USER_004-17",
+        "created_at": "2026年11月02日20时00分",
+        "application_name": "腾讯会议",
+        "service_name": "会议",
+        "resolution": "1080p",
+        "rtt": "80ms",
+        "start_timestamp": "2026年11月02日20时15分",
+        "end_timestamp": "2026年11月02日21时45分",
+        "duration": "90min",
+        "location": "驻地酒店商务中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-11-02T20:00:00Z"
+      },
+      "description": "工作记录 [REC_USER_004_20261102_17] (resolution=1080p)"
+    }
+  ],
+  "elapsed_sec": 14.9,
+  "error_attribution": null
+}

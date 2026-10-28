@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<title>S-USER_001-04 样本评测详情</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --border: #dcdfe6;
+    --primary: #1f4e79;
+    --text: #1f2329;
+    --muted: #606266;
+    --ok: #1b7f37;
+    --ok-bg: #e6f4ea;
+    --fail: #b91c1c;
+    --fail-bg: #fce8e6;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 24px 32px;
+    line-height: 1.5;
+    font-size: 13.5px;
+  }
+  h1 { margin: 0 0 6px 0; font-size: 20px; color: #111827; }
+  h2 { margin: 20px 0 10px 0; font-size: 15px; color: #1f2937; border-left: 4px solid var(--primary); padding-left: 8px; }
+  .subtitle { color: var(--muted); margin-bottom: 16px; font-size: 13px; }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+  }
+  .stat-card .k { color: var(--muted); font-size: 12px; }
+  .stat-card .v { color: var(--primary); font-size: 21px; font-weight: 700; margin-top: 4px; }
+  .stat-card .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  table.tbl, table.inner-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+  }
+  table.tbl th, table.tbl td, table.inner-tbl th, table.inner-tbl td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #ebeef5;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.tbl th, table.inner-tbl th { background: #f0f3f8; color: #303133; font-weight: 600; }
+  tr.row-diff td { background: #fff1f0; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eef1f6;
+    color: #374151;
+  }
+  .badge.pass { background: var(--ok-bg); color: var(--ok); }
+  .badge.fail { background: var(--fail-bg); color: var(--fail); }
+  .tier-factual_memory { background: #e8f0fe; color: #1967d2; }
+  .tier-working_memory { background: #fef3c7; color: #92400e; }
+  .tier-experiential_memory { background: #ede9fe; color: #5b21b6; }
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .tabs, .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tab-btn, .flt-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .tab-btn.active, .flt-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  details.sess-details {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  details.sess-details summary {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none;
+    background: #ffffff;
+  }
+  details.sess-details summary:hover { background: #f8fafc; }
+  details.sess-details[open] summary { border-bottom: 1px solid var(--border); background: #f0f4f8; }
+  .sess-body { padding: 12px 16px; }
+  .diff-alert {
+    background: var(--fail-bg);
+    border: 1px solid #f5c2c7;
+    color: #842029;
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    font-size: 12.5px;
+  }
+  .turns-wrap { display: grid; gap: 10px; }
+  .turn-card {
+    background: #fafbfc;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+  .turn-hdr { font-weight: 600; font-size: 13px; margin-bottom: 6px; color: var(--primary); }
+  .utterance { padding: 5px 9px; border-radius: 4px; margin-bottom: 5px; font-size: 13px; }
+  .user-u { background: #eef4fa; }
+  .agent-u { background: #f3f4f6; color: #374151; }
+  .sub-sec { margin-top: 8px; font-size: 12.5px; }
+  .t-ok { color: var(--ok); font-weight: 600; }
+  .t-fail { color: var(--fail); font-weight: 600; }
+  .muted { color: var(--muted); }
+  code {
+    font-family: Consolas, Monaco, monospace;
+    background: #f1f3f5;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  a.ext-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 12px; margin-left: 8px; }
+  a.ext-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <div style="margin-bottom:12px;"><a href="../index.html" class="ext-link">← 返回总览报告 (index.html)</a> · <a href="S-USER_001-04.json" class="ext-link">查看原始 JSON (S-USER_001-04.json)</a></div>
+  <h1>样本 S-USER_001-04 (mobile_persona_001 / USER_001) 评测详情 <span class='badge pass'>PASS ✓</span></h1>
+  <div class="subtitle">Turn 通过数: 2 / 2 · 耗时: 7.71s</div>
+  <div style="background:#fff; border:1px solid var(--border); border-radius:6px; padding:16px;">
+    <table class='inner-tbl' style='margin-bottom:10px;'><thead><tr><th>用户 ID</th><th>记忆层级 (Tier)</th><th>会话角色 (Role)</th><th>设计类别 (Blueprint)</th><th>对话模板</th><th>场景环境 / 记忆动作</th><th>参考时间</th></tr></thead><tbody><tr><td><code>USER_001</code></td><td><span class='badge tier-working_memory'>工作记忆 (working_memory)</span></td><td><span class='badge'>跨期复用 (reuse_session)</span></td><td><b>跨期引用历史工单规格 (working_record_reuse)</b></td><td><code>T2-6</code></td><td>露天高山滑雪训练基地 · <code>retrieve_working_record_reuse</code></td><td>2026年09月21日12时15分</td></tr></tbody></table><div class='turns-wrap'><div class='turn-card'><div class='turn-hdr'>Turn 1 <span class='badge pass'>Turn PASS ✓</span></div><div class='utterance user-u'><b>用户 (User):</b> 这次去高山露天训练场，还按上周在高山露天训练场办的那个意图保障单规格来。</div><div class='utterance agent-u'><b>助手 (Agent):</b> 收到，已为您在历史意图保障单账本中找到上周在高山露天训练场的抖音开直播意图保障单（画质1080p、时延≤50ms）。请问今天具体的保障时间是几点到几点呢？</div><div class='sub-sec'><b>1) 本轮记忆检索结果 (MemorySystem.search):</b><table class='inner-tbl'><thead><tr><th style='width:160px;'>记忆子类型</th><th style='width:200px;'>节点 ID / Key</th><th style='width:70px;'>状态</th><th style='width:65px;'>得分</th><th>检索内容与槽位详情</th></tr></thead><tbody><tr><td><code>preferred_value</code><br/><span class='muted'>主线参数偏好 (preferred_value)</span></td><td><code>MEM_16AE83E5BF3A</code><br/><b>douyin | openlive</b> + 配对周期路由 <code>12:30-13:30 | douyin:openlive</code></td><td>reinforced</td><td><b>0.922</b></td><td>app=<code>抖音</code>, svc=<code>开直播</code>, res=<code>1080p</code>, rtt=<code>50ms</code>, 时段=<code>2026年09月21日12时30分 ~ 2026年09月21日13时30分 (60min)</code><br/><span class='muted'>检索方式: [向量锚点吸附: 大巴转场途中(cos=0.4648)-&gt;tencent_meeting|meeting] [指针跳: periodic_preference[12:30-13:30] -&gt; douyin|openlive; periodic_preference[douyin|openlive] -&gt; 12:30-13:30] SELECT WHERE application=douyin AND business=openlive</span></td></tr><tr><td><code>scene_preference</code><br/><span class='muted'>支线场景偏好 (scene_preference)</span></td><td><code>MEM_817F27BB8E63</code><br/><b>大巴转场途中 | tencent_meeting | meeting</b> + 配对周期路由 <code>18:45-19:45 | tencent_meeting:meeting</code></td><td>active</td><td><b>0.872</b></td><td>app=<code>腾讯会议</code>, svc=<code>会议</code>, res=<code>720p</code>, rtt=<code>100ms</code>, 时段=<code>2026年09月21日18时45分 ~ 2026年09月21日19时45分 (60min)</code><br/><span class='muted'>检索方式: [向量锚点吸附: 大巴转场途中(cos=0.4648)-&gt;tencent_meeting|meeting] [指针跳: periodic_preference[12:30-13:30] -&gt; douyin|openlive; periodic_preference[douyin|openlive] -&gt; 12:30-13:30] SELECT WHERE application=tencent_meeting AND business=meeting AND scene=大巴转场途中</span></td></tr><tr><td><code>periodic_preference</code><br/><span class='muted'>周期时间路由</span></td><td><code>MEM_E1027469D27D</code><br/><b>12:30-13:30 | douyin:openlive</b></td><td>reinforced</td><td><b>0.909</b></td><td>time_window=<code>12:30-13:30</code> → value=<code>douyin:openlive</code></td></tr><tr><td><code>periodic_preference</code><br/><span class='muted'>周期时间路由</span></td><td><code>MEM_102D64DFDFA6</code><br/><b>18:45-19:45 | tencent_meeting:meeting</b></td><td>active</td><td><b>0.832</b></td><td>time_window=<code>18:45-19:45</code> → value=<code>tencent_meeting:meeting</code></td></tr><tr><td><code>service_to_app</code><br/><span class='muted'>业务应用路由</span></td><td><code>MEM_BB18309B1CF6</code><br/><b>openlive</b></td><td>active</td><td><b>0.809</b></td><td>business=<code>openlive</code> ↔ application=<code>douyin</code></td></tr><tr><td><code>expression</code><br/><span class='muted'>个人黑话词典</span></td><td><code>MEM_2AE8965C3C4D</code><br/><b>千万别转圈</b></td><td>active</td><td><b>0.828</b></td><td>alias=「<b>千万别转圈</b>」 → target=<code>50ms</code> (作用域: <code>douyin|openlive</code>)</td></tr><tr><td><code>expression</code><br/><span class='muted'>个人黑话词典</span></td><td><code>MEM_9B2E5E1199F0</code><br/><b>保个基本画质</b></td><td>active</td><td><b>0.800</b></td><td>alias=「<b>保个基本画质</b>」 → target=<code>720p</code> (作用域: <code>tencent_meeting|meeting</code>)</td></tr><tr><td><code>working_record</code><br/><span class='muted'>工作记忆工单</span></td><td><code>MEM_0D9F7D4BFD37</code><br/><b>REC_USER_001_20260914_01</b></td><td>active</td><td><b>0.815</b></td><td>app=<code>抖音</code>, svc=<code>开直播</code>, res=<code>1080p</code>, rtt=<code>50ms</code></td></tr><tr><td><code>working_record</code><br/><span class='muted'>工作记忆工单</span></td><td><code>MEM_948B996E079B</code><br/><b>REC_USER_001_20260916_02</b></td><td>active</td><td><b>0.800</b></td><td>app=<code>腾讯会议</code>, svc=<code>会议</code>, res=<code>720p</code>, rtt=<code>100ms</code></td></tr><tr><td><code>working_record</code><br/><span class='muted'>工作记忆工单</span></td><td><code>MEM_89DE07752937</code><br/><b>REC_USER_001_20260918_03</b></td><td>active</td><td><b>0.797</b></td><td>app=<code>抖音</code>, svc=<code>开直播</code>, res=<code>1080p</code>, rtt=<code>50ms</code></td></tr></tbody></table></div><div class='sub-sec'><b>2) 本轮意图理解 GT vs 模型预测对比:</b><div style='margin-bottom:6px;'><b>意图标识: <code>抖音/开直播</code></b> <span class='badge pass'>PASS ✓ (7槽位全匹配)</span></div><table class='inner-tbl'><thead><tr><th style='width:160px;'>槽位名 (Slot)</th><th>标准真值 (GT)</th><th>模型预测 (Pred)</th><th style='width:90px;'>对比结果</th></tr></thead><tbody><tr class=''><td><code>application_name</code></td><td><code>抖音</code></td><td><code>抖音</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>service_name</code></td><td><code>开直播</code></td><td><code>开直播</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>resolution</code></td><td><code>1080p</code></td><td><code>1080p</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>rtt</code></td><td><code>50ms</code></td><td><code>50ms</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>start_timestamp</code></td><td><code>None</code></td><td><code>None</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>end_timestamp</code></td><td><code>None</code></td><td><code>None</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>duration</code></td><td><code>None</code></td><td><code>None</code></td><td><span class='t-ok'>✓</span></td></tr></tbody></table></div></div><div class='turn-card'><div class='turn-hdr'>Turn 2 <span class='badge pass'>Turn PASS ✓</span></div><div class='utterance user-u'><b>用户 (User):</b> 今天是从12时30分到13时30分，持续60min。</div><div class='utterance agent-u'><b>助手 (Agent):</b> 好的，已按您引用的历史意图保障单规格为您成功开通今日抖音开直播保障（1080p / 时延≤50ms，时段12时30分至13时30分）。祝您工作顺利！</div><div class='sub-sec'><b>1) 本轮记忆检索结果 (MemorySystem.search):</b><table class='inner-tbl'><thead><tr><th style='width:160px;'>记忆子类型</th><th style='width:200px;'>节点 ID / Key</th><th style='width:70px;'>状态</th><th style='width:65px;'>得分</th><th>检索内容与槽位详情</th></tr></thead><tbody><tr><td><code>preferred_value</code><br/><span class='muted'>主线参数偏好 (preferred_value)</span></td><td><code>MEM_16AE83E5BF3A</code><br/><b>douyin | openlive</b> + 配对周期路由 <code>12:30-13:30 | douyin:openlive</code></td><td>reinforced</td><td><b>0.887</b></td><td>app=<code>抖音</code>, svc=<code>开直播</code>, res=<code>1080p</code>, rtt=<code>50ms</code>, 时段=<code>2026年09月21日12时30分 ~ 2026年09月21日13时30分 (60min)</code><br/><span class='muted'>检索方式: [指针跳: periodic_preference[12:30-13:30] -&gt; douyin|openlive] SELECT WHERE application=douyin AND business=openlive</span></td></tr><tr><td><code>scene_preference</code><br/><span class='muted'>支线场景偏好 (scene_preference)</span></td><td><code>MEM_817F27BB8E63</code><br/><b>大巴转场途中 | tencent_meeting | meeting</b> + 配对周期路由 <code>18:45-19:45 | tencent_meeting:meeting</code></td><td>active</td><td><b>0.567</b></td><td>app=<code>腾讯会议</code>, svc=<code>会议</code>, res=<code>720p</code>, rtt=<code>100ms</code>, 时段=<code>2026年09月21日18时45分 ~ 2026年09月21日19时45分 (60min)</code><br/><span class='muted'>检索方式: 混合检索</span></td></tr><tr><td><code>periodic_preference</code><br/><span class='muted'>周期时间路由</span></td><td><code>MEM_E1027469D27D</code><br/><b>12:30-13:30 | douyin:openlive</b></td><td>reinforced</td><td><b>0.874</b></td><td>time_window=<code>12:30-13:30</code> → value=<code>douyin:openlive</code></td></tr><tr><td><code>periodic_preference</code><br/><span class='muted'>周期时间路由</span></td><td><code>MEM_102D64DFDFA6</code><br/><b>18:45-19:45 | tencent_meeting:meeting</b></td><td>active</td><td><b>0.619</b></td><td>time_window=<code>18:45-19:45</code> → value=<code>tencent_meeting:meeting</code></td></tr><tr><td><code>service_to_app</code><br/><span class='muted'>业务应用路由</span></td><td><code>MEM_BB18309B1CF6</code><br/><b>openlive</b></td><td>active</td><td><b>0.799</b></td><td>business=<code>openlive</code> ↔ application=<code>douyin</code></td></tr><tr><td><code>expression</code><br/><span class='muted'>个人黑话词典</span></td><td><code>MEM_2AE8965C3C4D</code><br/><b>千万别转圈</b></td><td>active</td><td><b>0.800</b></td><td>alias=「<b>千万别转圈</b>」 → target=<code>50ms</code> (作用域: <code>douyin|openlive</code>)</td></tr><tr><td><code>expression</code><br/><span class='muted'>个人黑话词典</span></td><td><code>MEM_9B2E5E1199F0</code><br/><b>保个基本画质</b></td><td>active</td><td><b>0.585</b></td><td>alias=「<b>保个基本画质</b>」 → target=<code>720p</code> (作用域: <code>tencent_meeting|meeting</code>)</td></tr><tr><td><code>working_record</code><br/><span class='muted'>工作记忆工单</span></td><td><code>MEM_0D9F7D4BFD37</code><br/><b>REC_USER_001_20260914_01</b></td><td>active</td><td><b>0.820</b></td><td>app=<code>抖音</code>, svc=<code>开直播</code>, res=<code>1080p</code>, rtt=<code>50ms</code></td></tr><tr><td><code>working_record</code><br/><span class='muted'>工作记忆工单</span></td><td><code>MEM_89DE07752937</code><br/><b>REC_USER_001_20260918_03</b></td><td>active</td><td><b>0.795</b></td><td>app=<code>抖音</code>, svc=<code>开直播</code>, res=<code>1080p</code>, rtt=<code>50ms</code></td></tr><tr><td><code>working_record</code><br/><span class='muted'>工作记忆工单</span></td><td><code>MEM_948B996E079B</code><br/><b>REC_USER_001_20260916_02</b></td><td>active</td><td><b>0.637</b></td><td>app=<code>腾讯会议</code>, svc=<code>会议</code>, res=<code>720p</code>, rtt=<code>100ms</code></td></tr></tbody></table></div><div class='sub-sec'><b>2) 本轮意图理解 GT vs 模型预测对比:</b><div style='margin-bottom:6px;'><b>意图标识: <code>抖音/开直播</code></b> <span class='badge pass'>PASS ✓ (7槽位全匹配)</span></div><table class='inner-tbl'><thead><tr><th style='width:160px;'>槽位名 (Slot)</th><th>标准真值 (GT)</th><th>模型预测 (Pred)</th><th style='width:90px;'>对比结果</th></tr></thead><tbody><tr class=''><td><code>application_name</code></td><td><code>抖音</code></td><td><code>抖音</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>service_name</code></td><td><code>开直播</code></td><td><code>开直播</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>resolution</code></td><td><code>1080p</code></td><td><code>1080p</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>rtt</code></td><td><code>50ms</code></td><td><code>50ms</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>start_timestamp</code></td><td><code>2026年09月21日12时30分</code></td><td><code>2026年09月21日12时30分</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>end_timestamp</code></td><td><code>2026年09月21日13时30分</code></td><td><code>2026年09月21日13时30分</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>duration</code></td><td><code>60min</code></td><td><code>60min</code></td><td><span class='t-ok'>✓</span></td></tr></tbody></table></div></div></div><div class='sub-sec' style='margin-top:10px;'><b>3) 会话结束后用户记忆库快照 (11 条节点):</b><table class='inner-tbl'><thead><tr><th style='width:140px;'>子类型</th><th style='width:180px;'>Memory Key</th><th style='width:75px;'>状态</th><th style='width:130px;'>投票/复用</th><th style='width:80px;'>保持率</th><th>节点内容 (Content)</th></tr></thead><tbody><tr><td><code>expression</code></td><td><b>保个基本画质</b></td><td>active</td><td>votes=1 (reuse=0)</td><td>R=1.0000</td><td><code>{&quot;alias&quot;: &quot;保个基本画质&quot;, &quot;source_expression&quot;: &quot;保个基本画质&quot;, &quot;target&quot;: &quot;720p&quot;, &quot;validity&quot;: &quot;long_term&quot;, &quot;note&quot;: &quot;表达映射：「保个基本画质」-&gt; 720p&quot;, &quot;application&quot;: &quot;tencent_meeting&quot;, &quot;business&quot;: &quot;meeting&quot;, &quot;scene&quot;: &quot;大巴转场途中&quot;, &quot;app_cn&quot;: &quot;腾讯会议&quot;, &quot;service_cn&quot;: &quot;会议&quot;}</code></td></tr><tr><td><code>expression</code></td><td><b>千万别转圈</b></td><td>reinforced</td><td>votes=2 (reuse=0)</td><td>R=1.0000</td><td><code>{&quot;alias&quot;: &quot;千万别转圈&quot;, &quot;source_expression&quot;: &quot;千万别转圈&quot;, &quot;target&quot;: &quot;50ms&quot;, &quot;validity&quot;: &quot;long_term&quot;, &quot;note&quot;: &quot;表达映射：「千万别转圈」-&gt; 50ms&quot;, &quot;application&quot;: &quot;douyin&quot;, &quot;business&quot;: &quot;openlive&quot;, &quot;app_cn&quot;: &quot;抖音&quot;, &quot;service_cn&quot;: &quot;开直播&quot;}</code></td></tr><tr><td><code>periodic_preference</code></td><td><b>12:30-13:30 | douyin:openlive</b></td><td>reinforced</td><td>votes=2 (reuse=1)</td><td>R=0.9686</td><td><code>{&quot;condition&quot;: &quot;12:30-13:30&quot;, &quot;value&quot;: &quot;douyin:openlive&quot;, &quot;time_window&quot;: &quot;12:30-13:30&quot;, &quot;application&quot;: &quot;douyin&quot;, &quot;business&quot;: &quot;openlive&quot;, &quot;app_cn&quot;: &quot;抖音&quot;, &quot;service_cn&quot;: &quot;开直播&quot;, &quot;validity&quot;: &quot;long_term&quot;, &quot;note&quot;: &quot;周期时间路由：12:30-13:30 -&gt; douyin (openlive)&quot;, &quot;declaration_mode&quot;: &quot;explicit&quot;}</code></td></tr><tr><td><code>periodic_preference</code></td><td><b>18:45-19:45 | tencent_meeting:meeting</b></td><td>active</td><td>votes=1 (reuse=0)</td><td>R=0.9096</td><td><code>{&quot;condition&quot;: &quot;18:45-19:45&quot;, &quot;value&quot;: &quot;tencent_meeting:meeting&quot;, &quot;time_window&quot;: &quot;18:45-19:45&quot;, &quot;application&quot;: &quot;tencent_meeting&quot;, &quot;business&quot;: &quot;meeting&quot;, &quot;app_cn&quot;: &quot;腾讯会议&quot;, &quot;service_cn&quot;: &quot;会议&quot;, &quot;validity&quot;: &quot;long_term&quot;, &quot;note&quot;: &quot;周期时间路由：18:45-19:45 -&gt; tencent_meeting (meeting)&quot;, &quot;declaration_mode&quot;: &quot;explicit&quot;}</code></td></tr><tr><td><code>preferred_value</code></td><td><b>douyin | openlive</b></td><td>reinforced</td><td>votes=2 (reuse=1)</td><td>R=0.9842</td><td><code>{&quot;application&quot;: &quot;douyin&quot;, &quot;business&quot;: &quot;openlive&quot;, &quot;app_cn&quot;: &quot;抖音&quot;, &quot;service_cn&quot;: &quot;开直播&quot;, &quot;resolution&quot;: &quot;1080p&quot;, &quot;latency&quot;: &quot;50ms&quot;, &quot;validity&quot;: &quot;long_term&quot;, &quot;note&quot;: &quot;默认参数偏好：douyin (openlive)&quot;, &quot;declaration_mode&quot;: &quot;explicit&quot;}</code></td></tr><tr><td><code>scene_preference</code></td><td><b>大巴转场途中 | tencent_meeting | meeting</b></td><td>active</td><td>votes=1 (reuse=0)</td><td>R=0.9096</td><td><code>{&quot;scene&quot;: &quot;大巴转场途中&quot;, &quot;application&quot;: &quot;tencent_meeting&quot;, &quot;business&quot;: &quot;meeting&quot;, &quot;app_cn&quot;: &quot;腾讯会议&quot;, &quot;service_cn&quot;: &quot;会议&quot;, &quot;resolution&quot;: &quot;720p&quot;, &quot;latency&quot;: &quot;100ms&quot;, &quot;validity&quot;: &quot;long_term&quot;, &quot;note&quot;: &quot;场景参数覆写：大巴转场途中 下使用 tencent_meeting (meeting)&quot;, &quot;declaration_mode&quot;: &quot;explicit&quot;}</code></td></tr><tr><td><code>service_to_app</code></td><td><b>openlive</b></td><td>active</td><td>votes=1 (reuse=0)</td><td>R=0.9704</td><td><code>{&quot;business&quot;: &quot;openlive&quot;, &quot;application&quot;: &quot;douyin&quot;, &quot;validity&quot;: &quot;long_term&quot;, &quot;note&quot;: &quot;跨会话归纳路由指针：openlive 默认使用 douyin（累计 2 次观测）&quot;}</code></td></tr><tr><td><code>working_record</code></td><td><b>REC_USER_001_20260914_01</b></td><td>reinforced</td><td>votes=2 (reuse=1)</td><td>R=1.0000</td><td><code>{&quot;record_id&quot;: &quot;REC_USER_001_20260914_01&quot;, &quot;session_id&quot;: &quot;S-USER_001-01&quot;, &quot;created_at&quot;: &quot;2026年09月14日12时15分&quot;, &quot;application_name&quot;: &quot;抖音&quot;, &quot;service_name&quot;: &quot;开直播&quot;, &quot;resolution&quot;: &quot;1080p&quot;, &quot;rtt&quot;: &quot;50ms&quot;, &quot;start_timestamp&quot;: &quot;2026年09月14日12时30分&quot;, &quot;end_timestamp&quot;: &quot;2026年09月14日13时30分&quot;, &quot;duration&quot;: &quot;60min&quot;, &quot;location&quot;: &quot;露天高山滑雪训练基地&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;temporal_reference_aliases&quot;: [&quot;上次&quot;, &quot;上周&quot;, &quot;上个月初&quot;, &quot;之前&quot;, &quot;昨天预约&quot;], &quot;event_time&quot;: &quot;2026-09-21T12:15:00Z&quot;}</code></td></tr><tr><td><code>working_record</code></td><td><b>REC_USER_001_20260916_02</b></td><td>active</td><td>votes=1 (reuse=0)</td><td>R=1.0000</td><td><code>{&quot;record_id&quot;: &quot;REC_USER_001_20260916_02&quot;, &quot;session_id&quot;: &quot;S-USER_001-02&quot;, &quot;created_at&quot;: &quot;2026年09月16日18时30分&quot;, &quot;application_name&quot;: &quot;腾讯会议&quot;, &quot;service_name&quot;: &quot;会议&quot;, &quot;resolution&quot;: &quot;720p&quot;, &quot;rtt&quot;: &quot;100ms&quot;, &quot;start_timestamp&quot;: &quot;2026年09月16日18时45分&quot;, &quot;end_timestamp&quot;: &quot;2026年09月16日19时45分&quot;, &quot;duration&quot;: &quot;60min&quot;, &quot;location&quot;: &quot;大巴跨城转场高速公路&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;temporal_reference_aliases&quot;: [&quot;上次&quot;, &quot;上周&quot;, &quot;上个月初&quot;, &quot;之前&quot;, &quot;昨天预约&quot;], &quot;event_time&quot;: &quot;2026-09-16T18:30:00Z&quot;}</code></td></tr><tr><td><code>working_record</code></td><td><b>REC_USER_001_20260918_03</b></td><td>active</td><td>votes=1 (reuse=0)</td><td>R=1.0000</td><td><code>{&quot;record_id&quot;: &quot;REC_USER_001_20260918_03&quot;, &quot;session_id&quot;: &quot;S-USER_001-03&quot;, &quot;created_at&quot;: &quot;2026年09月18日12时15分&quot;, &quot;application_name&quot;: &quot;抖音&quot;, &quot;service_name&quot;: &quot;开直播&quot;, &quot;resolution&quot;: &quot;1080p&quot;, &quot;rtt&quot;: &quot;50ms&quot;, &quot;start_timestamp&quot;: &quot;2026年09月18日12时30分&quot;, &quot;end_timestamp&quot;: &quot;2026年09月18日13时30分&quot;, &quot;duration&quot;: &quot;60min&quot;, &quot;location&quot;: &quot;露天高山滑雪训练基地&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;temporal_reference_aliases&quot;: [&quot;上次&quot;, &quot;上周&quot;, &quot;上个月初&quot;, &quot;之前&quot;, &quot;昨天预约&quot;], &quot;event_time&quot;: &quot;2026-09-18T12:15:00Z&quot;}</code></td></tr><tr><td><code>working_record</code></td><td><b>REC_USER_001_20260921_04</b></td><td>active</td><td>votes=1 (reuse=0)</td><td>R=1.0000</td><td><code>{&quot;record_id&quot;: &quot;REC_USER_001_20260921_04&quot;, &quot;session_id&quot;: &quot;S-USER_001-04&quot;, &quot;created_at&quot;: &quot;2026年09月21日12时15分&quot;, &quot;application_name&quot;: &quot;抖音&quot;, &quot;service_name&quot;: &quot;开直播&quot;, &quot;resolution&quot;: &quot;1080p&quot;, &quot;rtt&quot;: &quot;50ms&quot;, &quot;start_timestamp&quot;: &quot;2026年09月21日12时30分&quot;, &quot;end_timestamp&quot;: &quot;2026年09月21日13时30分&quot;, &quot;duration&quot;: &quot;60min&quot;, &quot;location&quot;: &quot;露天高山滑雪训练基地&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;temporal_reference_aliases&quot;: [&quot;上次&quot;, &quot;上周&quot;, &quot;上个月初&quot;, &quot;之前&quot;, &quot;昨天预约&quot;], &quot;event_time&quot;: &quot;2026-09-21T12:15:00Z&quot;}</code></td></tr></tbody></table></div>
+  </div>
+</body>
+</html>

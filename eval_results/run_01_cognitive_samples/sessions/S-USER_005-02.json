@@ -1,0 +1,804 @@
+{
+  "session_id": "S-USER_005-02",
+  "reference_time": "2026年09月16日18时30分",
+  "memory_tier": "factual_memory",
+  "template_id": "T3-1",
+  "memory_role": "evidence_session",
+  "blueprint_type": "sub_01",
+  "environment": "大巴跨城转场高速公路",
+  "memory_action": "disambiguate_sub_storyline_1",
+  "session_pass": true,
+  "session_gt": {
+    "微信/视频通话": {
+      "application_name": "微信",
+      "service_name": "视频通话",
+      "resolution": "720p",
+      "rtt": "100ms",
+      "start_timestamp": "2026年09月16日18时45分",
+      "end_timestamp": "2026年09月16日19时45分",
+      "duration": "60min"
+    }
+  },
+  "session_pred": {
+    "微信/视频通话": {
+      "application_name": "微信",
+      "service_name": "视频通话",
+      "resolution": "720p",
+      "rtt": "100ms",
+      "start_timestamp": "2026年09月16日18时45分",
+      "end_timestamp": "2026年09月16日19时45分",
+      "duration": "60min"
+    }
+  },
+  "session_diffs": "ok_session",
+  "turn_ok_count": 3,
+  "turn_total_count": 3,
+  "turns": [
+    {
+      "turn": 1,
+      "user_utterance": "在大巴转场途中网络不太稳，帮我给微信视频通话开个保障，时间从今天18时45分开始。",
+      "agent_utterance": "收到，已确认是微信视频通话保障。请问画质、时延和持续时长有什么具体要求？",
+      "memory_trace": {
+        "turn": 1,
+        "query": "在大巴转场途中网络不太稳，帮我给微信视频通话开个保障，时间从今天18时45分开始。",
+        "reference_time": "2026年09月16日18时30分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 5,
+        "major_hits": [
+          {
+            "memory_id": "MEM_3B3F80BED8B0",
+            "subtype": "scene_preference",
+            "memory_key": "影视传媒数字创作基地 | douyin | openlive",
+            "paired_periodic_key": "08:30-10:30 | douyin:openlive",
+            "status": "reinforced",
+            "score": 0.661105,
+            "resolved_slots": {
+              "application_name": "抖音",
+              "service_name": "开直播",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "08:30-10:30",
+              "scene": "影视传媒数字创作基地",
+              "start_timestamp": "2026年09月16日08时30分",
+              "end_timestamp": "2026年09月16日10时30分",
+              "duration": "120min"
+            },
+            "structured_match": ""
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_BD852332E9F0",
+            "subtype": "periodic_preference",
+            "memory_key": "08:30-10:30 | douyin:openlive",
+            "status": "active",
+            "score": 0.662948,
+            "time_window": "08:30-10:30",
+            "value": "douyin:openlive"
+          }
+        ],
+        "service_hits": [
+          {
+            "memory_id": "MEM_1119687D4A93",
+            "subtype": "service_to_app",
+            "memory_key": "openlive",
+            "status": "active",
+            "score": 0.619338,
+            "business": "openlive",
+            "application": "douyin"
+          }
+        ],
+        "expression_hits": [
+          {
+            "memory_id": "MEM_C1AAB3BB3814",
+            "memory_key": "别掉链子",
+            "alias": "别掉链子",
+            "target": "50ms",
+            "application": "douyin",
+            "business": "openlive",
+            "scene": "影视传媒数字创作基地",
+            "score": 0.607729
+          }
+        ],
+        "working_hits": [
+          {
+            "memory_id": "MEM_678702896265",
+            "memory_key": "REC_USER_005_20260914_01",
+            "record_id": "REC_USER_005_20260914_01",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.655203
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "抖音",
+          "service_name": "开直播",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "08:30-10:30",
+          "scene": "影视传媒数字创作基地",
+          "start_timestamp": "2026年09月16日08时30分",
+          "end_timestamp": "2026年09月16日10时30分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户请求新建微信视频通话保障，时间从今天18时45分开始。无其他参数指定，prev_state为空且非指代历史，故仅赋值应用、服务及起始时间。\n# 身份判定: 与已有意图无关, 新建\n# intent: new\nstate.application_name = \"微信\"\nstate.service_name = \"视频通话\"\nstate.timestamp = find_timestamp(start=\"2026年09月16日18时45分\")",
+      "preds": {
+        "微信/视频通话": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "resolution": null,
+          "rtt": null,
+          "start_timestamp": "2026年09月16日18时45分",
+          "end_timestamp": null,
+          "duration": null
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 1,
+          "intent_key": "微信/视频通话",
+          "gt": {
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": null,
+            "rtt": null,
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": null,
+            "duration": null
+          },
+          "pred": {
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": null,
+            "rtt": null,
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": null,
+            "duration": null
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户请求新建微信视频通话保障，时间从今天18时45分开始。无其他参数指定，prev_state为空且非指代历史，故仅赋值应用、服务及起始时间。\n# 身份判定: 与已有意图无关, 新建\n# intent: new\nstate.application_name = \"微信\"\nstate.service_name = \"视频通话\"\nstate.timestamp = find_timestamp(start=\"2026年09月16日18时45分\")"
+        }
+      ],
+      "turn_pass": true
+    },
+    {
+      "turn": 2,
+      "user_utterance": "清晰度按‘一般清楚就行’开，时延控制在100ms以内，预计持续60min。",
+      "agent_utterance": "确认一下，您说的‘一般清楚就行’具体指哪个画质档位？以后也按这个理解吗？",
+      "memory_trace": {
+        "turn": 2,
+        "query": "清晰度按‘一般清楚就行’开，时延控制在100ms以内，预计持续60min。",
+        "reference_time": "2026年09月16日18时30分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 5,
+        "major_hits": [
+          {
+            "memory_id": "MEM_3B3F80BED8B0",
+            "subtype": "scene_preference",
+            "memory_key": "影视传媒数字创作基地 | douyin | openlive",
+            "paired_periodic_key": "08:30-10:30 | douyin:openlive",
+            "status": "reinforced",
+            "score": 0.884536,
+            "resolved_slots": {
+              "application_name": "抖音",
+              "service_name": "开直播",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "08:30-10:30",
+              "scene": "影视传媒数字创作基地",
+              "start_timestamp": "2026年09月16日08时30分",
+              "end_timestamp": "2026年09月16日10时30分",
+              "duration": "120min"
+            },
+            "structured_match": "[向量锚点吸附: 影视传媒数字创作基地(cos=0.5196)->douyin|openlive] SELECT WHERE application=douyin AND business=openlive AND scene=影视传媒数字创作基地"
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_BD852332E9F0",
+            "subtype": "periodic_preference",
+            "memory_key": "08:30-10:30 | douyin:openlive",
+            "status": "active",
+            "score": 0.843361,
+            "time_window": "08:30-10:30",
+            "value": "douyin:openlive"
+          }
+        ],
+        "service_hits": [
+          {
+            "memory_id": "MEM_1119687D4A93",
+            "subtype": "service_to_app",
+            "memory_key": "openlive",
+            "status": "active",
+            "score": 0.800459,
+            "business": "openlive",
+            "application": "douyin"
+          }
+        ],
+        "expression_hits": [
+          {
+            "memory_id": "MEM_C1AAB3BB3814",
+            "memory_key": "别掉链子",
+            "alias": "别掉链子",
+            "target": "50ms",
+            "application": "douyin",
+            "business": "openlive",
+            "scene": "影视传媒数字创作基地",
+            "score": 0.795255
+          }
+        ],
+        "working_hits": [
+          {
+            "memory_id": "MEM_678702896265",
+            "memory_key": "REC_USER_005_20260914_01",
+            "record_id": "REC_USER_005_20260914_01",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.795127
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "抖音",
+          "service_name": "开直播",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "08:30-10:30",
+          "scene": "影视传媒数字创作基地",
+          "start_timestamp": "2026年09月16日08时30分",
+          "end_timestamp": "2026年09月16日10时30分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户补充微信视频通话的时延和时长，但“一般清楚”为未知黑话，按规则本轮不赋值 resolution。\n# 身份判定: 更新已有意图 I1(微信/视频通话)\n# intent: I1\nstate.rtt = '100ms'\nstate.timestamp = find_timestamp(duration='60min')",
+      "preds": {
+        "微信/视频通话": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "resolution": null,
+          "rtt": "100ms",
+          "start_timestamp": "2026年09月16日18时45分",
+          "end_timestamp": "2026年09月16日19时45分",
+          "duration": "60min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 2,
+          "intent_key": "微信/视频通话",
+          "gt": {
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": null,
+            "rtt": "100ms",
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": "2026年09月16日19时45分",
+            "duration": "60min"
+          },
+          "pred": {
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": null,
+            "rtt": "100ms",
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": "2026年09月16日19时45分",
+            "duration": "60min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户补充微信视频通话的时延和时长，但“一般清楚”为未知黑话，按规则本轮不赋值 resolution。\n# 身份判定: 更新已有意图 I1(微信/视频通话)\n# intent: I1\nstate.rtt = '100ms'\nstate.timestamp = find_timestamp(duration='60min')"
+        }
+      ],
+      "turn_pass": true
+    },
+    {
+      "turn": 3,
+      "user_utterance": "对，就是画质档位720p，往后都照这个标准记，开通吧。",
+      "agent_utterance": "好的，已按您刚确认的含义记录，并为您开通微信视频通话保障（720p / 时延≤100ms）。祝您使用愉快！",
+      "memory_trace": {
+        "turn": 3,
+        "query": "对，就是画质档位720p，往后都照这个标准记，开通吧。",
+        "reference_time": "2026年09月16日18时30分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 5,
+        "major_hits": [
+          {
+            "memory_id": "MEM_3B3F80BED8B0",
+            "subtype": "scene_preference",
+            "memory_key": "影视传媒数字创作基地 | douyin | openlive",
+            "paired_periodic_key": "08:30-10:30 | douyin:openlive",
+            "status": "reinforced",
+            "score": 0.889536,
+            "resolved_slots": {
+              "application_name": "抖音",
+              "service_name": "开直播",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "08:30-10:30",
+              "scene": "影视传媒数字创作基地",
+              "start_timestamp": "2026年09月16日08时30分",
+              "end_timestamp": "2026年09月16日10时30分",
+              "duration": "120min"
+            },
+            "structured_match": "[向量锚点吸附: 别掉链子(cos=0.4365)->50ms] SELECT WHERE application=douyin AND business=openlive AND scene=影视传媒数字创作基地"
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_BD852332E9F0",
+            "subtype": "periodic_preference",
+            "memory_key": "08:30-10:30 | douyin:openlive",
+            "status": "active",
+            "score": 0.848361,
+            "time_window": "08:30-10:30",
+            "value": "douyin:openlive"
+          }
+        ],
+        "service_hits": [
+          {
+            "memory_id": "MEM_1119687D4A93",
+            "subtype": "service_to_app",
+            "memory_key": "openlive",
+            "status": "active",
+            "score": 0.805459,
+            "business": "openlive",
+            "application": "douyin"
+          }
+        ],
+        "expression_hits": [
+          {
+            "memory_id": "MEM_C1AAB3BB3814",
+            "memory_key": "别掉链子",
+            "alias": "别掉链子",
+            "target": "50ms",
+            "application": "douyin",
+            "business": "openlive",
+            "scene": "影视传媒数字创作基地",
+            "score": 0.840255
+          }
+        ],
+        "working_hits": [
+          {
+            "memory_id": "MEM_678702896265",
+            "memory_key": "REC_USER_005_20260914_01",
+            "record_id": "REC_USER_005_20260914_01",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.800127
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "抖音",
+          "service_name": "开直播",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "08:30-10:30",
+          "scene": "影视传媒数字创作基地",
+          "start_timestamp": "2026年09月16日08时30分",
+          "end_timestamp": "2026年09月16日10时30分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户确认画质为720p并授权开通，同时要求将720p设为微信视频通话的默认标准。针对当前意图I1(微信/视频通话)，需更新resolution字段为'720p'。\n# 身份判定: 更新已有意图 I1(微信/视频通话)\n# intent: I1\nstate.resolution = '720p'",
+      "preds": {
+        "微信/视频通话": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "resolution": "720p",
+          "rtt": "100ms",
+          "start_timestamp": "2026年09月16日18时45分",
+          "end_timestamp": "2026年09月16日19时45分",
+          "duration": "60min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 3,
+          "intent_key": "微信/视频通话",
+          "gt": {
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "720p",
+            "rtt": "100ms",
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": "2026年09月16日19时45分",
+            "duration": "60min"
+          },
+          "pred": {
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "720p",
+            "rtt": "100ms",
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": "2026年09月16日19时45分",
+            "duration": "60min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户确认画质为720p并授权开通，同时要求将720p设为微信视频通话的默认标准。针对当前意图I1(微信/视频通话)，需更新resolution字段为'720p'。\n# 身份判定: 更新已有意图 I1(微信/视频通话)\n# intent: I1\nstate.resolution = '720p'"
+        }
+      ],
+      "turn_pass": true
+    }
+  ],
+  "extracted_events": [
+    {
+      "event_id": "EVT_331EB9FD1295",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "scene_preference",
+      "memory_key_fields": {
+        "scene": "大巴转场途中",
+        "application": "wechat",
+        "business": "video_call"
+      },
+      "content": {
+        "scene": "大巴转场途中",
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "resolution": "720p",
+        "latency": "100ms",
+        "validity": "long_term",
+        "note": "场景参数覆写：大巴转场途中 下使用 wechat (video_call)",
+        "declaration_mode": "explicit"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_005-02",
+      "evidence_turns": [
+        1,
+        2,
+        3
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-09-16T18:30:00Z",
+      "owner_type": "user",
+      "user_id": "USER_005",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_865E369C4BB8",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "periodic_preference",
+      "memory_key_fields": {
+        "condition": "18:45-19:45",
+        "value": "wechat:video_call"
+      },
+      "content": {
+        "condition": "18:45-19:45",
+        "value": "wechat:video_call",
+        "time_window": "18:45-19:45",
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "validity": "long_term",
+        "note": "周期时间路由：18:45-19:45 -> wechat (video_call)",
+        "declaration_mode": "explicit"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_005-02",
+      "evidence_turns": [
+        1,
+        2,
+        3
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-09-16T18:30:00Z",
+      "owner_type": "user",
+      "user_id": "USER_005",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_F460C05F35EB",
+      "event_type": "EXPRESSION_ALIAS",
+      "subtype": "expression",
+      "memory_key_fields": {
+        "alias": "一般清楚就行"
+      },
+      "content": {
+        "alias": "一般清楚就行",
+        "source_expression": "一般清楚就行",
+        "target": "720p",
+        "validity": "long_term",
+        "note": "表达映射：「一般清楚就行」-> 720p",
+        "application": "wechat",
+        "business": "video_call",
+        "scene": "大巴转场途中",
+        "app_cn": "微信",
+        "service_cn": "视频通话"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_005-02",
+      "evidence_turns": [
+        3
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-09-16T18:30:00Z",
+      "owner_type": "user",
+      "user_id": "USER_005",
+      "agent_id": "",
+      "tenant_id": "default"
+    }
+  ],
+  "ebbinghaus_decay": {
+    "expired_candidates": [],
+    "degraded_reinforced": []
+  },
+  "memory_snapshot": [
+    {
+      "memory_id": "MEM_5EB9AC0D8CF0",
+      "subtype": "expression",
+      "memory_key": "一般清楚就行",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "alias": "一般清楚就行",
+        "source_expression": "一般清楚就行",
+        "target": "720p",
+        "validity": "long_term",
+        "note": "表达映射：「一般清楚就行」-> 720p",
+        "application": "wechat",
+        "business": "video_call",
+        "scene": "大巴转场途中",
+        "app_cn": "微信",
+        "service_cn": "视频通话"
+      },
+      "description": "个性化表达映射：「一般清楚就行」表示 720p (target=720p) - 表达映射：「一般清楚就行」-> 720p"
+    },
+    {
+      "memory_id": "MEM_C1AAB3BB3814",
+      "subtype": "expression",
+      "memory_key": "别掉链子",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "alias": "别掉链子",
+        "source_expression": "别掉链子",
+        "target": "50ms",
+        "validity": "long_term",
+        "note": "表达映射：「别掉链子」-> 50ms",
+        "application": "douyin",
+        "business": "openlive",
+        "scene": "影视传媒数字创作基地",
+        "app_cn": "抖音",
+        "service_cn": "开直播"
+      },
+      "description": "个性化表达映射：「别掉链子」表示 50ms (target=50ms) - 表达映射：「别掉链子」-> 50ms"
+    },
+    {
+      "memory_id": "MEM_BD852332E9F0",
+      "subtype": "periodic_preference",
+      "memory_key": "08:30-10:30 | douyin:openlive",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 0,
+      "retention": 0.9693,
+      "stability": 1.55,
+      "content": {
+        "condition": "08:30-10:30",
+        "value": "douyin:openlive",
+        "time_window": "08:30-10:30",
+        "application": "douyin",
+        "business": "openlive",
+        "app_cn": "抖音",
+        "service_cn": "开直播",
+        "validity": "long_term",
+        "note": "周期时间路由：08:30-10:30 -> douyin (openlive)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：08:30-10:30 -> douyin:openlive (time_window=08:30-10:30, value=douyin:openlive) - 周期时间路由：08:30-10:30 -> douyin (openlive)"
+    },
+    {
+      "memory_id": "MEM_7B51FA36FF8B",
+      "subtype": "periodic_preference",
+      "memory_key": "18:45-19:45 | wechat:video_call",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "condition": "18:45-19:45",
+        "value": "wechat:video_call",
+        "time_window": "18:45-19:45",
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "validity": "long_term",
+        "note": "周期时间路由：18:45-19:45 -> wechat (video_call)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：18:45-19:45 -> wechat:video_call (time_window=18:45-19:45, value=wechat:video_call) - 周期时间路由：18:45-19:45 -> wechat (video_call)"
+    },
+    {
+      "memory_id": "MEM_3F694321E712",
+      "subtype": "scene_preference",
+      "memory_key": "大巴转场途中 | wechat | video_call",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "scene": "大巴转场途中",
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "resolution": "720p",
+        "latency": "100ms",
+        "validity": "long_term",
+        "note": "场景参数覆写：大巴转场途中 下使用 wechat (video_call)",
+        "declaration_mode": "explicit"
+      },
+      "description": "场景偏好：大巴转场途中 下使用 wechat (video_call) (resolution=720p, latency=100ms) - 场景参数覆写：大巴转场途中 下使用 wechat (video_call)"
+    },
+    {
+      "memory_id": "MEM_3B3F80BED8B0",
+      "subtype": "scene_preference",
+      "memory_key": "影视传媒数字创作基地 | douyin | openlive",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 0.9745,
+      "stability": 1.88,
+      "content": {
+        "scene": "影视传媒数字创作基地",
+        "application": "douyin",
+        "business": "openlive",
+        "resolution": "1080p",
+        "latency": "50ms",
+        "app_cn": "抖音",
+        "service_cn": "开直播",
+        "validity": "long_term",
+        "declaration_mode": "explicit",
+        "note": "场景参数覆写：影视传媒数字创作基地 下使用 douyin (openlive)"
+      },
+      "description": "场景偏好：影视传媒数字创作基地 下使用 douyin (openlive) (resolution=1080p, latency=50ms) - 场景参数覆写：影视传媒数字创作基地 下使用 douyin (openlive)"
+    },
+    {
+      "memory_id": "MEM_1119687D4A93",
+      "subtype": "service_to_app",
+      "memory_key": "openlive",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.976,
+      "stability": 1.0,
+      "content": {
+        "business": "openlive",
+        "application": "douyin",
+        "validity": "long_term",
+        "note": "跨会话归纳路由指针：openlive 默认使用 douyin（累计 2 次观测）"
+      },
+      "description": "业务默认应用：openlive 默认使用 douyin - 跨会话归纳路由指针：openlive 默认使用 douyin（累计 2 次观测）"
+    },
+    {
+      "memory_id": "MEM_678702896265",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_005_20260914_01",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_005_20260914_01",
+        "session_id": "S-USER_005-01",
+        "created_at": "2026年09月14日08时15分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月14日08时30分",
+        "end_timestamp": "2026年09月14日10时30分",
+        "duration": "120min",
+        "location": "影视传媒数字创作基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-14T08:15:00Z"
+      },
+      "description": "工作记录 [REC_USER_005_20260914_01] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_B78F526930B5",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_005_20260916_02",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_005_20260916_02",
+        "session_id": "S-USER_005-02",
+        "created_at": "2026年09月16日18时30分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "720p",
+        "rtt": "100ms",
+        "start_timestamp": "2026年09月16日18时45分",
+        "end_timestamp": "2026年09月16日19时45分",
+        "duration": "60min",
+        "location": "大巴跨城转场高速公路",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-16T18:30:00Z"
+      },
+      "description": "工作记录 [REC_USER_005_20260916_02] (resolution=720p)"
+    }
+  ],
+  "elapsed_sec": 12.85,
+  "error_attribution": null
+}

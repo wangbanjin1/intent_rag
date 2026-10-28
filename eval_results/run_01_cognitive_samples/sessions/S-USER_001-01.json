@@ -1,0 +1,449 @@
+{
+  "session_id": "S-USER_001-01",
+  "reference_time": "2026年09月14日12时15分",
+  "memory_tier": "factual_memory",
+  "template_id": "T2-1",
+  "memory_role": "evidence_session",
+  "blueprint_type": "main",
+  "environment": "露天高山滑雪训练基地",
+  "memory_action": "declare_explicit_rule",
+  "session_pass": true,
+  "session_gt": {
+    "抖音/开直播": {
+      "application_name": "抖音",
+      "service_name": "开直播",
+      "resolution": "1080p",
+      "rtt": "50ms",
+      "start_timestamp": "2026年09月14日12时30分",
+      "end_timestamp": "2026年09月14日13时30分",
+      "duration": "60min"
+    }
+  },
+  "session_pred": {
+    "抖音/开直播": {
+      "application_name": "抖音",
+      "service_name": "开直播",
+      "resolution": "1080p",
+      "rtt": "50ms",
+      "start_timestamp": "2026年09月14日12时30分",
+      "end_timestamp": "2026年09月14日13时30分",
+      "duration": "60min"
+    }
+  },
+  "session_diffs": "ok_session",
+  "turn_ok_count": 3,
+  "turn_total_count": 3,
+  "turns": [
+    {
+      "turn": 1,
+      "user_utterance": "你好，需要给抖音开直播做一个网络保障，时间是今天12时30分开始。",
+      "agent_utterance": "收到，已为您锁定抖音开直播保障，时间从12时30分开始。请问您需要保障的清晰度、时延上限和预计持续时长分别是多少呢？",
+      "memory_trace": {
+        "turn": 1,
+        "query": "你好，需要给抖音开直播做一个网络保障，时间是今天12时30分开始。",
+        "reference_time": "2026年09月14日12时15分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 0,
+        "major_hits": [],
+        "periodic_hits": [],
+        "service_hits": [],
+        "expression_hits": [],
+        "working_hits": [],
+        "experience_hits": [],
+        "selected_best_major": null
+      },
+      "llm_raw": "# summary: 用户新建抖音开直播保障，仅给出开始时间今天12时30分，无结束/时长/画质/时延要求。\n# 身份判定: 无已有意图, 新建\n# intent: new\nstate.application_name = \"抖音\"\nstate.service_name = \"开直播\"\nstate.timestamp = find_timestamp(start=\"2026年09月14日12时30分\")",
+      "preds": {
+        "抖音/开直播": {
+          "application_name": "抖音",
+          "service_name": "开直播",
+          "resolution": null,
+          "rtt": null,
+          "start_timestamp": "2026年09月14日12时30分",
+          "end_timestamp": null,
+          "duration": null
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 1,
+          "intent_key": "抖音/开直播",
+          "gt": {
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": null,
+            "rtt": null,
+            "start_timestamp": "2026年09月14日12时30分",
+            "end_timestamp": null,
+            "duration": null
+          },
+          "pred": {
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": null,
+            "rtt": null,
+            "start_timestamp": "2026年09月14日12时30分",
+            "end_timestamp": null,
+            "duration": null
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户新建抖音开直播保障，仅给出开始时间今天12时30分，无结束/时长/画质/时延要求。\n# 身份判定: 无已有意图, 新建\n# intent: new\nstate.application_name = \"抖音\"\nstate.service_name = \"开直播\"\nstate.timestamp = find_timestamp(start=\"2026年09月14日12时30分\")"
+        }
+      ],
+      "turn_pass": true
+    },
+    {
+      "turn": 2,
+      "user_utterance": "好的，画质用1080p，时延50ms以内，预计持续一个钟头（到13时30分）。我说‘千万别转圈’，就是时延控制在50ms以内。以后我只要每天这个时段说'老规矩'，就按这个来：抖音开直播、1080p、50ms以内，记住这个习惯哈，别掉链子。",
+      "agent_utterance": "收到，已为您登记老规矩习惯。确认按1080p、50ms以内立即为您开通本次保障吗？",
+      "memory_trace": {
+        "turn": 2,
+        "query": "好的，画质用1080p，时延50ms以内，预计持续一个钟头（到13时30分）。我说‘千万别转圈’，就是时延控制在50ms以内。以后我只要每天这个时段说'老规矩'，就按这个来：抖音开直播、1080p、50ms以内，记住这个习惯哈，别掉链子。",
+        "reference_time": "2026年09月14日12时15分",
+        "has_memory_trigger": true,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 0,
+        "major_hits": [],
+        "periodic_hits": [],
+        "service_hits": [],
+        "expression_hits": [],
+        "working_hits": [],
+        "experience_hits": [],
+        "selected_best_major": null
+      },
+      "llm_raw": "# summary: 用户补充抖音开直播的画质1080p、时延50ms，并明确时间从12:30开始持续60分钟至13:30。后半句“以后...老规矩”属于长期偏好设定，非本次即时保障请求参数变更，故仅更新当前意图I1。\n# 身份判定: 更新已有意图 I1(抖音/开直播)\n# intent: I1\nstate.resolution = '1080p'\nstate.rtt = '50ms'\nstate.timestamp = find_timestamp(start='2026年09月14日12时30分', end='2026年09月14日13时30分', duration='60min')",
+      "preds": {
+        "抖音/开直播": {
+          "application_name": "抖音",
+          "service_name": "开直播",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "start_timestamp": "2026年09月14日12时30分",
+          "end_timestamp": "2026年09月14日13时30分",
+          "duration": "60min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 2,
+          "intent_key": "抖音/开直播",
+          "gt": {
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "start_timestamp": "2026年09月14日12时30分",
+            "end_timestamp": "2026年09月14日13时30分",
+            "duration": "60min"
+          },
+          "pred": {
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "start_timestamp": "2026年09月14日12时30分",
+            "end_timestamp": "2026年09月14日13时30分",
+            "duration": "60min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户补充抖音开直播的画质1080p、时延50ms，并明确时间从12:30开始持续60分钟至13:30。后半句“以后...老规矩”属于长期偏好设定，非本次即时保障请求参数变更，故仅更新当前意图I1。\n# 身份判定: 更新已有意图 I1(抖音/开直播)\n# intent: I1\nstate.resolution = '1080p'\nstate.rtt = '50ms'\nstate.timestamp = find_timestamp(start='2026年09月14日12时30分', end='2026年09月14日13时30分', duration='60min')"
+        }
+      ],
+      "turn_pass": true
+    },
+    {
+      "turn": 3,
+      "user_utterance": "对，确认直接开通。",
+      "agent_utterance": "好的，已为您成功受理本次保障，并已为您将该配置记录为长期老规矩，祝您使用愉快！",
+      "memory_trace": {
+        "turn": 3,
+        "query": "对，确认直接开通。",
+        "reference_time": "2026年09月14日12时15分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 0,
+        "major_hits": [],
+        "periodic_hits": [],
+        "service_hits": [],
+        "expression_hits": [],
+        "working_hits": [],
+        "experience_hits": [],
+        "selected_best_major": null
+      },
+      "llm_raw": "# summary: 用户确认开通，无字段变更\n# 身份判定: 更新已有意图 I1(抖音/开直播)\n# intent: I1",
+      "preds": {
+        "抖音/开直播": {
+          "application_name": "抖音",
+          "service_name": "开直播",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "start_timestamp": "2026年09月14日12时30分",
+          "end_timestamp": "2026年09月14日13时30分",
+          "duration": "60min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 3,
+          "intent_key": "抖音/开直播",
+          "gt": {
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "start_timestamp": "2026年09月14日12时30分",
+            "end_timestamp": "2026年09月14日13时30分",
+            "duration": "60min"
+          },
+          "pred": {
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "start_timestamp": "2026年09月14日12时30分",
+            "end_timestamp": "2026年09月14日13时30分",
+            "duration": "60min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户确认开通，无字段变更\n# 身份判定: 更新已有意图 I1(抖音/开直播)\n# intent: I1"
+        }
+      ],
+      "turn_pass": true
+    }
+  ],
+  "extracted_events": [
+    {
+      "event_id": "EVT_9F2FE7E24798",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "preferred_value",
+      "memory_key_fields": {
+        "application": "douyin",
+        "business": "openlive"
+      },
+      "content": {
+        "application": "douyin",
+        "business": "openlive",
+        "app_cn": "抖音",
+        "service_cn": "开直播",
+        "resolution": "1080p",
+        "latency": "50ms",
+        "validity": "long_term",
+        "note": "默认参数偏好：douyin (openlive)",
+        "declaration_mode": "explicit"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_001-01",
+      "evidence_turns": [
+        1,
+        2
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-09-14T12:15:00Z",
+      "owner_type": "user",
+      "user_id": "USER_001",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_8345B4A5494E",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "periodic_preference",
+      "memory_key_fields": {
+        "condition": "12:30-13:30",
+        "value": "douyin:openlive"
+      },
+      "content": {
+        "condition": "12:30-13:30",
+        "value": "douyin:openlive",
+        "time_window": "12:30-13:30",
+        "application": "douyin",
+        "business": "openlive",
+        "app_cn": "抖音",
+        "service_cn": "开直播",
+        "validity": "long_term",
+        "note": "周期时间路由：12:30-13:30 -> douyin (openlive)",
+        "declaration_mode": "explicit"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_001-01",
+      "evidence_turns": [
+        1,
+        2
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-09-14T12:15:00Z",
+      "owner_type": "user",
+      "user_id": "USER_001",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_2BD835216B24",
+      "event_type": "EXPRESSION_ALIAS",
+      "subtype": "expression",
+      "memory_key_fields": {
+        "alias": "千万别转圈"
+      },
+      "content": {
+        "alias": "千万别转圈",
+        "source_expression": "千万别转圈",
+        "target": "50ms",
+        "validity": "long_term",
+        "note": "表达映射：「千万别转圈」-> 50ms",
+        "application": "douyin",
+        "business": "openlive",
+        "app_cn": "抖音",
+        "service_cn": "开直播"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_001-01",
+      "evidence_turns": [
+        2
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-09-14T12:15:00Z",
+      "owner_type": "user",
+      "user_id": "USER_001",
+      "agent_id": "",
+      "tenant_id": "default"
+    }
+  ],
+  "ebbinghaus_decay": {
+    "expired_candidates": [],
+    "degraded_reinforced": []
+  },
+  "memory_snapshot": [
+    {
+      "memory_id": "MEM_2AE8965C3C4D",
+      "subtype": "expression",
+      "memory_key": "千万别转圈",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "alias": "千万别转圈",
+        "source_expression": "千万别转圈",
+        "target": "50ms",
+        "validity": "long_term",
+        "note": "表达映射：「千万别转圈」-> 50ms",
+        "application": "douyin",
+        "business": "openlive",
+        "app_cn": "抖音",
+        "service_cn": "开直播"
+      },
+      "description": "个性化表达映射：「千万别转圈」表示 50ms (target=50ms) - 表达映射：「千万别转圈」-> 50ms"
+    },
+    {
+      "memory_id": "MEM_E1027469D27D",
+      "subtype": "periodic_preference",
+      "memory_key": "12:30-13:30 | douyin:openlive",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "condition": "12:30-13:30",
+        "value": "douyin:openlive",
+        "time_window": "12:30-13:30",
+        "application": "douyin",
+        "business": "openlive",
+        "app_cn": "抖音",
+        "service_cn": "开直播",
+        "validity": "long_term",
+        "note": "周期时间路由：12:30-13:30 -> douyin (openlive)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：12:30-13:30 -> douyin:openlive (time_window=12:30-13:30, value=douyin:openlive) - 周期时间路由：12:30-13:30 -> douyin (openlive)"
+    },
+    {
+      "memory_id": "MEM_16AE83E5BF3A",
+      "subtype": "preferred_value",
+      "memory_key": "douyin | openlive",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "application": "douyin",
+        "business": "openlive",
+        "app_cn": "抖音",
+        "service_cn": "开直播",
+        "resolution": "1080p",
+        "latency": "50ms",
+        "validity": "long_term",
+        "note": "默认参数偏好：douyin (openlive)",
+        "declaration_mode": "explicit"
+      },
+      "description": "用户在 douyin (openlive) 下的默认首选参数 (resolution=1080p, latency=50ms) - 默认参数偏好：douyin (openlive)"
+    },
+    {
+      "memory_id": "MEM_0D9F7D4BFD37",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_001_20260914_01",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_001_20260914_01",
+        "session_id": "S-USER_001-01",
+        "created_at": "2026年09月14日12时15分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月14日12时30分",
+        "end_timestamp": "2026年09月14日13时30分",
+        "duration": "60min",
+        "location": "露天高山滑雪训练基地",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-14T12:15:00Z"
+      },
+      "description": "工作记录 [REC_USER_001_20260914_01] (resolution=1080p)"
+    }
+  ],
+  "elapsed_sec": 14.54,
+  "error_attribution": null
+}

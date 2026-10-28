@@ -1,0 +1,695 @@
+{
+  "session_id": "S-USER_002-02",
+  "reference_time": "2026年09月16日18时30分",
+  "memory_tier": "factual_memory",
+  "template_id": "T3-1",
+  "memory_role": "evidence_session",
+  "blueprint_type": "sub_01",
+  "environment": "大巴跨城转场高速公路",
+  "memory_action": "disambiguate_sub_storyline_1",
+  "session_pass": true,
+  "session_gt": {
+    "腾讯会议/会议": {
+      "application_name": "腾讯会议",
+      "service_name": "会议",
+      "resolution": "720p",
+      "rtt": "100ms",
+      "start_timestamp": "2026年09月16日18时45分",
+      "end_timestamp": "2026年09月16日19时45分",
+      "duration": "60min"
+    }
+  },
+  "session_pred": {
+    "腾讯会议/会议": {
+      "application_name": "腾讯会议",
+      "service_name": "会议",
+      "resolution": "720p",
+      "rtt": "100ms",
+      "start_timestamp": "2026年09月16日18时45分",
+      "end_timestamp": "2026年09月16日19时45分",
+      "duration": "60min"
+    }
+  },
+  "session_diffs": "ok_session",
+  "turn_ok_count": 3,
+  "turn_total_count": 3,
+  "turns": [
+    {
+      "turn": 1,
+      "user_utterance": "在大巴转场途中网络不太稳，帮我给腾讯会议会议开个保障，时间从今天18时45分开始。",
+      "agent_utterance": "收到，已确认是腾讯会议会议保障。请问画质、时延和持续时长有什么具体要求？",
+      "memory_trace": {
+        "turn": 1,
+        "query": "在大巴转场途中网络不太稳，帮我给腾讯会议会议开个保障，时间从今天18时45分开始。",
+        "reference_time": "2026年09月16日18时30分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 3,
+        "major_hits": [
+          {
+            "memory_id": "MEM_29647B2E12DB",
+            "subtype": "preferred_value",
+            "memory_key": "wechat | video_call",
+            "paired_periodic_key": "15:00-17:00 | wechat:video_call",
+            "status": "candidate",
+            "score": 0.608857,
+            "resolved_slots": {
+              "application_name": "微信",
+              "service_name": "视频通话",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "15:00-17:00",
+              "scene": "",
+              "start_timestamp": "2026年09月16日15时00分",
+              "end_timestamp": "2026年09月16日17时00分",
+              "duration": "120min"
+            },
+            "structured_match": ""
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_AC7EE501EAE5",
+            "subtype": "periodic_preference",
+            "memory_key": "15:00-17:00 | wechat:video_call",
+            "status": "candidate",
+            "score": 0.66123,
+            "time_window": "15:00-17:00",
+            "value": "wechat:video_call"
+          }
+        ],
+        "service_hits": [],
+        "expression_hits": [],
+        "working_hits": [
+          {
+            "memory_id": "MEM_EC00A5E92822",
+            "memory_key": "REC_USER_002_20260914_01",
+            "record_id": "REC_USER_002_20260914_01",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.678019
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "15:00-17:00",
+          "scene": "",
+          "start_timestamp": "2026年09月16日15时00分",
+          "end_timestamp": "2026年09月16日17时00分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户新建腾讯会议保障，指定应用为腾讯会议，服务为会议，开始时间为今天18时45分。未提及分辨率、时延及结束时间/时长，故仅赋值 application_name, service_name, start_timestamp。\n# 身份判定: 无已有意图，新建\n# intent: new\nstate.application_name = \"腾讯会议\"\nstate.service_name = \"会议\"\nstate.timestamp = find_timestamp(start=\"2026年09月16日18时45分\")",
+      "preds": {
+        "腾讯会议/会议": {
+          "application_name": "腾讯会议",
+          "service_name": "会议",
+          "resolution": null,
+          "rtt": null,
+          "start_timestamp": "2026年09月16日18时45分",
+          "end_timestamp": null,
+          "duration": null
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 1,
+          "intent_key": "腾讯会议/会议",
+          "gt": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": null,
+            "rtt": null,
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": null,
+            "duration": null
+          },
+          "pred": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": null,
+            "rtt": null,
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": null,
+            "duration": null
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户新建腾讯会议保障，指定应用为腾讯会议，服务为会议，开始时间为今天18时45分。未提及分辨率、时延及结束时间/时长，故仅赋值 application_name, service_name, start_timestamp。\n# 身份判定: 无已有意图，新建\n# intent: new\nstate.application_name = \"腾讯会议\"\nstate.service_name = \"会议\"\nstate.timestamp = find_timestamp(start=\"2026年09月16日18时45分\")"
+        }
+      ],
+      "turn_pass": true
+    },
+    {
+      "turn": 2,
+      "user_utterance": "画质只要‘能认清人脸’，时延控制在100ms以内，预计持续60min。",
+      "agent_utterance": "请教一下，您提到的‘能认清人脸’具体对应哪档画质档位？以后也帮您按这个记吗？",
+      "memory_trace": {
+        "turn": 2,
+        "query": "画质只要‘能认清人脸’，时延控制在100ms以内，预计持续60min。",
+        "reference_time": "2026年09月16日18时30分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 3,
+        "major_hits": [
+          {
+            "memory_id": "MEM_29647B2E12DB",
+            "subtype": "preferred_value",
+            "memory_key": "wechat | video_call",
+            "paired_periodic_key": "15:00-17:00 | wechat:video_call",
+            "status": "candidate",
+            "score": 0.59828,
+            "resolved_slots": {
+              "application_name": "微信",
+              "service_name": "视频通话",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "15:00-17:00",
+              "scene": "",
+              "start_timestamp": "2026年09月16日15时00分",
+              "end_timestamp": "2026年09月16日17时00分",
+              "duration": "120min"
+            },
+            "structured_match": ""
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_AC7EE501EAE5",
+            "subtype": "periodic_preference",
+            "memory_key": "15:00-17:00 | wechat:video_call",
+            "status": "candidate",
+            "score": 0.612496,
+            "time_window": "15:00-17:00",
+            "value": "wechat:video_call"
+          }
+        ],
+        "service_hits": [],
+        "expression_hits": [],
+        "working_hits": [
+          {
+            "memory_id": "MEM_EC00A5E92822",
+            "memory_key": "REC_USER_002_20260914_01",
+            "record_id": "REC_USER_002_20260914_01",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.622714
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "15:00-17:00",
+          "scene": "",
+          "start_timestamp": "2026年09月16日15时00分",
+          "end_timestamp": "2026年09月16日17时00分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户补充腾讯会议/会议的画质、时延和时长。关键约束：'能认清人脸'为未登记黑话，严禁赋值 resolution；rtt=100ms, duration=60min 正常赋值。\n# 身份判定: 更新已有意图 I1(腾讯会议/会议)\n# intent: I1\nstate.rtt = '100ms'\nstate.duration = '60min'",
+      "preds": {
+        "腾讯会议/会议": {
+          "application_name": "腾讯会议",
+          "service_name": "会议",
+          "resolution": null,
+          "rtt": "100ms",
+          "start_timestamp": "2026年09月16日18时45分",
+          "end_timestamp": "2026年09月16日19时45分",
+          "duration": "60min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 2,
+          "intent_key": "腾讯会议/会议",
+          "gt": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": null,
+            "rtt": "100ms",
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": "2026年09月16日19时45分",
+            "duration": "60min"
+          },
+          "pred": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": null,
+            "rtt": "100ms",
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": "2026年09月16日19时45分",
+            "duration": "60min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户补充腾讯会议/会议的画质、时延和时长。关键约束：'能认清人脸'为未登记黑话，严禁赋值 resolution；rtt=100ms, duration=60min 正常赋值。\n# 身份判定: 更新已有意图 I1(腾讯会议/会议)\n# intent: I1\nstate.rtt = '100ms'\nstate.duration = '60min'"
+        }
+      ],
+      "turn_pass": true
+    },
+    {
+      "turn": 3,
+      "user_utterance": "对，就是画质档位720p，往后都照这个标准记，开通吧。",
+      "agent_utterance": "好的，已按您刚确认的含义记录，并为您开通腾讯会议会议保障（720p / 时延≤100ms）。祝您使用愉快！",
+      "memory_trace": {
+        "turn": 3,
+        "query": "对，就是画质档位720p，往后都照这个标准记，开通吧。",
+        "reference_time": "2026年09月16日18时30分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": false,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 3,
+        "major_hits": [
+          {
+            "memory_id": "MEM_29647B2E12DB",
+            "subtype": "preferred_value",
+            "memory_key": "wechat | video_call",
+            "paired_periodic_key": "15:00-17:00 | wechat:video_call",
+            "status": "candidate",
+            "score": 0.622317,
+            "resolved_slots": {
+              "application_name": "微信",
+              "service_name": "视频通话",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "15:00-17:00",
+              "scene": "",
+              "start_timestamp": "2026年09月16日15时00分",
+              "end_timestamp": "2026年09月16日17时00分",
+              "duration": "120min"
+            },
+            "structured_match": ""
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_AC7EE501EAE5",
+            "subtype": "periodic_preference",
+            "memory_key": "15:00-17:00 | wechat:video_call",
+            "status": "candidate",
+            "score": 0.599273,
+            "time_window": "15:00-17:00",
+            "value": "wechat:video_call"
+          }
+        ],
+        "service_hits": [],
+        "expression_hits": [],
+        "working_hits": [
+          {
+            "memory_id": "MEM_EC00A5E92822",
+            "memory_key": "REC_USER_002_20260914_01",
+            "record_id": "REC_USER_002_20260914_01",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.616407
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "15:00-17:00",
+          "scene": "",
+          "start_timestamp": "2026年09月16日15时00分",
+          "end_timestamp": "2026年09月16日17时00分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户确认画质为720p并要求记录偏好，同时执行开通操作。针对已有意图I1(腾讯会议/会议)，更新resolution字段为720p。\n# 身份判定: 更新已有意图 I1(腾讯会议/会议)\n# intent: I1\nstate.resolution = '720p'",
+      "preds": {
+        "腾讯会议/会议": {
+          "application_name": "腾讯会议",
+          "service_name": "会议",
+          "resolution": "720p",
+          "rtt": "100ms",
+          "start_timestamp": "2026年09月16日18时45分",
+          "end_timestamp": "2026年09月16日19时45分",
+          "duration": "60min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 3,
+          "intent_key": "腾讯会议/会议",
+          "gt": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "720p",
+            "rtt": "100ms",
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": "2026年09月16日19时45分",
+            "duration": "60min"
+          },
+          "pred": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "720p",
+            "rtt": "100ms",
+            "start_timestamp": "2026年09月16日18时45分",
+            "end_timestamp": "2026年09月16日19时45分",
+            "duration": "60min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户确认画质为720p并要求记录偏好，同时执行开通操作。针对已有意图I1(腾讯会议/会议)，更新resolution字段为720p。\n# 身份判定: 更新已有意图 I1(腾讯会议/会议)\n# intent: I1\nstate.resolution = '720p'"
+        }
+      ],
+      "turn_pass": true
+    }
+  ],
+  "extracted_events": [
+    {
+      "event_id": "EVT_D47C829A287F",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "scene_preference",
+      "memory_key_fields": {
+        "scene": "大巴转场途中",
+        "application": "tencent_meeting",
+        "business": "meeting"
+      },
+      "content": {
+        "scene": "大巴转场途中",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "resolution": "720p",
+        "latency": "100ms",
+        "validity": "long_term",
+        "note": "场景参数覆写：大巴转场途中 下使用 tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_002-02",
+      "evidence_turns": [
+        1,
+        2,
+        3
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-09-16T18:30:00Z",
+      "owner_type": "user",
+      "user_id": "USER_002",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_CE50A99A54C4",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "periodic_preference",
+      "memory_key_fields": {
+        "condition": "18:45-19:45",
+        "value": "tencent_meeting:meeting"
+      },
+      "content": {
+        "condition": "18:45-19:45",
+        "value": "tencent_meeting:meeting",
+        "time_window": "18:45-19:45",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "validity": "long_term",
+        "note": "周期时间路由：18:45-19:45 -> tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_002-02",
+      "evidence_turns": [
+        1,
+        2,
+        3
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-09-16T18:30:00Z",
+      "owner_type": "user",
+      "user_id": "USER_002",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_1B64C6157F67",
+      "event_type": "EXPRESSION_ALIAS",
+      "subtype": "expression",
+      "memory_key_fields": {
+        "alias": "能认清人脸"
+      },
+      "content": {
+        "alias": "能认清人脸",
+        "target": "720p",
+        "note": "表达映射：「能认清人脸」-> 720p",
+        "validity": "long_term",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "scene": "大巴转场途中",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议"
+      },
+      "validity": "long_term",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_002-02",
+      "evidence_turns": [
+        2,
+        3
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-09-16T18:30:00Z",
+      "owner_type": "user",
+      "user_id": "USER_002",
+      "agent_id": "",
+      "tenant_id": "default"
+    }
+  ],
+  "ebbinghaus_decay": {
+    "expired_candidates": [],
+    "degraded_reinforced": []
+  },
+  "memory_snapshot": [
+    {
+      "memory_id": "MEM_3D60C852A754",
+      "subtype": "expression",
+      "memory_key": "能认清人脸",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "alias": "能认清人脸",
+        "target": "720p",
+        "note": "表达映射：「能认清人脸」-> 720p",
+        "validity": "long_term",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "scene": "大巴转场途中",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议"
+      },
+      "description": "个性化表达映射：「能认清人脸」表示 720p (target=720p) - 表达映射：「能认清人脸」-> 720p"
+    },
+    {
+      "memory_id": "MEM_AC7EE501EAE5",
+      "subtype": "periodic_preference",
+      "memory_key": "15:00-17:00 | wechat:video_call",
+      "status": "candidate",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.9578,
+      "stability": 1.0,
+      "content": {
+        "condition": "15:00-17:00",
+        "value": "wechat:video_call",
+        "time_window": "15:00-17:00",
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "validity": "long_term",
+        "note": "周期时间路由：15:00-17:00 -> wechat (video_call)",
+        "declaration_mode": "implicit"
+      },
+      "description": "周期/条件偏好：15:00-17:00 -> wechat:video_call (time_window=15:00-17:00, value=wechat:video_call) - 周期时间路由：15:00-17:00 -> wechat (video_call)"
+    },
+    {
+      "memory_id": "MEM_BCB6FB0FEC97",
+      "subtype": "periodic_preference",
+      "memory_key": "18:45-19:45 | tencent_meeting:meeting",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "condition": "18:45-19:45",
+        "value": "tencent_meeting:meeting",
+        "time_window": "18:45-19:45",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "validity": "long_term",
+        "note": "周期时间路由：18:45-19:45 -> tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：18:45-19:45 -> tencent_meeting:meeting (time_window=18:45-19:45, value=tencent_meeting:meeting) - 周期时间路由：18:45-19:45 -> tencent_meeting (meeting)"
+    },
+    {
+      "memory_id": "MEM_29647B2E12DB",
+      "subtype": "preferred_value",
+      "memory_key": "wechat | video_call",
+      "status": "candidate",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.9787,
+      "stability": 1.0,
+      "content": {
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "resolution": "1080p",
+        "latency": "50ms",
+        "validity": "long_term",
+        "note": "默认参数偏好：wechat (video_call)",
+        "declaration_mode": "implicit"
+      },
+      "description": "用户在 wechat (video_call) 下的默认首选参数 (resolution=1080p, latency=50ms) - 默认参数偏好：wechat (video_call)"
+    },
+    {
+      "memory_id": "MEM_DF063AB70742",
+      "subtype": "scene_preference",
+      "memory_key": "大巴转场途中 | tencent_meeting | meeting",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "scene": "大巴转场途中",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "resolution": "720p",
+        "latency": "100ms",
+        "validity": "long_term",
+        "note": "场景参数覆写：大巴转场途中 下使用 tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "description": "场景偏好：大巴转场途中 下使用 tencent_meeting (meeting) (resolution=720p, latency=100ms) - 场景参数覆写：大巴转场途中 下使用 tencent_meeting (meeting)"
+    },
+    {
+      "memory_id": "MEM_EC00A5E92822",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_002_20260914_01",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_002_20260914_01",
+        "session_id": "S-USER_002-01",
+        "created_at": "2026年09月14日14时45分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月14日15时00分",
+        "end_timestamp": "2026年09月14日17时00分",
+        "duration": "120min",
+        "location": "金融街财富管理中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-14T14:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_002_20260914_01] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_DC3580B42C59",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_002_20260916_02",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_002_20260916_02",
+        "session_id": "S-USER_002-02",
+        "created_at": "2026年09月16日18时30分",
+        "application_name": "腾讯会议",
+        "service_name": "会议",
+        "resolution": "720p",
+        "rtt": "100ms",
+        "start_timestamp": "2026年09月16日18时45分",
+        "end_timestamp": "2026年09月16日19时45分",
+        "duration": "60min",
+        "location": "大巴跨城转场高速公路",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-16T18:30:00Z"
+      },
+      "description": "工作记录 [REC_USER_002_20260916_02] (resolution=720p)"
+    }
+  ],
+  "elapsed_sec": 12.11,
+  "error_attribution": null
+}

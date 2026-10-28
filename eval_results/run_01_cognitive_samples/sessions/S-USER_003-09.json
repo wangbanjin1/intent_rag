@@ -1,0 +1,1059 @@
+{
+  "session_id": "S-USER_003-09",
+  "reference_time": "2026年10月14日13时45分",
+  "memory_tier": "factual_memory",
+  "template_id": "T2-3",
+  "memory_role": "correction_session",
+  "blueprint_type": "event_override",
+  "environment": "沿海暴雨强对流前沿现场",
+  "memory_action": "override_temporary_preference",
+  "session_pass": true,
+  "session_gt": {
+    "腾讯会议/会议": {
+      "application_name": "腾讯会议",
+      "service_name": "会议",
+      "resolution": "720p",
+      "rtt": "30ms",
+      "start_timestamp": "2026年10月14日14时00分",
+      "end_timestamp": "2026年10月14日16时00分",
+      "duration": "120min"
+    }
+  },
+  "session_pred": {
+    "腾讯会议/会议": {
+      "application_name": "腾讯会议",
+      "service_name": "会议",
+      "resolution": "720p",
+      "rtt": "30ms",
+      "start_timestamp": "2026年10月14日14时00分",
+      "end_timestamp": "2026年10月14日16时00分",
+      "duration": "120min"
+    }
+  },
+  "session_diffs": "ok_session",
+  "turn_ok_count": 2,
+  "turn_total_count": 2,
+  "turns": [
+    {
+      "turn": 1,
+      "user_utterance": "今天在沿海巡逻岸线，老规矩，用腾讯会议做会议，帮我把保障开上。",
+      "agent_utterance": "收到，我调取到之前登记的腾讯会议会议配置：画质1080p、时延50ms以内，14时00分至16时00分（持续120min），确认按这套配置开通吗？",
+      "memory_trace": {
+        "turn": 1,
+        "query": "今天在沿海巡逻岸线，老规矩，用腾讯会议做会议，帮我把保障开上。",
+        "reference_time": "2026年10月14日13时45分",
+        "has_memory_trigger": true,
+        "session_memory_triggered": true,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 10,
+        "major_hits": [
+          {
+            "memory_id": "MEM_E5D3E6E57CEE",
+            "subtype": "scene_preference",
+            "memory_key": "市青年公益服务中心 | tencent_meeting | meeting",
+            "paired_periodic_key": "14:00-16:00 | tencent_meeting:meeting",
+            "status": "reinforced",
+            "score": 0.900421,
+            "resolved_slots": {
+              "application_name": "腾讯会议",
+              "service_name": "会议",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "14:00-16:00",
+              "scene": "市青年公益服务中心",
+              "start_timestamp": "2026年10月14日14时00分",
+              "end_timestamp": "2026年10月14日16时00分",
+              "duration": "120min"
+            },
+            "structured_match": "[向量锚点吸附: 市青年公益服务中心(cos=0.5363)->tencent_meeting|meeting, 顺滑一点(cos=0.4229)->50ms] [指针跳: periodic_preference[14:00-16:00] -> tencent_meeting|meeting; periodic_preference[tencent_meeting|meeting] -> 14:00-16:00] SELECT WHERE application=tencent_meeting AND business=meeting AND scene=市青年公益服务中心"
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_3C02C9CDCB2B",
+            "subtype": "periodic_preference",
+            "memory_key": "14:00-16:00 | tencent_meeting:meeting",
+            "status": "reinforced",
+            "score": 0.890457,
+            "time_window": "14:00-16:00",
+            "value": "tencent_meeting:meeting"
+          }
+        ],
+        "service_hits": [],
+        "expression_hits": [
+          {
+            "memory_id": "MEM_CAF36B1B7F8E",
+            "memory_key": "顺滑一点",
+            "alias": "顺滑一点",
+            "target": "50ms",
+            "application": "tencent_meeting",
+            "business": "meeting",
+            "scene": "市青年公益服务中心",
+            "score": 0.879875
+          }
+        ],
+        "working_hits": [
+          {
+            "memory_id": "MEM_05B0A7F0677D",
+            "memory_key": "REC_USER_003_20260914_01",
+            "record_id": "REC_USER_003_20260914_01",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.835697
+          },
+          {
+            "memory_id": "MEM_E63F169DFA56",
+            "memory_key": "REC_USER_003_20260918_03",
+            "record_id": "REC_USER_003_20260918_03",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.830193
+          },
+          {
+            "memory_id": "MEM_8F83BBBA8D38",
+            "memory_key": "REC_USER_003_20260921_04",
+            "record_id": "REC_USER_003_20260921_04",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.82526
+          },
+          {
+            "memory_id": "MEM_FCB2330A8E4D",
+            "memory_key": "REC_USER_003_20260925_05",
+            "record_id": "REC_USER_003_20260925_05",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.810387
+          },
+          {
+            "memory_id": "MEM_8E0E76BAF62D",
+            "memory_key": "REC_USER_003_20260928_06",
+            "record_id": "REC_USER_003_20260928_06",
+            "application_name": "抖音",
+            "service_name": "开直播",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.800523
+          },
+          {
+            "memory_id": "MEM_F73A2E1CA868",
+            "memory_key": "REC_USER_003_20261012_08",
+            "record_id": "REC_USER_003_20261012_08",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.798203
+          },
+          {
+            "memory_id": "MEM_5BABB2403316",
+            "memory_key": "REC_USER_003_20261009_07",
+            "record_id": "REC_USER_003_20261009_07",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.796549
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "腾讯会议",
+          "service_name": "会议",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "14:00-16:00",
+          "scene": "市青年公益服务中心",
+          "start_timestamp": "2026年10月14日14时00分",
+          "end_timestamp": "2026年10月14日16时00分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户触发“老规矩”长期记忆指代，命中唯一 scene_preference (市青年公益服务中心|tencent_meeting|meeting)。根据 MEMORY FILL RULE，需填入全部7个槽位。虽然话语提到“沿海巡逻岸线”，但记忆系统已锁定场景为“市青年公益服务中心”且规则要求严格遵循记忆值补齐，故 application/service/resolution/rtt/timestamp 均取自记忆。\n# 身份判定: 无已有意图, 新建\n# intent: new\nstate.application_name = '腾讯会议'\nstate.service_name = '会议'\nstate.resolution = '1080p'\nstate.rtt = '50ms'\nstate.timestamp = find_timestamp(start='2026年10月14日14时00分', end='2026年10月14日16时00分', duration='120min')",
+      "preds": {
+        "腾讯会议/会议": {
+          "application_name": "腾讯会议",
+          "service_name": "会议",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "start_timestamp": "2026年10月14日14时00分",
+          "end_timestamp": "2026年10月14日16时00分",
+          "duration": "120min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 1,
+          "intent_key": "腾讯会议/会议",
+          "gt": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "start_timestamp": "2026年10月14日14时00分",
+            "end_timestamp": "2026年10月14日16时00分",
+            "duration": "120min"
+          },
+          "pred": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "start_timestamp": "2026年10月14日14时00分",
+            "end_timestamp": "2026年10月14日16时00分",
+            "duration": "120min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户触发“老规矩”长期记忆指代，命中唯一 scene_preference (市青年公益服务中心|tencent_meeting|meeting)。根据 MEMORY FILL RULE，需填入全部7个槽位。虽然话语提到“沿海巡逻岸线”，但记忆系统已锁定场景为“市青年公益服务中心”且规则要求严格遵循记忆值补齐，故 application/service/resolution/rtt/timestamp 均取自记忆。\n# 身份判定: 无已有意图, 新建\n# intent: new\nstate.application_name = '腾讯会议'\nstate.service_name = '会议'\nstate.resolution = '1080p'\nstate.rtt = '50ms'\nstate.timestamp = find_timestamp(start='2026年10月14日14时00分', end='2026年10月14日16时00分', duration='120min')"
+        }
+      ],
+      "turn_pass": true
+    },
+    {
+      "turn": 2,
+      "user_utterance": "对，不过今天现场特殊，画质临时调到720p，时延压到30ms以内，今天临时按这个来。",
+      "agent_utterance": "好的，已按现场特殊情况为您临时调整开通腾讯会议会议保障：画质720p、时延上限30ms，时段14时00分至16时00分。祝您现场顺利！",
+      "memory_trace": {
+        "turn": 2,
+        "query": "对，不过今天现场特殊，画质临时调到720p，时延压到30ms以内，今天临时按这个来。",
+        "reference_time": "2026年10月14日13时45分",
+        "has_memory_trigger": false,
+        "session_memory_triggered": true,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 10,
+        "major_hits": [
+          {
+            "memory_id": "MEM_E5D3E6E57CEE",
+            "subtype": "scene_preference",
+            "memory_key": "市青年公益服务中心 | tencent_meeting | meeting",
+            "paired_periodic_key": "14:00-16:00 | tencent_meeting:meeting",
+            "status": "reinforced",
+            "score": 0.905421,
+            "resolved_slots": {
+              "application_name": "腾讯会议",
+              "service_name": "会议",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "14:00-16:00",
+              "scene": "市青年公益服务中心",
+              "start_timestamp": "2026年10月14日14时00分",
+              "end_timestamp": "2026年10月14日16时00分",
+              "duration": "120min"
+            },
+            "structured_match": "[向量锚点吸附: 市青年公益服务中心(cos=0.4687)->tencent_meeting|meeting, 顺滑一点(cos=0.4553)->50ms, 糊弄不过去就行(cos=0.5822)->720p] [指针跳: periodic_preference[14:00-16:00] -> tencent_meeting|meeting; periodic_preference[tencent_meeting|meeting] -> 14:00-16:00] SELECT WHERE application=tencent_meeting AND business=meeting AND scene=市青年公益服务中心"
+          },
+          {
+            "memory_id": "MEM_6B741BFE145C",
+            "subtype": "scene_preference",
+            "memory_key": "大巴转场途中 | wechat | video_call",
+            "paired_periodic_key": "18:45-19:45 | wechat:video_call",
+            "status": "active",
+            "score": 0.825018,
+            "resolved_slots": {
+              "application_name": "微信",
+              "service_name": "视频通话",
+              "resolution": "720p",
+              "rtt": "100ms",
+              "time_window": "18:45-19:45",
+              "scene": "大巴转场途中",
+              "start_timestamp": "2026年10月14日18时45分",
+              "end_timestamp": "2026年10月14日19时45分",
+              "duration": "60min"
+            },
+            "structured_match": "[向量锚点吸附: 市青年公益服务中心(cos=0.4687)->tencent_meeting|meeting, 顺滑一点(cos=0.4553)->50ms, 糊弄不过去就行(cos=0.5822)->720p] [指针跳: periodic_preference[14:00-16:00] -> tencent_meeting|meeting; periodic_preference[tencent_meeting|meeting] -> 14:00-16:00] SELECT WHERE application=wechat AND business=video_call AND scene=大巴转场途中"
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_3C02C9CDCB2B",
+            "subtype": "periodic_preference",
+            "memory_key": "14:00-16:00 | tencent_meeting:meeting",
+            "status": "reinforced",
+            "score": 0.895457,
+            "time_window": "14:00-16:00",
+            "value": "tencent_meeting:meeting"
+          }
+        ],
+        "service_hits": [],
+        "expression_hits": [
+          {
+            "memory_id": "MEM_CAF36B1B7F8E",
+            "memory_key": "顺滑一点",
+            "alias": "顺滑一点",
+            "target": "50ms",
+            "application": "tencent_meeting",
+            "business": "meeting",
+            "scene": "市青年公益服务中心",
+            "score": 0.884875
+          },
+          {
+            "memory_id": "MEM_2EC95F1804F4",
+            "memory_key": "糊弄不过去就行",
+            "alias": "糊弄不过去就行",
+            "target": "720p",
+            "application": "wechat",
+            "business": "video_call",
+            "scene": "大巴转场途中",
+            "score": 0.870323
+          }
+        ],
+        "working_hits": [
+          {
+            "memory_id": "MEM_05B0A7F0677D",
+            "memory_key": "REC_USER_003_20260914_01",
+            "record_id": "REC_USER_003_20260914_01",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.840697
+          },
+          {
+            "memory_id": "MEM_A4EC8F02CA5D",
+            "memory_key": "REC_USER_003_20260916_02",
+            "record_id": "REC_USER_003_20260916_02",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "720p",
+            "rtt": "100ms",
+            "score": 0.84016
+          },
+          {
+            "memory_id": "MEM_E63F169DFA56",
+            "memory_key": "REC_USER_003_20260918_03",
+            "record_id": "REC_USER_003_20260918_03",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.835193
+          },
+          {
+            "memory_id": "MEM_8F83BBBA8D38",
+            "memory_key": "REC_USER_003_20260921_04",
+            "record_id": "REC_USER_003_20260921_04",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.83026
+          },
+          {
+            "memory_id": "MEM_FCB2330A8E4D",
+            "memory_key": "REC_USER_003_20260925_05",
+            "record_id": "REC_USER_003_20260925_05",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.815387
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "腾讯会议",
+          "service_name": "会议",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "14:00-16:00",
+          "scene": "市青年公益服务中心",
+          "start_timestamp": "2026年10月14日14时00分",
+          "end_timestamp": "2026年10月14日16时00分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户确认腾讯会议/会议保障，但要求临时修改画质为720p、时延为30ms。其他参数（时间等）沿用上一轮状态。\n# intent: I1\nstate.resolution = \"720p\"\nstate.rtt = \"30ms\"",
+      "preds": {
+        "腾讯会议/会议": {
+          "application_name": "腾讯会议",
+          "service_name": "会议",
+          "resolution": "720p",
+          "rtt": "30ms",
+          "start_timestamp": "2026年10月14日14时00分",
+          "end_timestamp": "2026年10月14日16时00分",
+          "duration": "120min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 2,
+          "intent_key": "腾讯会议/会议",
+          "gt": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "720p",
+            "rtt": "30ms",
+            "start_timestamp": "2026年10月14日14时00分",
+            "end_timestamp": "2026年10月14日16时00分",
+            "duration": "120min"
+          },
+          "pred": {
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "720p",
+            "rtt": "30ms",
+            "start_timestamp": "2026年10月14日14时00分",
+            "end_timestamp": "2026年10月14日16时00分",
+            "duration": "120min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户确认腾讯会议/会议保障，但要求临时修改画质为720p、时延为30ms。其他参数（时间等）沿用上一轮状态。\n# intent: I1\nstate.resolution = \"720p\"\nstate.rtt = \"30ms\""
+        }
+      ],
+      "turn_pass": true
+    }
+  ],
+  "extracted_events": [
+    {
+      "event_id": "EVT_D68FA1556AC6",
+      "event_type": "PREFERENCE_CONFIRM",
+      "subtype": "scene_preference",
+      "memory_key_fields": {
+        "scene": "市青年公益服务中心",
+        "application": "tencent_meeting",
+        "business": "meeting"
+      },
+      "content": {
+        "scene": "市青年公益服务中心",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "resolution": "1080p",
+        "latency": "50ms",
+        "validity": "temporary",
+        "note": "场景参数覆写：市青年公益服务中心 下使用 tencent_meeting (meeting)"
+      },
+      "validity": "temporary",
+      "confidence": 0.95,
+      "source_session_id": "S-USER_003-09",
+      "evidence_turns": [
+        1
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-10-14T13:45:00Z",
+      "owner_type": "user",
+      "user_id": "USER_003",
+      "agent_id": "",
+      "tenant_id": "default"
+    },
+    {
+      "event_id": "EVT_3BCD554B7A2F",
+      "event_type": "PREFERENCE_SET",
+      "subtype": "scene_preference",
+      "memory_key_fields": {
+        "scene": "市青年公益服务中心",
+        "application": "tencent_meeting",
+        "business": "meeting"
+      },
+      "content": {
+        "scene": "市青年公益服务中心",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "resolution": "720p",
+        "latency": "30ms",
+        "validity": "temporary",
+        "note": "场景参数覆写：市青年公益服务中心 下使用 tencent_meeting (meeting)"
+      },
+      "validity": "temporary",
+      "confidence": 0.98,
+      "source_session_id": "S-USER_003-09",
+      "evidence_turns": [
+        2
+      ],
+      "target_slots": [],
+      "is_concession": false,
+      "event_time": "2026-10-14T13:45:00Z",
+      "owner_type": "user",
+      "user_id": "USER_003",
+      "agent_id": "",
+      "tenant_id": "default"
+    }
+  ],
+  "ebbinghaus_decay": {
+    "expired_candidates": [],
+    "degraded_reinforced": []
+  },
+  "memory_snapshot": [
+    {
+      "memory_id": "MEM_B0CFAA0C3138",
+      "subtype": "environment",
+      "memory_key": "市青年公益服务中心 | tencent_meeting | meeting",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.2231,
+      "stability": 1.0,
+      "content": {
+        "environment": "市青年公益服务中心",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "resolution": "1080p",
+        "latency": "50ms",
+        "note": "当用户处于【市青年公益服务中心】环境时，腾讯会议业务自动应用1080p、50ms以内的长期偏好设置",
+        "time_window": "14:00-16:00",
+        "declaration_mode": "explicit",
+        "validity": "long_term"
+      },
+      "description": "环境偏好：在 市青年公益服务中心 环境下使用 tencent_meeting (meeting) 的策略 (resolution=1080p, latency=50ms, time_window=14:00-16:00) - 当用户处于【市青年公益服务中心】环境时，腾讯会议业务自动应用1080p、50ms以内的长期偏好设置"
+    },
+    {
+      "memory_id": "MEM_DCA51E8E668C",
+      "subtype": "experience",
+      "memory_key": "EXP_OVERLAPPING_ORDER_RESOLUTION_01 | intent_disambiguation",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "experience_id": "EXP_OVERLAPPING_ORDER_RESOLUTION_01",
+        "domain": "intent_disambiguation",
+        "strategy_type": "guest_cohost_service_selection",
+        "title": "受邀进他人直播间当连麦嘉宾（需按开直播保上行而非看直播）业务选择经验",
+        "condition": "用户说明受邀进入主会场/他人直播间当连麦嘉宾互动（字面含‘进直播间’，但角色为上麦发言的连麦嘉宾）",
+        "action": "识别连麦嘉宾上麦发言需实时上传音视频流，不能按普通观众【看直播】受理，主动将 service_name 设为【开直播】",
+        "trigger_conditions": {
+          "location_keywords": [
+            "社区",
+            "走访点",
+            "活动现场",
+            "户外",
+            "调研点",
+            "公共",
+            "公益服务中心"
+          ],
+          "task_keywords": [
+            "连麦",
+            "嘉宾",
+            "直播间",
+            "互动",
+            "受邀",
+            "上麦"
+          ]
+        },
+        "recommended_adjustments": {
+          "service_name": "开直播",
+          "preserve_user_quality_and_time": true
+        },
+        "event_time": "2026-09-28T14:45:00Z",
+        "source_session_id": "S-USER_003-06"
+      },
+      "description": "经验卡片 [intent_disambiguation/EXP_OVERLAPPING_ORDER_RESOLUTION_01] - 受邀进他人直播间当连麦嘉宾（需按开直播保上行而非看直播）业务选择经验"
+    },
+    {
+      "memory_id": "MEM_6DFBCCED7137",
+      "subtype": "experience",
+      "memory_key": "EXP_PREWARM_BUFFER_01 | time_scheduling",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 1.0,
+      "stability": 1.88,
+      "content": {
+        "experience_id": "EXP_PREWARM_BUFFER_01",
+        "domain": "time_scheduling",
+        "strategy_type": "prewarm_buffer",
+        "title": "重大活动与大型场馆现场提前30分钟网络预热起保经验",
+        "description": "大型体育赛事、奥体中心/会展中心场馆活动、关键峰会或重要现场保障，设备连线与信道加固需要提前30分钟试机。",
+        "condition": "识别重大活动或大型场馆现场（含开直播、视频会议、视频通话等业务），需提前预热试机",
+        "action": "将意图保障单 start_timestamp 提前30分钟，end_timestamp 保持不变，duration 增加30分钟",
+        "trigger_conditions": {
+          "keywords": [
+            "赛事直播",
+            "重大活动",
+            "开幕式",
+            "主旨演讲",
+            "奥体中心",
+            "会展中心",
+            "峰会",
+            "大型活动"
+          ]
+        },
+        "recommended_adjustments": {
+          "start_offset_minutes": -30,
+          "duration_add_minutes": 30,
+          "strategy": "前置预热加固"
+        },
+        "event_time": "2026-10-12T13:45:00Z",
+        "source_session_id": "S-USER_003-08"
+      },
+      "description": "经验卡片 [time_scheduling/EXP_PREWARM_BUFFER_01] - 重大活动与大型场馆现场提前30分钟网络预热起保经验"
+    },
+    {
+      "memory_id": "MEM_2EC95F1804F4",
+      "subtype": "expression",
+      "memory_key": "糊弄不过去就行",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "alias": "糊弄不过去就行",
+        "target": "720p",
+        "note": "表达映射：「糊弄不过去就行」-> 720p",
+        "validity": "long_term",
+        "application": "wechat",
+        "business": "video_call",
+        "scene": "大巴转场途中",
+        "app_cn": "微信",
+        "service_cn": "视频通话"
+      },
+      "description": "个性化表达映射：「糊弄不过去就行」表示 720p (target=720p) - 表达映射：「糊弄不过去就行」-> 720p"
+    },
+    {
+      "memory_id": "MEM_CAF36B1B7F8E",
+      "subtype": "expression",
+      "memory_key": "顺滑一点",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.55,
+      "content": {
+        "alias": "顺滑一点",
+        "source_expression": "顺滑一点",
+        "target": "50ms",
+        "validity": "long_term",
+        "note": "表达映射：「顺滑一点」-> 50ms",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "scene": "市青年公益服务中心"
+      },
+      "description": "个性化表达映射：「顺滑一点」表示 50ms (target=50ms) - 表达映射：「顺滑一点」-> 50ms"
+    },
+    {
+      "memory_id": "MEM_3C02C9CDCB2B",
+      "subtype": "periodic_preference",
+      "memory_key": "14:00-16:00 | tencent_meeting:meeting",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 3,
+      "positive_votes": 3,
+      "reuse_count": 2,
+      "retention": 0.9572,
+      "stability": 2.29,
+      "content": {
+        "condition": "14:00-16:00",
+        "value": "tencent_meeting:meeting",
+        "time_window": "14:00-16:00",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "validity": "long_term",
+        "note": "周期时间路由：14:00-16:00 -> tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：14:00-16:00 -> tencent_meeting:meeting (time_window=14:00-16:00, value=tencent_meeting:meeting) - 周期时间路由：14:00-16:00 -> tencent_meeting (meeting)"
+    },
+    {
+      "memory_id": "MEM_81C9B3122078",
+      "subtype": "periodic_preference",
+      "memory_key": "18:45-19:45 | wechat:video_call",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.5735,
+      "stability": 1.0,
+      "content": {
+        "condition": "18:45-19:45",
+        "value": "wechat:video_call",
+        "time_window": "18:45-19:45",
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "validity": "long_term",
+        "note": "周期时间路由：18:45-19:45 -> wechat (video_call)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：18:45-19:45 -> wechat:video_call (time_window=18:45-19:45, value=wechat:video_call) - 周期时间路由：18:45-19:45 -> wechat (video_call)"
+    },
+    {
+      "memory_id": "MEM_6B741BFE145C",
+      "subtype": "scene_preference",
+      "memory_key": "大巴转场途中 | wechat | video_call",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.5735,
+      "stability": 1.0,
+      "content": {
+        "scene": "大巴转场途中",
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "resolution": "720p",
+        "latency": "100ms",
+        "validity": "long_term",
+        "note": "场景参数覆写：大巴转场途中 下使用 wechat (video_call)",
+        "declaration_mode": "explicit"
+      },
+      "description": "场景偏好：大巴转场途中 下使用 wechat (video_call) (resolution=720p, latency=100ms) - 场景参数覆写：大巴转场途中 下使用 wechat (video_call)"
+    },
+    {
+      "memory_id": "MEM_E5D3E6E57CEE",
+      "subtype": "scene_preference",
+      "memory_key": "市青年公益服务中心 | tencent_meeting | meeting",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 3,
+      "positive_votes": 3,
+      "reuse_count": 2,
+      "retention": 0.9572,
+      "stability": 2.29,
+      "content": {
+        "scene": "市青年公益服务中心",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "resolution": "1080p",
+        "latency": "50ms",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "validity": "long_term",
+        "declaration_mode": "explicit",
+        "note": "场景参数覆写：市青年公益服务中心 下使用 tencent_meeting (meeting)"
+      },
+      "description": "场景偏好：市青年公益服务中心 下使用 tencent_meeting (meeting) (resolution=1080p, latency=50ms) - 场景参数覆写：市青年公益服务中心 下使用 tencent_meeting (meeting)"
+    },
+    {
+      "memory_id": "MEM_CAEBF5C62EDA",
+      "subtype": "service_to_app",
+      "memory_key": "meeting",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.7711,
+      "stability": 1.0,
+      "content": {
+        "business": "meeting",
+        "application": "tencent_meeting",
+        "validity": "long_term",
+        "note": "跨会话归纳路由指针：meeting 默认使用 tencent_meeting（累计 2 次观测）"
+      },
+      "description": "业务默认应用：meeting 默认使用 tencent_meeting - 跨会话归纳路由指针：meeting 默认使用 tencent_meeting（累计 2 次观测）"
+    },
+    {
+      "memory_id": "MEM_05B0A7F0677D",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_003_20260914_01",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 1.0,
+      "stability": 1.88,
+      "content": {
+        "record_id": "REC_USER_003_20260914_01",
+        "session_id": "S-USER_003-01",
+        "created_at": "2026年09月14日13时45分",
+        "application_name": "腾讯会议",
+        "service_name": "会议",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月14日14时00分",
+        "end_timestamp": "2026年09月14日16时00分",
+        "duration": "120min",
+        "location": "市青年公益服务中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-21T13:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_003_20260914_01] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_A4EC8F02CA5D",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_003_20260916_02",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_003_20260916_02",
+        "session_id": "S-USER_003-02",
+        "created_at": "2026年09月16日18时30分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "720p",
+        "rtt": "100ms",
+        "start_timestamp": "2026年09月16日18时45分",
+        "end_timestamp": "2026年09月16日19时45分",
+        "duration": "60min",
+        "location": "大巴跨城转场高速公路",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-16T18:30:00Z"
+      },
+      "description": "工作记录 [REC_USER_003_20260916_02] (resolution=720p)"
+    },
+    {
+      "memory_id": "MEM_E63F169DFA56",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_003_20260918_03",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_003_20260918_03",
+        "session_id": "S-USER_003-03",
+        "created_at": "2026年09月18日13时45分",
+        "application_name": "腾讯会议",
+        "service_name": "会议",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月18日14时00分",
+        "end_timestamp": "2026年09月18日16时00分",
+        "duration": "120min",
+        "location": "市青年公益服务中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-18T13:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_003_20260918_03] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_8F83BBBA8D38",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_003_20260921_04",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_003_20260921_04",
+        "session_id": "S-USER_003-04",
+        "created_at": "2026年09月21日13时45分",
+        "application_name": "腾讯会议",
+        "service_name": "会议",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月21日14时00分",
+        "end_timestamp": "2026年09月21日16时00分",
+        "duration": "120min",
+        "location": "市青年公益服务中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-21T13:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_003_20260921_04] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_FCB2330A8E4D",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_003_20260925_05",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_003_20260925_05",
+        "session_id": "S-USER_003-05",
+        "created_at": "2026年09月25日13时45分",
+        "application_name": "腾讯会议",
+        "service_name": "会议",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月25日14时00分",
+        "end_timestamp": "2026年09月25日16时00分",
+        "duration": "120min",
+        "location": "市青年公益服务中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-25T13:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_003_20260925_05] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_8E0E76BAF62D",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_003_20260928_06",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_003_20260928_06",
+        "session_id": "S-USER_003-06",
+        "created_at": "2026年09月28日14时45分",
+        "application_name": "抖音",
+        "service_name": "开直播",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月28日15时00分",
+        "end_timestamp": "2026年09月28日17时00分",
+        "duration": "120min",
+        "location": "市青年公益服务中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-28T14:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_003_20260928_06] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_5BABB2403316",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_003_20261009_07",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_003_20261009_07",
+        "session_id": "S-USER_003-07",
+        "created_at": "2026年10月09日13时45分",
+        "application_name": "腾讯会议",
+        "service_name": "会议",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月09日14时00分",
+        "end_timestamp": "2026年10月09日17时00分",
+        "duration": "180min",
+        "location": "市青年公益服务中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-09T13:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_003_20261009_07] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_F73A2E1CA868",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_003_20261012_08",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_003_20261012_08",
+        "session_id": "S-USER_003-08",
+        "created_at": "2026年10月12日13时45分",
+        "application_name": "腾讯会议",
+        "service_name": "会议",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月12日13时30分",
+        "end_timestamp": "2026年10月12日16时00分",
+        "duration": "150min",
+        "location": "奥林匹克体育中心多功能馆",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-12T13:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_003_20261012_08] (resolution=1080p)"
+    }
+  ],
+  "elapsed_sec": 12.64,
+  "error_attribution": null
+}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<title>S-USER_002-01 样本评测详情</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --border: #dcdfe6;
+    --primary: #1f4e79;
+    --text: #1f2329;
+    --muted: #606266;
+    --ok: #1b7f37;
+    --ok-bg: #e6f4ea;
+    --fail: #b91c1c;
+    --fail-bg: #fce8e6;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 24px 32px;
+    line-height: 1.5;
+    font-size: 13.5px;
+  }
+  h1 { margin: 0 0 6px 0; font-size: 20px; color: #111827; }
+  h2 { margin: 20px 0 10px 0; font-size: 15px; color: #1f2937; border-left: 4px solid var(--primary); padding-left: 8px; }
+  .subtitle { color: var(--muted); margin-bottom: 16px; font-size: 13px; }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+  }
+  .stat-card .k { color: var(--muted); font-size: 12px; }
+  .stat-card .v { color: var(--primary); font-size: 21px; font-weight: 700; margin-top: 4px; }
+  .stat-card .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  table.tbl, table.inner-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+  }
+  table.tbl th, table.tbl td, table.inner-tbl th, table.inner-tbl td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #ebeef5;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.tbl th, table.inner-tbl th { background: #f0f3f8; color: #303133; font-weight: 600; }
+  tr.row-diff td { background: #fff1f0; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eef1f6;
+    color: #374151;
+  }
+  .badge.pass { background: var(--ok-bg); color: var(--ok); }
+  .badge.fail { background: var(--fail-bg); color: var(--fail); }
+  .tier-factual_memory { background: #e8f0fe; color: #1967d2; }
+  .tier-working_memory { background: #fef3c7; color: #92400e; }
+  .tier-experiential_memory { background: #ede9fe; color: #5b21b6; }
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .tabs, .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tab-btn, .flt-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .tab-btn.active, .flt-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  details.sess-details {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  details.sess-details summary {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none;
+    background: #ffffff;
+  }
+  details.sess-details summary:hover { background: #f8fafc; }
+  details.sess-details[open] summary { border-bottom: 1px solid var(--border); background: #f0f4f8; }
+  .sess-body { padding: 12px 16px; }
+  .diff-alert {
+    background: var(--fail-bg);
+    border: 1px solid #f5c2c7;
+    color: #842029;
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    font-size: 12.5px;
+  }
+  .turns-wrap { display: grid; gap: 10px; }
+  .turn-card {
+    background: #fafbfc;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+  .turn-hdr { font-weight: 600; font-size: 13px; margin-bottom: 6px; color: var(--primary); }
+  .utterance { padding: 5px 9px; border-radius: 4px; margin-bottom: 5px; font-size: 13px; }
+  .user-u { background: #eef4fa; }
+  .agent-u { background: #f3f4f6; color: #374151; }
+  .sub-sec { margin-top: 8px; font-size: 12.5px; }
+  .t-ok { color: var(--ok); font-weight: 600; }
+  .t-fail { color: var(--fail); font-weight: 600; }
+  .muted { color: var(--muted); }
+  code {
+    font-family: Consolas, Monaco, monospace;
+    background: #f1f3f5;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  a.ext-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 12px; margin-left: 8px; }
+  a.ext-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <div style="margin-bottom:12px;"><a href="../index.html" class="ext-link">← 返回总览报告 (index.html)</a> · <a href="S-USER_002-01.json" class="ext-link">查看原始 JSON (S-USER_002-01.json)</a></div>
+  <h1>样本 S-USER_002-01 (mobile_persona_002 / USER_002) 评测详情 <span class='badge pass'>PASS ✓</span></h1>
+  <div class="subtitle">Turn 通过数: 3 / 3 · 耗时: 11.01s</div>
+  <div style="background:#fff; border:1px solid var(--border); border-radius:6px; padding:16px;">
+    <table class='inner-tbl' style='margin-bottom:10px;'><thead><tr><th>用户 ID</th><th>记忆层级 (Tier)</th><th>会话角色 (Role)</th><th>设计类别 (Blueprint)</th><th>对话模板</th><th>场景环境 / 记忆动作</th><th>参考时间</th></tr></thead><tbody><tr><td><code>USER_002</code></td><td><span class='badge tier-factual_memory'>事实记忆 (factual_memory)</span></td><td><span class='badge'>首次建档 (evidence_session)</span></td><td><b>主线周期习惯偏好 (main)</b></td><td><code>T2-1</code></td><td>金融街财富管理中心 · <code>single_task_implicit_behavior</code></td><td>2026年09月14日14时45分</td></tr></tbody></table><div class='turns-wrap'><div class='turn-card'><div class='turn-hdr'>Turn 1 <span class='badge pass'>Turn PASS ✓</span></div><div class='utterance user-u'><b>用户 (User):</b> 你好，需要给微信视频通话做一个网络保障，时间是今天15时00分开始。</div><div class='utterance agent-u'><b>助手 (Agent):</b> 收到，已为您锁定微信视频通话保障，时间从15时00分开始。请问您需要保障的清晰度、时延上限和预计持续时长分别是多少呢？</div><div class='sub-sec'><b>1) 本轮记忆检索结果 (MemorySystem.search):</b><div class='muted'>本轮未检索到历史记忆卡片（首次建档或域外请求）</div></div><div class='sub-sec'><b>2) 本轮意图理解 GT vs 模型预测对比:</b><div style='margin-bottom:6px;'><b>意图标识: <code>微信/视频通话</code></b> <span class='badge pass'>PASS ✓ (7槽位全匹配)</span></div><table class='inner-tbl'><thead><tr><th style='width:160px;'>槽位名 (Slot)</th><th>标准真值 (GT)</th><th>模型预测 (Pred)</th><th style='width:90px;'>对比结果</th></tr></thead><tbody><tr class=''><td><code>application_name</code></td><td><code>微信</code></td><td><code>微信</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>service_name</code></td><td><code>视频通话</code></td><td><code>视频通话</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>resolution</code></td><td><code>None</code></td><td><code>None</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>rtt</code></td><td><code>None</code></td><td><code>None</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>start_timestamp</code></td><td><code>2026年09月14日15时00分</code></td><td><code>2026年09月14日15时00分</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>end_timestamp</code></td><td><code>None</code></td><td><code>None</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>duration</code></td><td><code>None</code></td><td><code>None</code></td><td><span class='t-ok'>✓</span></td></tr></tbody></table></div></div><div class='turn-card'><div class='turn-hdr'>Turn 2 <span class='badge pass'>Turn PASS ✓</span></div><div class='utterance user-u'><b>用户 (User):</b> 好的，画质用1080p，时延50ms以内，预计持续俩小时。今天就按这个配置开通吧。</div><div class='utterance agent-u'><b>助手 (Agent):</b> 收到，已为您登记老规矩习惯。确认按1080p、50ms以内立即为您开通本次保障吗？</div><div class='sub-sec'><b>1) 本轮记忆检索结果 (MemorySystem.search):</b><div class='muted'>本轮未检索到历史记忆卡片（首次建档或域外请求）</div></div><div class='sub-sec'><b>2) 本轮意图理解 GT vs 模型预测对比:</b><div style='margin-bottom:6px;'><b>意图标识: <code>微信/视频通话</code></b> <span class='badge pass'>PASS ✓ (7槽位全匹配)</span></div><table class='inner-tbl'><thead><tr><th style='width:160px;'>槽位名 (Slot)</th><th>标准真值 (GT)</th><th>模型预测 (Pred)</th><th style='width:90px;'>对比结果</th></tr></thead><tbody><tr class=''><td><code>application_name</code></td><td><code>微信</code></td><td><code>微信</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>service_name</code></td><td><code>视频通话</code></td><td><code>视频通话</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>resolution</code></td><td><code>1080p</code></td><td><code>1080p</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>rtt</code></td><td><code>50ms</code></td><td><code>50ms</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>start_timestamp</code></td><td><code>2026年09月14日15时00分</code></td><td><code>2026年09月14日15时00分</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>end_timestamp</code></td><td><code>2026年09月14日17时00分</code></td><td><code>2026年09月14日17时00分</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>duration</code></td><td><code>120min</code></td><td><code>120min</code></td><td><span class='t-ok'>✓</span></td></tr></tbody></table></div></div><div class='turn-card'><div class='turn-hdr'>Turn 3 <span class='badge pass'>Turn PASS ✓</span></div><div class='utterance user-u'><b>用户 (User):</b> 对，确认直接开通。</div><div class='utterance agent-u'><b>助手 (Agent):</b> 好的，已为您成功受理微信视频通话网络保障（1080p / 时延≤50ms），祝您使用愉快！</div><div class='sub-sec'><b>1) 本轮记忆检索结果 (MemorySystem.search):</b><div class='muted'>本轮未检索到历史记忆卡片（首次建档或域外请求）</div></div><div class='sub-sec'><b>2) 本轮意图理解 GT vs 模型预测对比:</b><div style='margin-bottom:6px;'><b>意图标识: <code>微信/视频通话</code></b> <span class='badge pass'>PASS ✓ (7槽位全匹配)</span></div><table class='inner-tbl'><thead><tr><th style='width:160px;'>槽位名 (Slot)</th><th>标准真值 (GT)</th><th>模型预测 (Pred)</th><th style='width:90px;'>对比结果</th></tr></thead><tbody><tr class=''><td><code>application_name</code></td><td><code>微信</code></td><td><code>微信</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>service_name</code></td><td><code>视频通话</code></td><td><code>视频通话</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>resolution</code></td><td><code>1080p</code></td><td><code>1080p</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>rtt</code></td><td><code>50ms</code></td><td><code>50ms</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>start_timestamp</code></td><td><code>2026年09月14日15时00分</code></td><td><code>2026年09月14日15时00分</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>end_timestamp</code></td><td><code>2026年09月14日17时00分</code></td><td><code>2026年09月14日17时00分</code></td><td><span class='t-ok'>✓</span></td></tr><tr class=''><td><code>duration</code></td><td><code>120min</code></td><td><code>120min</code></td><td><span class='t-ok'>✓</span></td></tr></tbody></table></div></div></div><div class='sub-sec' style='margin-top:10px;'><b>3) 会话结束后用户记忆库快照 (3 条节点):</b><table class='inner-tbl'><thead><tr><th style='width:140px;'>子类型</th><th style='width:180px;'>Memory Key</th><th style='width:75px;'>状态</th><th style='width:130px;'>投票/复用</th><th style='width:80px;'>保持率</th><th>节点内容 (Content)</th></tr></thead><tbody><tr><td><code>periodic_preference</code></td><td><b>15:00-17:00 | wechat:video_call</b></td><td>candidate</td><td>votes=1 (reuse=0)</td><td>R=1.0000</td><td><code>{&quot;condition&quot;: &quot;15:00-17:00&quot;, &quot;value&quot;: &quot;wechat:video_call&quot;, &quot;time_window&quot;: &quot;15:00-17:00&quot;, &quot;application&quot;: &quot;wechat&quot;, &quot;business&quot;: &quot;video_call&quot;, &quot;app_cn&quot;: &quot;微信&quot;, &quot;service_cn&quot;: &quot;视频通话&quot;, &quot;validity&quot;: &quot;long_term&quot;, &quot;note&quot;: &quot;周期时间路由：15:00-17:00 -&gt; wechat (video_call)&quot;, &quot;declaration_mode&quot;: &quot;implicit&quot;}</code></td></tr><tr><td><code>preferred_value</code></td><td><b>wechat | video_call</b></td><td>candidate</td><td>votes=1 (reuse=0)</td><td>R=1.0000</td><td><code>{&quot;application&quot;: &quot;wechat&quot;, &quot;business&quot;: &quot;video_call&quot;, &quot;app_cn&quot;: &quot;微信&quot;, &quot;service_cn&quot;: &quot;视频通话&quot;, &quot;resolution&quot;: &quot;1080p&quot;, &quot;latency&quot;: &quot;50ms&quot;, &quot;validity&quot;: &quot;long_term&quot;, &quot;note&quot;: &quot;默认参数偏好：wechat (video_call)&quot;, &quot;declaration_mode&quot;: &quot;implicit&quot;}</code></td></tr><tr><td><code>working_record</code></td><td><b>REC_USER_002_20260914_01</b></td><td>active</td><td>votes=1 (reuse=0)</td><td>R=1.0000</td><td><code>{&quot;record_id&quot;: &quot;REC_USER_002_20260914_01&quot;, &quot;session_id&quot;: &quot;S-USER_002-01&quot;, &quot;created_at&quot;: &quot;2026年09月14日14时45分&quot;, &quot;application_name&quot;: &quot;微信&quot;, &quot;service_name&quot;: &quot;视频通话&quot;, &quot;resolution&quot;: &quot;1080p&quot;, &quot;rtt&quot;: &quot;50ms&quot;, &quot;start_timestamp&quot;: &quot;2026年09月14日15时00分&quot;, &quot;end_timestamp&quot;: &quot;2026年09月14日17时00分&quot;, &quot;duration&quot;: &quot;120min&quot;, &quot;location&quot;: &quot;金融街财富管理中心&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;temporal_reference_aliases&quot;: [&quot;上次&quot;, &quot;上周&quot;, &quot;上个月初&quot;, &quot;之前&quot;, &quot;昨天预约&quot;], &quot;event_time&quot;: &quot;2026-09-14T14:45:00Z&quot;}</code></td></tr></tbody></table></div>
+  </div>
+</body>
+</html>

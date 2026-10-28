@@ -1,0 +1,885 @@
+{
+  "session_id": "S-USER_002-07",
+  "reference_time": "2026年10月09日14时45分",
+  "memory_tier": "factual_memory",
+  "template_id": "T2-5",
+  "memory_role": "reuse_session",
+  "blueprint_type": "main",
+  "environment": "金融街财富管理中心",
+  "memory_action": "extend_duration_amend",
+  "session_pass": true,
+  "session_gt": {
+    "微信/视频通话": {
+      "application_name": "微信",
+      "service_name": "视频通话",
+      "resolution": "1080p",
+      "rtt": "50ms",
+      "start_timestamp": "2026年10月09日15时00分",
+      "end_timestamp": "2026年10月09日18时00分",
+      "duration": "180min"
+    }
+  },
+  "session_pred": {
+    "微信/视频通话": {
+      "application_name": "微信",
+      "service_name": "视频通话",
+      "resolution": "1080p",
+      "rtt": "50ms",
+      "start_timestamp": "2026年10月09日15时00分",
+      "end_timestamp": "2026年10月09日18时00分",
+      "duration": "180min"
+    }
+  },
+  "session_diffs": "ok_session",
+  "turn_ok_count": 2,
+  "turn_total_count": 2,
+  "turns": [
+    {
+      "turn": 1,
+      "user_utterance": "今天在金融街财富管理中心，老规矩，用微信做打视讯，帮我把保障开上。",
+      "agent_utterance": "收到，我调取到之前登记的微信视频通话配置：画质1080p、时延50ms以内，从15时00分开始保障，确认按这套配置开通吗？",
+      "memory_trace": {
+        "turn": 1,
+        "query": "今天在金融街财富管理中心，老规矩，用微信做打视讯，帮我把保障开上。",
+        "reference_time": "2026年10月09日14时45分",
+        "has_memory_trigger": true,
+        "session_memory_triggered": true,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 10,
+        "major_hits": [
+          {
+            "memory_id": "MEM_6346F380F93B",
+            "subtype": "scene_preference",
+            "memory_key": "金融街财富管理中心 | wechat | video_call",
+            "paired_periodic_key": "15:00-17:00 | wechat:video_call",
+            "status": "reinforced",
+            "score": 0.878783,
+            "resolved_slots": {
+              "application_name": "微信",
+              "service_name": "视频通话",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "15:00-17:00",
+              "scene": "金融街财富管理中心",
+              "start_timestamp": "2026年10月09日15时00分",
+              "end_timestamp": "2026年10月09日17时00分",
+              "duration": "120min"
+            },
+            "structured_match": "[指针跳: service_to_app[wechat] -> video_call; periodic_preference[15:00-17:00] -> wechat|video_call; periodic_preference[wechat|video_call] -> 15:00-17:00] SELECT WHERE application=wechat AND business=video_call AND scene=金融街财富管理中心"
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_AC7EE501EAE5",
+            "subtype": "periodic_preference",
+            "memory_key": "15:00-17:00 | wechat:video_call",
+            "status": "active",
+            "score": 0.869013,
+            "time_window": "15:00-17:00",
+            "value": "wechat:video_call"
+          }
+        ],
+        "service_hits": [
+          {
+            "memory_id": "MEM_FD5451674EF2",
+            "subtype": "service_to_app",
+            "memory_key": "video_call",
+            "status": "active",
+            "score": 0.792506,
+            "business": "video_call",
+            "application": "wechat"
+          }
+        ],
+        "expression_hits": [
+          {
+            "memory_id": "MEM_617BCA632E37",
+            "memory_key": "顺畅推流",
+            "alias": "顺畅推流",
+            "target": "50ms",
+            "application": "wechat",
+            "business": "video_call",
+            "scene": "金融街财富管理中心",
+            "score": 0.820389
+          }
+        ],
+        "working_hits": [
+          {
+            "memory_id": "MEM_5E7611955765",
+            "memory_key": "REC_USER_002_20260918_03",
+            "record_id": "REC_USER_002_20260918_03",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.820194
+          },
+          {
+            "memory_id": "MEM_EC00A5E92822",
+            "memory_key": "REC_USER_002_20260914_01",
+            "record_id": "REC_USER_002_20260914_01",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.815708
+          },
+          {
+            "memory_id": "MEM_277589AD46E2",
+            "memory_key": "REC_USER_002_20260921_04",
+            "record_id": "REC_USER_002_20260921_04",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.810262
+          },
+          {
+            "memory_id": "MEM_46AC0EDC3AEF",
+            "memory_key": "REC_USER_002_20260925_05",
+            "record_id": "REC_USER_002_20260925_05",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.80039
+          },
+          {
+            "memory_id": "MEM_65408AFC2640",
+            "memory_key": "REC_USER_002_20260928_06",
+            "record_id": "REC_USER_002_20260928_06",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.793365
+          },
+          {
+            "memory_id": "MEM_DC3580B42C59",
+            "memory_key": "REC_USER_002_20260916_02",
+            "record_id": "REC_USER_002_20260916_02",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "720p",
+            "rtt": "100ms",
+            "score": 0.685579
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "15:00-17:00",
+          "scene": "金融街财富管理中心",
+          "start_timestamp": "2026年10月09日15时00分",
+          "end_timestamp": "2026年10月09日17时00分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户触发长期记忆指代“老规矩”及场景“金融街财富管理中心”，命中唯一 scene_preference (微信/视频通话)。根据 MEMORY FILL RULE，需填充 application_name, service_name, resolution, rtt, start_timestamp, end_timestamp, duration。话语中“打视讯”确认为视频通话服务，“今天”结合记忆中的具体日期（2026年10月09日）一致，故直接使用记忆值。\n# 身份判定: 新建意图，无已有状态\n# intent: new\nstate.application_name = '微信'\nstate.service_name = '视频通话'\nstate.resolution = '1080p'\nstate.rtt = '50ms'\nstate.timestamp = find_timestamp(start='2026年10月09日15时00分', end='2026年10月09日17时00分', duration='120min')",
+      "preds": {
+        "微信/视频通话": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "start_timestamp": "2026年10月09日15时00分",
+          "end_timestamp": "2026年10月09日17时00分",
+          "duration": "120min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 1,
+          "intent_key": "微信/视频通话",
+          "gt": {
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "start_timestamp": "2026年10月09日15时00分",
+            "end_timestamp": "2026年10月09日17时00分",
+            "duration": "120min"
+          },
+          "pred": {
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "start_timestamp": "2026年10月09日15时00分",
+            "end_timestamp": "2026年10月09日17时00分",
+            "duration": "120min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户触发长期记忆指代“老规矩”及场景“金融街财富管理中心”，命中唯一 scene_preference (微信/视频通话)。根据 MEMORY FILL RULE，需填充 application_name, service_name, resolution, rtt, start_timestamp, end_timestamp, duration。话语中“打视讯”确认为视频通话服务，“今天”结合记忆中的具体日期（2026年10月09日）一致，故直接使用记忆值。\n# 身份判定: 新建意图，无已有状态\n# intent: new\nstate.application_name = '微信'\nstate.service_name = '视频通话'\nstate.resolution = '1080p'\nstate.rtt = '50ms'\nstate.timestamp = find_timestamp(start='2026年10月09日15时00分', end='2026年10月09日17时00分', duration='120min')"
+        }
+      ],
+      "turn_pass": true
+    },
+    {
+      "turn": 2,
+      "user_utterance": "对，老规矩不变，不过今天现场活动延长了，帮我把保障时长延长到180min。",
+      "agent_utterance": "好的，已按老规矩为您开通微信视频通话保障：画质保持1080p、时延上限50ms，时长已延长至180min。祝您活动顺利！",
+      "memory_trace": {
+        "turn": 2,
+        "query": "对，老规矩不变，不过今天现场活动延长了，帮我把保障时长延长到180min。",
+        "reference_time": "2026年10月09日14时45分",
+        "has_memory_trigger": true,
+        "session_memory_triggered": true,
+        "session_wr_mode": null,
+        "session_exp_triggered": null,
+        "raw_hit_count": 10,
+        "major_hits": [
+          {
+            "memory_id": "MEM_6346F380F93B",
+            "subtype": "scene_preference",
+            "memory_key": "金融街财富管理中心 | wechat | video_call",
+            "paired_periodic_key": "15:00-17:00 | wechat:video_call",
+            "status": "reinforced",
+            "score": 0.883783,
+            "resolved_slots": {
+              "application_name": "微信",
+              "service_name": "视频通话",
+              "resolution": "1080p",
+              "rtt": "50ms",
+              "time_window": "15:00-17:00",
+              "scene": "金融街财富管理中心",
+              "start_timestamp": "2026年10月09日15时00分",
+              "end_timestamp": "2026年10月09日17时00分",
+              "duration": "120min"
+            },
+            "structured_match": "[向量锚点吸附: 能认清人脸(cos=0.4803)->720p, 顺畅推流(cos=0.4205)->50ms] [指针跳: periodic_preference[15:00-17:00] -> wechat|video_call; periodic_preference[wechat|video_call] -> 15:00-17:00] SELECT WHERE application=wechat AND business=video_call AND scene=金融街财富管理中心"
+          },
+          {
+            "memory_id": "MEM_DF063AB70742",
+            "subtype": "scene_preference",
+            "memory_key": "大巴转场途中 | tencent_meeting | meeting",
+            "paired_periodic_key": "18:45-19:45 | tencent_meeting:meeting",
+            "status": "active",
+            "score": 0.826976,
+            "resolved_slots": {
+              "application_name": "腾讯会议",
+              "service_name": "会议",
+              "resolution": "720p",
+              "rtt": "100ms",
+              "time_window": "18:45-19:45",
+              "scene": "大巴转场途中",
+              "start_timestamp": "2026年10月09日18时45分",
+              "end_timestamp": "2026年10月09日19时45分",
+              "duration": "60min"
+            },
+            "structured_match": "[向量锚点吸附: 能认清人脸(cos=0.4803)->720p, 顺畅推流(cos=0.4205)->50ms] [指针跳: periodic_preference[15:00-17:00] -> wechat|video_call; periodic_preference[wechat|video_call] -> 15:00-17:00] SELECT WHERE application=tencent_meeting AND business=meeting AND scene=大巴转场途中"
+          }
+        ],
+        "periodic_hits": [
+          {
+            "memory_id": "MEM_AC7EE501EAE5",
+            "subtype": "periodic_preference",
+            "memory_key": "15:00-17:00 | wechat:video_call",
+            "status": "active",
+            "score": 0.874013,
+            "time_window": "15:00-17:00",
+            "value": "wechat:video_call"
+          }
+        ],
+        "service_hits": [],
+        "expression_hits": [
+          {
+            "memory_id": "MEM_617BCA632E37",
+            "memory_key": "顺畅推流",
+            "alias": "顺畅推流",
+            "target": "50ms",
+            "application": "wechat",
+            "business": "video_call",
+            "scene": "金融街财富管理中心",
+            "score": 0.865389
+          },
+          {
+            "memory_id": "MEM_3D60C852A754",
+            "memory_key": "能认清人脸",
+            "alias": "能认清人脸",
+            "target": "720p",
+            "application": "tencent_meeting",
+            "business": "meeting",
+            "scene": "大巴转场途中",
+            "score": 0.860324
+          }
+        ],
+        "working_hits": [
+          {
+            "memory_id": "MEM_DC3580B42C59",
+            "memory_key": "REC_USER_002_20260916_02",
+            "record_id": "REC_USER_002_20260916_02",
+            "application_name": "腾讯会议",
+            "service_name": "会议",
+            "resolution": "720p",
+            "rtt": "100ms",
+            "score": 0.835161
+          },
+          {
+            "memory_id": "MEM_5E7611955765",
+            "memory_key": "REC_USER_002_20260918_03",
+            "record_id": "REC_USER_002_20260918_03",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.825194
+          },
+          {
+            "memory_id": "MEM_EC00A5E92822",
+            "memory_key": "REC_USER_002_20260914_01",
+            "record_id": "REC_USER_002_20260914_01",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.820708
+          },
+          {
+            "memory_id": "MEM_277589AD46E2",
+            "memory_key": "REC_USER_002_20260921_04",
+            "record_id": "REC_USER_002_20260921_04",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.815262
+          },
+          {
+            "memory_id": "MEM_46AC0EDC3AEF",
+            "memory_key": "REC_USER_002_20260925_05",
+            "record_id": "REC_USER_002_20260925_05",
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "score": 0.80539
+          }
+        ],
+        "experience_hits": [],
+        "selected_best_major": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "time_window": "15:00-17:00",
+          "scene": "金融街财富管理中心",
+          "start_timestamp": "2026年10月09日15时00分",
+          "end_timestamp": "2026年10月09日17时00分",
+          "duration": "120min"
+        }
+      },
+      "llm_raw": "# summary: 用户确认沿用老规矩配置，仅将保障时长延长至180min。需更新 duration 为 '180min'，并基于 prev_state 的 start_timestamp (2026年10月09日15时00分) 重新推算 end_timestamp (15:00 + 3h = 18:00)。其他字段（app, svc, res, rtt）保持不变，不赋值。\n# 身份判定: 更新已有意图 I1(微信/视频通话)\n# intent: I1\nstate.duration = \"180min\"\nstate.timestamp = find_timestamp(start=state.start_timestamp, duration=\"180min\")",
+      "preds": {
+        "微信/视频通话": {
+          "application_name": "微信",
+          "service_name": "视频通话",
+          "resolution": "1080p",
+          "rtt": "50ms",
+          "start_timestamp": "2026年10月09日15时00分",
+          "end_timestamp": "2026年10月09日18时00分",
+          "duration": "180min"
+        }
+      },
+      "eval_details": [
+        {
+          "turn": 2,
+          "intent_key": "微信/视频通话",
+          "gt": {
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "start_timestamp": "2026年10月09日15时00分",
+            "end_timestamp": "2026年10月09日18时00分",
+            "duration": "180min"
+          },
+          "pred": {
+            "application_name": "微信",
+            "service_name": "视频通话",
+            "resolution": "1080p",
+            "rtt": "50ms",
+            "start_timestamp": "2026年10月09日15时00分",
+            "end_timestamp": "2026年10月09日18时00分",
+            "duration": "180min"
+          },
+          "match": true,
+          "wrong": [],
+          "missed_intent": false,
+          "gt_derived": [],
+          "llm_raw": "# summary: 用户确认沿用老规矩配置，仅将保障时长延长至180min。需更新 duration 为 '180min'，并基于 prev_state 的 start_timestamp (2026年10月09日15时00分) 重新推算 end_timestamp (15:00 + 3h = 18:00)。其他字段（app, svc, res, rtt）保持不变，不赋值。\n# 身份判定: 更新已有意图 I1(微信/视频通话)\n# intent: I1\nstate.duration = \"180min\"\nstate.timestamp = find_timestamp(start=state.start_timestamp, duration=\"180min\")"
+        }
+      ],
+      "turn_pass": true
+    }
+  ],
+  "extracted_events": [],
+  "ebbinghaus_decay": {
+    "expired_candidates": [],
+    "degraded_reinforced": []
+  },
+  "memory_snapshot": [
+    {
+      "memory_id": "MEM_7F75A90F9215",
+      "subtype": "experience",
+      "memory_key": "EXP_CALENDAR_HOLIDAY_EXCEPTION_01 | time_scheduling",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 1.0,
+      "stability": 1.88,
+      "content": {
+        "experience_id": "EXP_CALENDAR_HOLIDAY_EXCEPTION_01",
+        "domain": "time_scheduling",
+        "strategy_type": "holiday_avoidance",
+        "title": "周期例行排期遇法定节假日自动顺延经验",
+        "description": "每周例行安排的周会意图保障单如果恰逢国家法定节假日（如2026年10月01日至10月07日国庆节放假），直接按原定休假日开通会导致空跑扣费。",
+        "condition": "周期例行周会意图保障单排期撞上国庆法定节假日（如2026年10月05日）",
+        "action": "将 start_timestamp 与 end_timestamp 的日期从 2026年10月05日 顺延改为节后首个工作日 2026年10月08日，时刻与 duration 不变",
+        "trigger_conditions": {
+          "keywords": [
+            "国庆节",
+            "国庆假期",
+            "中秋节",
+            "元旦",
+            "春节",
+            "法定假日",
+            "放假",
+            "例行周会",
+            "10月5日",
+            "10月05日"
+          ]
+        },
+        "recommended_adjustments": {
+          "action": "将2026年10月05日顺延至节后首个工作日2026年10月08日（时刻与时长不变）",
+          "strategy": "节假日排期避让"
+        },
+        "event_time": "2026-09-28T14:45:00Z",
+        "source_session_id": "S-USER_002-06"
+      },
+      "description": "经验卡片 [time_scheduling/EXP_CALENDAR_HOLIDAY_EXCEPTION_01] - 周期例行排期遇法定节假日自动顺延经验"
+    },
+    {
+      "memory_id": "MEM_3D60C852A754",
+      "subtype": "expression",
+      "memory_key": "能认清人脸",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "alias": "能认清人脸",
+        "target": "720p",
+        "note": "表达映射：「能认清人脸」-> 720p",
+        "validity": "long_term",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "scene": "大巴转场途中",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议"
+      },
+      "description": "个性化表达映射：「能认清人脸」表示 720p (target=720p) - 表达映射：「能认清人脸」-> 720p"
+    },
+    {
+      "memory_id": "MEM_617BCA632E37",
+      "subtype": "expression",
+      "memory_key": "顺畅推流",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "alias": "顺畅推流",
+        "target": "50ms",
+        "note": "表达映射：「顺畅推流」-> 50ms",
+        "validity": "long_term",
+        "application": "wechat",
+        "business": "video_call",
+        "scene": "金融街财富管理中心",
+        "app_cn": "微信",
+        "service_cn": "视频通话"
+      },
+      "description": "个性化表达映射：「顺畅推流」表示 50ms (target=50ms) - 表达映射：「顺畅推流」-> 50ms"
+    },
+    {
+      "memory_id": "MEM_AC7EE501EAE5",
+      "subtype": "periodic_preference",
+      "memory_key": "15:00-17:00 | wechat:video_call",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 0.7997,
+      "stability": 1.88,
+      "content": {
+        "condition": "15:00-17:00",
+        "value": "wechat:video_call",
+        "time_window": "15:00-17:00",
+        "application": "wechat",
+        "business": "video_call",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "validity": "long_term",
+        "note": "周期时间路由：15:00-17:00 -> wechat (video_call)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：15:00-17:00 -> wechat:video_call (time_window=15:00-17:00, value=wechat:video_call) - 周期时间路由：15:00-17:00 -> wechat (video_call)"
+    },
+    {
+      "memory_id": "MEM_BCB6FB0FEC97",
+      "subtype": "periodic_preference",
+      "memory_key": "18:45-19:45 | tencent_meeting:meeting",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.6333,
+      "stability": 1.0,
+      "content": {
+        "condition": "18:45-19:45",
+        "value": "tencent_meeting:meeting",
+        "time_window": "18:45-19:45",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "validity": "long_term",
+        "note": "周期时间路由：18:45-19:45 -> tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "description": "周期/条件偏好：18:45-19:45 -> tencent_meeting:meeting (time_window=18:45-19:45, value=tencent_meeting:meeting) - 周期时间路由：18:45-19:45 -> tencent_meeting (meeting)"
+    },
+    {
+      "memory_id": "MEM_DF063AB70742",
+      "subtype": "scene_preference",
+      "memory_key": "大巴转场途中 | tencent_meeting | meeting",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.6333,
+      "stability": 1.0,
+      "content": {
+        "scene": "大巴转场途中",
+        "application": "tencent_meeting",
+        "business": "meeting",
+        "app_cn": "腾讯会议",
+        "service_cn": "会议",
+        "resolution": "720p",
+        "latency": "100ms",
+        "validity": "long_term",
+        "note": "场景参数覆写：大巴转场途中 下使用 tencent_meeting (meeting)",
+        "declaration_mode": "explicit"
+      },
+      "description": "场景偏好：大巴转场途中 下使用 tencent_meeting (meeting) (resolution=720p, latency=100ms) - 场景参数覆写：大巴转场途中 下使用 tencent_meeting (meeting)"
+    },
+    {
+      "memory_id": "MEM_6346F380F93B",
+      "subtype": "scene_preference",
+      "memory_key": "金融街财富管理中心 | wechat | video_call",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 0.7997,
+      "stability": 1.88,
+      "content": {
+        "scene": "金融街财富管理中心",
+        "application": "wechat",
+        "business": "video_call",
+        "resolution": "1080p",
+        "latency": "50ms",
+        "app_cn": "微信",
+        "service_cn": "视频通话",
+        "validity": "long_term",
+        "declaration_mode": "explicit",
+        "note": "场景参数覆写：金融街财富管理中心 下使用 wechat (video_call)"
+      },
+      "description": "场景偏好：金融街财富管理中心 下使用 wechat (video_call) (resolution=1080p, latency=50ms) - 场景参数覆写：金融街财富管理中心 下使用 wechat (video_call)"
+    },
+    {
+      "memory_id": "MEM_FD5451674EF2",
+      "subtype": "service_to_app",
+      "memory_key": "video_call",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 0.8106,
+      "stability": 1.0,
+      "content": {
+        "business": "video_call",
+        "application": "wechat",
+        "validity": "long_term",
+        "note": "跨会话归纳路由指针：video_call 默认使用 wechat（累计 2 次观测）"
+      },
+      "description": "业务默认应用：video_call 默认使用 wechat - 跨会话归纳路由指针：video_call 默认使用 wechat（累计 2 次观测）"
+    },
+    {
+      "memory_id": "MEM_EC00A5E92822",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_002_20260914_01",
+      "status": "reinforced",
+      "validity": "long_term",
+      "votes": 2,
+      "positive_votes": 2,
+      "reuse_count": 1,
+      "retention": 1.0,
+      "stability": 1.88,
+      "content": {
+        "record_id": "REC_USER_002_20260914_01",
+        "session_id": "S-USER_002-01",
+        "created_at": "2026年09月14日14时45分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月14日15时00分",
+        "end_timestamp": "2026年09月14日17时00分",
+        "duration": "120min",
+        "location": "金融街财富管理中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-21T14:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_002_20260914_01] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_DC3580B42C59",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_002_20260916_02",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_002_20260916_02",
+        "session_id": "S-USER_002-02",
+        "created_at": "2026年09月16日18时30分",
+        "application_name": "腾讯会议",
+        "service_name": "会议",
+        "resolution": "720p",
+        "rtt": "100ms",
+        "start_timestamp": "2026年09月16日18时45分",
+        "end_timestamp": "2026年09月16日19时45分",
+        "duration": "60min",
+        "location": "大巴跨城转场高速公路",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-16T18:30:00Z"
+      },
+      "description": "工作记录 [REC_USER_002_20260916_02] (resolution=720p)"
+    },
+    {
+      "memory_id": "MEM_5E7611955765",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_002_20260918_03",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_002_20260918_03",
+        "session_id": "S-USER_002-03",
+        "created_at": "2026年09月18日14时45分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月18日15时00分",
+        "end_timestamp": "2026年09月18日17时00分",
+        "duration": "120min",
+        "location": "金融街财富管理中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-18T14:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_002_20260918_03] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_277589AD46E2",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_002_20260921_04",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_002_20260921_04",
+        "session_id": "S-USER_002-04",
+        "created_at": "2026年09月21日14时45分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年09月21日15时00分",
+        "end_timestamp": "2026年09月21日17时00分",
+        "duration": "120min",
+        "location": "金融街财富管理中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-21T14:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_002_20260921_04] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_46AC0EDC3AEF",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_002_20260925_05",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_002_20260925_05",
+        "session_id": "S-USER_002-05",
+        "created_at": "2026年09月25日14时45分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月08日15时00分",
+        "end_timestamp": "2026年10月08日17时00分",
+        "duration": "120min",
+        "location": "金融街财富管理中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-25T14:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_002_20260925_05] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_65408AFC2640",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_002_20260928_06",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_002_20260928_06",
+        "session_id": "S-USER_002-06",
+        "created_at": "2026年09月28日14时45分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月08日15时00分",
+        "end_timestamp": "2026年10月08日17时00分",
+        "duration": "120min",
+        "location": "金融街财富管理中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-09-28T14:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_002_20260928_06] (resolution=1080p)"
+    },
+    {
+      "memory_id": "MEM_489F50B85DB1",
+      "subtype": "working_record",
+      "memory_key": "REC_USER_002_20261009_07",
+      "status": "active",
+      "validity": "long_term",
+      "votes": 1,
+      "positive_votes": 1,
+      "reuse_count": 0,
+      "retention": 1.0,
+      "stability": 1.0,
+      "content": {
+        "record_id": "REC_USER_002_20261009_07",
+        "session_id": "S-USER_002-07",
+        "created_at": "2026年10月09日14时45分",
+        "application_name": "微信",
+        "service_name": "视频通话",
+        "resolution": "1080p",
+        "rtt": "50ms",
+        "start_timestamp": "2026年10月09日15时00分",
+        "end_timestamp": "2026年10月09日18时00分",
+        "duration": "180min",
+        "location": "金融街财富管理中心",
+        "status": "completed",
+        "temporal_reference_aliases": [
+          "上次",
+          "上周",
+          "上个月初",
+          "之前",
+          "昨天预约"
+        ],
+        "event_time": "2026-10-09T14:45:00Z"
+      },
+      "description": "工作记录 [REC_USER_002_20261009_07] (resolution=1080p)"
+    }
+  ],
+  "elapsed_sec": 49.35,
+  "error_attribution": null
+}
