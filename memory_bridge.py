@@ -336,21 +336,31 @@ class MemoryBridge:
                 + "# 2. 完整填入用户指定的应用、业务、画质 (resolution) 和时延 (rtt)!\n"
             )
 
-        # (c) 历史工单时长消歧类经验: 开始时刻取用户话语, 时长取经验卡片, 结束时刻 = 开始 + 时长
-        if adj.get("duration") and adj.get("prefer_formal_duration_over_recent_temp"):
-            target_dur = str(adj.get("duration"))
+        # (c) 历史工单时长消歧类经验: 开始时刻取用户话语, 时长动态取用户历史正式工单 (过滤近期临时短单), 结束时刻 = 开始 + 时长
+        if adj.get("prefer_formal_duration_over_recent_temp"):
+            u_app = _mentioned_app(utterance)
+            formal_wrs = [
+                r for r in all_working_records
+                if not _is_temp_record(r) and _parse_minutes(r.get("duration"))
+            ]
+            app_formal = [r for r in formal_wrs if u_app and r.get("application_name") == u_app] if u_app else []
+            cand_wrs = app_formal or formal_wrs
+            dur_freq: dict[str, int] = {}
+            for r in cand_wrs:
+                d_val = str(r.get("duration") or "")
+                dur_freq[d_val] = dur_freq.get(d_val, 0) + 1
+            rec = (
+                max(cand_wrs, key=lambda r: (dur_freq.get(str(r.get("duration") or ""), 0), _rec_sort_key(r)))
+                if cand_wrs
+                else None
+            )
+            target_dur = str((rec or {}).get("duration") or adj.get("duration") or "")
             dur_min = _parse_minutes(target_dur)
             st_dt = _explicit_start_dt(utterance, reference_time)
             src_note = "用户本轮明说的开始时刻"
-            if st_dt is None:
-                # 话语未给开始时刻: 回退到账本中时长与经验一致的最近一笔正式工单的时刻, 锚定到今天
-                formal = [
-                    r for r in all_working_records
-                    if not _is_temp_record(r) and _parse_minutes(r.get("duration")) == dur_min
-                ]
-                rec = max(formal, key=_rec_sort_key) if formal else None
+            if st_dt is None and rec is not None:
                 ref_dt = _tex.parse_reference_time(reference_time)
-                if rec is not None and ref_dt is not None:
+                if ref_dt is not None:
                     try:
                         rst = datetime.strptime(str(rec.get("start_timestamp")), DT_FMT)
                         st_dt = ref_dt.replace(hour=rst.hour, minute=rst.minute, second=0, microsecond=0)
@@ -363,13 +373,13 @@ class MemoryBridge:
                     head
                     + f"#   start_timestamp = '{st_dt.strftime(DT_FMT)}'  (来源: {src_note})\n"
                     + f"#   end_timestamp   = '{et_dt.strftime(DT_FMT)}'  (= start + {target_dur})\n"
-                    + f"#   duration        = {target_dur!r}  (来源: 经验卡片, 过滤近期临时短单)\n"
+                    + f"#   duration        = {target_dur!r}  (来源: 历史正式工单 [{(rec or {}).get('record_id', 'formal')}], 过滤近期临时短单)\n"
                     + "# 1. 本轮直接将 start_timestamp, end_timestamp, duration 设为上述值;\n"
                     + "# 2. application_name / service_name / resolution / rtt 一律按用户本轮话语填写 (经验不改写这些槽位)!\n"
                 )
             return (
                 head
-                + f"# 1. duration 设为 {target_dur!r}, end_timestamp = 用户给出的开始时刻 + {target_dur} (不要沿用近期临时短单的时长);\n"
+                + "# 1. 过滤近期临时短单，按历史正式工单的 duration 推算 end_timestamp = 用户给出的开始时刻 + duration;\n"
                 + "# 2. application_name / service_name / resolution / rtt 一律按用户本轮话语填写!\n"
             )
 
@@ -910,8 +920,8 @@ class MemoryBridge:
                     "# === WORKING RECORD DISAMBIGUATION RULE (多笔历史工单待消歧规则, 本轮生效, 优先级最高) ===\n"
                     "# 用户引用了历史意图保障单规格并给出了今日时间，但历史账本中存在多笔工单，本轮需向用户确认按哪一笔的规格。\n"
                     "# 必须遵守:\n"
-                    "# 1. 本轮只填用户明确说出的槽位 (application_name, service_name, start_timestamp, end_timestamp, duration 等);\n"
-                    "# 2. 若用户本轮没有明说画质/时延, 不要给 state.resolution 和 state.rtt 赋值 (留空, 等用户指定按哪笔工单后再补齐); 明说了则照填!\n"
+                    "# 1. 本轮只填 application_name, service_name 以及用户给出的今日时间 (start_timestamp, end_timestamp, duration);\n"
+                    "# 2. 本轮严禁给 state.resolution 和 state.rtt 赋值 (必须留空，即使话语末尾带有『抓紧别掉链子』等口头催促词也不要查黑话词典填 rtt，必须等下一轮用户选定按哪一笔历史工单后再补齐画质与时延)!\n"
                 )
             # Working Memory Mode 3: working_record_reuse (引用历史工单规格, 本轮未给出今日时间)
             elif wr_act == "reuse":
