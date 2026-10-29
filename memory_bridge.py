@@ -820,11 +820,12 @@ class MemoryBridge:
             # 经验记忆归纳学习或确认轮: 当前会话在上一轮已落盘锁定的全部 7 个目标槽位保持不变
             hint_lines.append(
                 "# === EXPERIENCE FOLLOW-UP KEEP RULE (经验记忆归纳/确认轮状态锁定规则, 本轮生效, 优先级最高) ===\n"
-                "# 本轮属于经验记忆归纳学习或确认轮：即使本轮用户口头提及“把开始时间往前提前半小时”或重申经验做法（该语句仅用于向经验库结晶未来规则 EXP_*），\n"
-                "# 当前会话在上一轮已落盘锁定的全部 7 个目标槽位（尤其是 start_timestamp, end_timestamp, duration）必须严格保持不变！\n"
+                "# 本轮属于经验记忆归纳学习或确认轮：即使本轮用户口头提及“把开始时间往前提前半小时”、“平时对词我们都是打微信视频电话”或重申经验做法（该语句仅用于向经验库结晶未来规则 EXP_*），\n"
+                "# 当前会话在上一轮已落盘锁定的全部 7 个目标槽位（application_name, service_name, resolution, rtt, start_timestamp, end_timestamp, duration）必须严格保持不变！\n"
                 "# 必须遵守:\n"
                 "# 1. 严禁在本轮调用 find_timestamp(...) 或修改 start_timestamp / end_timestamp（忽略 TIME EVIDENCE 的偏移）;\n"
-                "# 2. 必须输出 `# 身份判定: 更新已有意图 I1` 与 `# intent: I1`，并用 `state.xxx = state.xxx` 完整保留 prev_state 中的全部 7 个槽位!\n"
+                "# 2. 严禁修改 state.resolution 或 state.rtt（严禁从【用户习惯画像】或长期记忆中拉取其他参数如 100ms 覆盖 prev_state 已有的 resolution 和 rtt）;\n"
+                "# 3. 必须输出 `# 身份判定: 更新已有意图 I1` 与 `# intent: I1`，并用 `state.xxx = state.xxx` 完整保留 prev_state 中的全部 7 个槽位!\n"
             )
 
         # =====================================================================
@@ -988,7 +989,7 @@ class MemoryBridge:
                 else:
                     hint_lines.append(
                         "# === WORKING RECORD CONFIRM RULE (工单复用确认轮保持规则, 本轮生效, 优先级最高) ===\n"
-                        "# 上一轮已补齐全部 7 个槽位，本轮用户确认开通:\n"
+                        "# 上一轮已补齐全部 7 个槽位，本轮用户确认开通（即使附带『画面要透亮就行』『顺滑』等口头语，也严禁修改 resolution 或 rtt）:\n"
                         "# 必须沿用已有意图段头 (如 # intent: I1), 并用 state.xxx = state.xxx 完整保留 prev_state 中的全部 7 个槽位!\n"
                     )
             elif self._session_wr_mode == "reuse":
@@ -1092,7 +1093,7 @@ class MemoryBridge:
                             "# === UNCLARIFIED SLANG RULE (未知个人黑话待消歧规则, 本轮生效, 优先级最高) ===\n"
                             f"# 用户本轮说出的「{slang_phrase}」是首次出现的个人黑话, 尚未在长期记忆词典中登记, 且本轮未给出对应的标准档位数值。\n"
                             "# 必须遵守:\n"
-                            f"# 1. 本轮严禁给 state.{target_slot_name} 赋值 (必须留空, 等待系统追问后用户在下一轮澄清具体数值);\n"
+                            f"# 1. 本轮严禁给 state.{target_slot_name} 赋值 (代码块中严禁写 state.{target_slot_name} = ...，严禁按通用规则兜底填 '720p'，必须留空等待系统追问后用户在下一轮澄清具体数值);\n"
                             "# 2. 本轮用户明确给出的其他槽位 (如时延/时长/开始时间) 以及上一轮 prev_state 已有的槽位必须正常赋值和沿用!\n"
                         )
 
