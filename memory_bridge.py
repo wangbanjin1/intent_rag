@@ -30,6 +30,13 @@ from memory_system.core.experience_rules import (
     trigger_matches,
 )
 from memory_system.core.namespace import user_namespace
+from memory_system.core.working_rules import (
+    classify_working_record_reference,
+    has_explicit_time,
+    referenced_day_offset,
+    reschedule_shift_minutes,
+)
+from memory_system.pipeline.extractor import _TEMP_VETO_WORDS
 
 import time_extractor as _tex
 from memory_system.pipeline.updater import compute_ebbinghaus_retention, normalize_ts_str
@@ -187,6 +194,36 @@ def _pick_working_record(
     return dict(pool[0])
 
 
+_LOC_RE = re.compile(
+    r"(?:在|到)([\u4e00-\u9fff][\u4e00-\u9fffA-Za-z0-9]{1,23}?)"
+    r"(?=这边|这儿|那边|那儿|这里|，|,|。|；|！|\s|办|开|用|做|搞|弄|准备|帮我|给|跟|要|有|了|拍|带队|打算|想)"
+)
+_LOC_PRONOUNS = {"这儿", "这边", "那边", "那儿", "这里", "那里", "线上", "路上", "现场"}
+_PARAM_VALUE_RE = re.compile(r"\d+\s*[pP]\b|\d+\s*(?:ms|毫秒)|[24][kK]|调到|压到|改成|改为|换成|降到|提到")
+
+
+def _extract_location(text: str) -> str:
+    """仅从用户话语中抽取地点 ("今天在X办…" / "到X了"), 不读取数据集 scenario 元数据。"""
+    for m in _LOC_RE.finditer(text or ""):
+        cand = m.group(1)
+        if cand in _LOC_PRONOUNS or re.search(r"\d|ms|以内|以下|时|分钟|小时|之前|上次|上周", cand):
+            continue
+        return cand
+    return ""
+
+
+def _is_temporary_override_dialogue(user_texts: list[str]) -> bool:
+    """仅凭用户话语判断本次是否为单次临时改参: 同一子句内同时出现临时否决词与具体参数改动。
+
+    (取代旧版读取数据集标签 blueprint_type == 'event_override' 的做法)
+    """
+    for txt in user_texts:
+        for clause in re.split(r"[，,。；;！!？?\n]", txt or ""):
+            if any(w in clause for w in _TEMP_VETO_WORDS) and _PARAM_VALUE_RE.search(clause):
+                return True
+    return False
+
+
 def _exp_card(eid: str, recalled: dict[str, dict[str, Any]]) -> dict[str, Any]:
     """合并内置经验模板与用户库中召回的经验卡片 (卡片字段优先)。"""
     card = dict(_BUILTIN_EXPERIENCE_TEMPLATES.get(eid) or {})
@@ -263,10 +300,20 @@ class MemoryBridge:
                 lines.append(f"state.application_name = {target_app!r}")
             if target_svc:
                 lines.append(f"state.service_name = {target_svc!r}")
+            st_dt, et_dt = _explicit_window(utterance, reference_time)
+            time_lock = ""
+            if st_dt is not None and et_dt is not None:
+                dur_min = int((et_dt - st_dt).total_seconds() // 60)
+                time_lock = (
+                    f"#   start_timestamp = '{st_dt.strftime(DT_FMT)}'  (来源: 用户本轮明说时刻, 严禁套用长期记忆中的其他时段)\n"
+                    f"#   end_timestamp   = '{et_dt.strftime(DT_FMT)}'  (来源: 用户本轮明说时刻)\n"
+                    f"#   duration        = '{dur_min}min'\n"
+                )
             return (
                 head
+                + time_lock
                 + f"# 1. 必须填 {', '.join(lines)} (按经验识别真实业务载体, 不要被字面词误导);\n"
-                + "# 2. 将本轮话语中给出的画质 (resolution)、时延 (rtt)、起止时间与时长 (start_timestamp / end_timestamp / duration) 完整填入 state!\n"
+                + "# 2. 将本轮话语中给出的画质 (resolution)、时延 (rtt)、起止时间与时长 (start_timestamp / end_timestamp / duration) 完整填入 state (严禁混入 MEMORY SYSTEM RETRIEVAL 中其他会话的时段)!\n"
             )
 
         # (b) 法定节假日顺延类经验: 日期由节假日日历计算
@@ -425,48 +472,126 @@ class MemoryBridge:
             if eid:
                 active_experiences[eid] = dict(node.content)
 
-        # 建立 (application, business) -> 正交 periodic_preference 时间窗路由映射
-        periodic_by_app_biz: dict[tuple[str, str], dict[str, Any]] = {}
+        # 建立 (application, business) -> 正交 periodic_preference 时间窗路由列表 (支持同一应用业务在不同时段的多条周期记忆)
+        periodic_list_by_app_biz: dict[tuple[str, str], list[dict[str, Any]]] = {}
+        seen_pp_keys: set[str] = set()
         for ph in periodic_hits:
             pc = ph.get("content") or {}
             key_ab = (str(pc.get("application") or ""), str(pc.get("business") or ""))
-            if key_ab[0] and key_ab[1] and key_ab not in periodic_by_app_biz:
-                periodic_by_app_biz[key_ab] = {
-                    "memory_id": ph.get("memory_id"),
-                    "memory_key": ph.get("memory_key"),
-                    "time_window": str(pc.get("time_window") or pc.get("condition") or ""),
-                    "status": ph.get("status"),
-                }
+            mk = str(ph.get("memory_key") or "")
+            if key_ab[0] and key_ab[1] and mk and mk not in seen_pp_keys:
+                seen_pp_keys.add(mk)
+                periodic_list_by_app_biz.setdefault(key_ab, []).append(
+                    {
+                        "memory_id": ph.get("memory_id"),
+                        "memory_key": mk,
+                        "time_window": str(pc.get("time_window") or pc.get("condition") or ""),
+                        "status": ph.get("status"),
+                    }
+                )
         for node in self.ms.filestore.iter_nodes(ns, memory_type="preference", subtype="periodic_preference"):
             if node.status in ("archived", "expired", "superseded") or node.validity.type == "temporary":
                 continue
             key_ab = (str(node.content.get("application") or ""), str(node.content.get("business") or ""))
-            if key_ab[0] and key_ab[1] and key_ab not in periodic_by_app_biz:
-                periodic_by_app_biz[key_ab] = {
-                    "memory_id": node.memory_id,
-                    "memory_key": node.memory_key,
-                    "time_window": str(node.content.get("time_window") or node.content.get("condition") or ""),
-                    "status": node.status,
-                }
+            mk = str(node.memory_key or "")
+            if key_ab[0] and key_ab[1] and mk and mk not in seen_pp_keys:
+                seen_pp_keys.add(mk)
+                periodic_list_by_app_biz.setdefault(key_ab, []).append(
+                    {
+                        "memory_id": node.memory_id,
+                        "memory_key": mk,
+                        "time_window": str(node.content.get("time_window") or node.content.get("condition") or ""),
+                        "status": node.status,
+                    }
+                )
+
+        ref_dt_now = _tex.parse_reference_time(reference_time)
+        ref_minutes_now = (ref_dt_now.hour * 60 + ref_dt_now.minute) if ref_dt_now is not None else None
+
+        def _select_best_periodic(
+            app_r: str, biz_r: str, app_c: str, svc_c: str, scene_str: str
+        ) -> dict[str, Any] | None:
+            pp_cands = periodic_list_by_app_biz.get((app_r, biz_r)) or []
+            if not pp_cands:
+                return None
+            if len(pp_cands) == 1:
+                return pp_cands[0]
+            # 若存在特定场景 scene_str, 优先匹配该场景下非临时历史工单对应的时段
+            if scene_str:
+                sc_wrs = [
+                    r for r in all_working_records
+                    if not _is_temp_record(r)
+                    and r.get("application_name") == app_c
+                    and r.get("service_name") == svc_c
+                    and scene_str in str(r.get("location") or "")
+                ]
+                for r in sc_wrs:
+                    try:
+                        _s = datetime.strptime(str(r["start_timestamp"]), DT_FMT)
+                        _e = datetime.strptime(str(r["end_timestamp"]), DT_FMT)
+                        wr_tw = f"{_s.strftime('%H:%M')}-{_e.strftime('%H:%M')}"
+                        for pp in pp_cands:
+                            if pp.get("time_window") == wr_tw:
+                                return pp
+                    except (KeyError, TypeError, ValueError):
+                        continue
+            # 否则按当前参考时刻 ref_minutes_now 就近选择尚未结束 (或距离最近) 的周期时间窗
+            if ref_minutes_now is not None:
+                def _pp_dist(pp: dict[str, Any]) -> tuple[int, int]:
+                    tw_s = str(pp.get("time_window") or "")
+                    m_tw = re.match(r"^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$", tw_s.strip())
+                    if not m_tw:
+                        return (1, 9999)
+                    st_m = int(m_tw.group(1)) * 60 + int(m_tw.group(2))
+                    # 尚未开始的时段 (st_m >= ref_minutes_now - 30) 优先于已过去的时段
+                    already_past = 1 if st_m < ref_minutes_now - 30 else 0
+                    return (already_past, abs(st_m - ref_minutes_now))
+                return min(pp_cands, key=_pp_dist)
+            return pp_cands[0]
 
         major_hits: list[dict[str, Any]] = []
         for h in param_hits:
             c = h.get("content") or {}
             app_raw = str(c.get("application") or "")
             biz_raw = str(c.get("business") or "")
+            sc_val = str(c.get("scene") or "").strip()
             app_cn, svc_cn = self._resolve_cn_app_svc(c, utterance)
-            paired_pp = periodic_by_app_biz.get((app_raw, biz_raw))
+            paired_pp = _select_best_periodic(app_raw, biz_raw, app_cn, svc_cn, sc_val)
             tw = str((paired_pp or {}).get("time_window") or c.get("time_window") or "")
+            res_val = c.get("resolution")
+            rtt_val = c.get("latency") or c.get("rtt")
+            # 若长期偏好节点缺少某个槽位 (如隐式归纳尚未提取全), 从该用户同应用+同业务的非临时历史工单回填
+            if not res_val or not rtt_val or not tw:
+                matching_wrs = [
+                    r for r in all_working_records
+                    if not _is_temp_record(r)
+                    and r.get("application_name") == app_cn
+                    and r.get("service_name") == svc_cn
+                ]
+                if matching_wrs:
+                    sc_wrs = [r for r in matching_wrs if sc_val and sc_val in str(r.get("location") or "")]
+                    ref_wr = (sc_wrs or matching_wrs)[0]
+                    if not res_val and ref_wr.get("resolution"):
+                        res_val = ref_wr.get("resolution")
+                    if not rtt_val and ref_wr.get("rtt"):
+                        rtt_val = ref_wr.get("rtt")
+                    if not tw and ref_wr.get("start_timestamp") and ref_wr.get("end_timestamp"):
+                        try:
+                            _s = datetime.strptime(str(ref_wr["start_timestamp"]), DT_FMT)
+                            _e = datetime.strptime(str(ref_wr["end_timestamp"]), DT_FMT)
+                            tw = f"{_s.strftime('%H:%M')}-{_e.strftime('%H:%M')}"
+                        except (TypeError, ValueError):
+                            pass
             anchored = anchor_time_window_to_ref(tw, reference_time) if tw else None
             enriched = dict(h)
             enriched["paired_periodic_key"] = (paired_pp or {}).get("memory_key") or ""
             enriched["resolved_slots"] = {
                 "application_name": app_cn,
                 "service_name": svc_cn,
-                "resolution": c.get("resolution"),
-                "rtt": c.get("latency") or c.get("rtt"),
+                "resolution": res_val,
+                "rtt": rtt_val,
                 "time_window": tw,
-                "scene": c.get("scene") or "",
+                "scene": sc_val,
                 "start_timestamp": anchored[0] if anchored else None,
                 "end_timestamp": anchored[1] if anchored else None,
                 "duration": anchored[2] if anchored else None,
@@ -505,6 +630,15 @@ class MemoryBridge:
             ]
             if explicit_svc_matches:
                 candidates = explicit_svc_matches
+
+            # 若话语明确提及了场景地点名, 优先匹配该场景记忆
+            explicit_scene_matches = [
+                m for m in candidates
+                if m["resolved_slots"].get("scene")
+                and m["resolved_slots"]["scene"] in utterance
+            ]
+            if explicit_scene_matches:
+                candidates = explicit_scene_matches
 
             # 排序优先级: active/reinforced 优先于 candidate, 然后按检索得分降序
             candidates.sort(
@@ -668,7 +802,12 @@ class MemoryBridge:
                 if rule_txt:
                     hint_lines.append(rule_txt)
 
-        elif turn_index > 1 and self._session_exp_triggered and prev_states:
+        elif (
+            turn_index > 1
+            and self._session_exp_triggered
+            and prev_states
+        ):
+            # 经验记忆归纳学习或确认轮: 当前会话在上一轮已落盘锁定的全部 7 个目标槽位保持不变
             hint_lines.append(
                 "# === EXPERIENCE FOLLOW-UP KEEP RULE (经验记忆归纳/确认轮状态锁定规则, 本轮生效, 优先级最高) ===\n"
                 "# 本轮属于经验记忆归纳学习或确认轮：即使本轮用户口头提及“把开始时间往前提前半小时”或重申经验做法（该语句仅用于向经验库结晶未来规则 EXP_*），\n"
@@ -702,66 +841,80 @@ class MemoryBridge:
                 "duration": rs["duration"],
             }
 
-        if turn_index == 1 and not self._session_exp_triggered and target_wr is not None:
-            # Working Memory Mode 1: working_record_reschedule ("把昨天预约的...往后推迟/提前一个小时")
-            if "昨天预约的" in utterance and ("推迟" in utterance or "提前" in utterance):
+        wr_act = classify_working_record_reference(utterance) if turn_index == 1 else None
+        # 学习会话 (经验尚未结晶) 不屏蔽其他记忆层: 系统按"没有该经验"时的正常逻辑受理
+        exp_applied = bool(self._session_exp_triggered) and not str(self._session_exp_triggered).endswith(":LEARNING")
+        if turn_index == 1 and not exp_applied and target_wr is not None:
+            # 工单指代类型由正则句式族 + "本轮是否已给出今日时间" 判定 (core/working_rules.py), 不依赖样本原句
+            # Working Memory Mode 1: working_record_reschedule (把之前预约的工单改期到今日对应时段)
+            if wr_act == "reschedule":
+                ref_dt = _tex.parse_reference_time(reference_time)
+                pool = [r for r in all_working_records if not _is_temp_record(r)]
+                picked = _pick_working_record(pool, utterance, prefer_latest=False)
+                if picked:
+                    target_wr = picked
                 self._session_wr_mode = "reschedule"
                 self._session_wr_target = target_wr
-                # 将工单或主线记忆的起止时分锚定到当前 reference_time 所在日期
-                resched_start = target_wr.get("start_timestamp")
-                resched_end = target_wr.get("end_timestamp")
-                resched_dur = target_wr.get("duration")
-                if best_major is not None and best_major["resolved_slots"].get("start_timestamp"):
-                    resched_start = best_major["resolved_slots"]["start_timestamp"]
-                    resched_end = best_major["resolved_slots"]["end_timestamp"]
-                    resched_dur = best_major["resolved_slots"]["duration"]
-                elif resched_start and len(reference_time) >= 11 and len(str(resched_start)) >= 11:
-                    date_prefix = reference_time[:11]
-                    resched_start = date_prefix + str(resched_start)[11:]
-                    if resched_end and len(str(resched_end)) >= 11:
-                        resched_end = date_prefix + str(resched_end)[11:]
-
-                # 逆推改期前的原预约挂起时段，消除模型把“已改期目标时段”误当成“原时段”再次加减1小时的歧义
+                resched_start = resched_end = None
                 pre_shift_desc = ""
                 try:
-                    st_dt = datetime.strptime(str(resched_start), DT_FMT)
-                    et_dt = datetime.strptime(str(resched_end), DT_FMT)
-                    delta_h = timedelta(hours=-1) if "推迟" in utterance else timedelta(hours=1)
-                    orig_st = (st_dt + delta_h).strftime("%H:%M")
-                    orig_et = (et_dt + delta_h).strftime("%H:%M")
-                    new_st = st_dt.strftime("%H:%M")
-                    new_et = et_dt.strftime("%H:%M")
-                    act_word = "往后推迟1小时" if "推迟" in utterance else "提前1小时"
-                    pre_shift_desc = f"#   原预约挂起时段 = '{orig_st}-{orig_et}' -> 经【{act_word}】换算后的最终目标时段 = '{new_st}-{new_et}'\n"
-                except Exception:
-                    pre_shift_desc = ""
-
+                    o_st = datetime.strptime(str(target_wr.get("start_timestamp")), DT_FMT)
+                    o_et = datetime.strptime(str(target_wr.get("end_timestamp")), DT_FMT)
+                    base = ref_dt if ref_dt is not None else o_st
+                    a_st = base.replace(hour=o_st.hour, minute=o_st.minute, second=0, microsecond=0)
+                    a_et = a_st + (o_et - o_st)
+                    resched_start, resched_end = a_st.strftime(DT_FMT), a_et.strftime(DT_FMT)
+                    shift_m = reschedule_shift_minutes(utterance)
+                    if shift_m:
+                        pre_st = a_st - timedelta(minutes=shift_m)
+                        pre_et = a_et - timedelta(minutes=shift_m)
+                        pre_shift_desc = (
+                            f"#   (注: 原预约基准时段为 {pre_st.strftime('%H:%M')}~{pre_et.strftime('%H:%M')}, "
+                            f"系统已执行完您要求的{'提前' if shift_m < 0 else '推迟'}{abs(shift_m)}分钟偏移, "
+                            f"最终改期时段即下方 {a_st.strftime('%H:%M')}~{a_et.strftime('%H:%M')}, 严禁在下方时段基础上再次加减1小时!)\n"
+                        )
+                except (TypeError, ValueError):
+                    resched_start = resched_end = None
+                resched_dur = target_wr.get("duration")
+                time_lines = (
+                    f"{pre_shift_desc}"
+                    f"#   改期后最终 start_timestamp = {resched_start!r}\n"
+                    f"#   改期后最终 end_timestamp   = {resched_end!r}\n"
+                    f"#   duration                   = {resched_dur!r}\n"
+                    if resched_start and resched_end
+                    else "#   (目标工单缺少可用时段: 时间按用户话语与工单时段自行换算)\n"
+                )
                 hint_lines.append(
                     "# === WORKING RECORD RESCHEDULE RULE (历史预约工单改期规则, 本轮生效, 优先级最高) ===\n"
-                    f"# 用户要求将昨天预约的保障工单改期，记忆系统已定位目标工单 [{target_wr.get('record_id')}] 并完成改期偏移换算:\n"
-                    f"{pre_shift_desc}"
+                    f"# 用户要求将之前预约的保障工单改期，记忆系统已定位目标工单 [{target_wr.get('record_id')}] 并完成改期时段对齐:\n"
                     f"#   application_name = {target_wr.get('application_name')!r}\n"
                     f"#   service_name     = {target_wr.get('service_name')!r}\n"
                     f"#   resolution       = {target_wr.get('resolution')!r}\n"
                     f"#   rtt              = {target_wr.get('rtt')!r}\n"
-                    f"#   改期换算完成后的最终 start_timestamp = {resched_start!r} (已包含推迟/提前1小时，严禁在此基础上再次加减1小时!)\n"
-                    f"#   改期换算完成后的最终 end_timestamp   = {resched_end!r} (已包含推迟/提前1小时，严禁在此基础上再次加减1小时!)\n"
-                    f"#   duration         = {resched_dur!r}\n"
-                    "# 必须遵守: # summary 保持简短一行，本轮直接将上述已换算完毕的 7 个槽位原样写入 state!\n"
+                    f"{time_lines}"
+                    "# 必须遵守:\n"
+                    "# 1. 本轮是当前对话的第 1 轮 (prev_state 为空)，段头必须写 # intent: new (严禁写 # intent: I1);\n"
+                    "# 2. 代码块中必须显式写出全部 7 个槽位赋值 (严禁省略 application_name, service_name, resolution, rtt):\n"
+                    f"#    state.application_name = {target_wr.get('application_name')!r}\n"
+                    f"#    state.service_name = {target_wr.get('service_name')!r}\n"
+                    f"#    state.resolution = {target_wr.get('resolution')!r}\n"
+                    f"#    state.rtt = {target_wr.get('rtt')!r}\n"
+                    f"#    state.timestamp = find_timestamp(start={resched_start!r}, end={resched_end!r}, duration={resched_dur!r})\n"
+                    "# 3. 严禁对 start_timestamp 再次做提前/推迟换算!\n"
                 )
-            # Working Memory Mode 2: working_record_disambig ("想按之前的意图保障单规格开...时间从...")
-            elif "想按之前的意图保障单规格" in utterance:
+            # Working Memory Mode 2: working_record_disambig (引用历史工单规格, 且本轮已给出今日时间)
+            elif wr_act == "disambig":
                 self._session_wr_mode = "disambig"
                 self._session_wr_target = target_wr
                 hint_lines.append(
                     "# === WORKING RECORD DISAMBIGUATION RULE (多笔历史工单待消歧规则, 本轮生效, 优先级最高) ===\n"
-                    "# 用户提及“想按之前的意图保障单规格”，但历史账本中存在多笔规格不同的工单，本轮需向用户追问选哪一笔。\n"
+                    "# 用户引用了历史意图保障单规格并给出了今日时间，但历史账本中存在多笔工单，本轮需向用户确认按哪一笔的规格。\n"
                     "# 必须遵守:\n"
-                    "# 1. 本轮只填用户明确说出的 application_name, service_name, start_timestamp, end_timestamp, duration;\n"
-                    "# 2. 严禁在本轮给 state.resolution 和 state.rtt 赋值 (必须留空 None，等待下一轮用户指定按哪笔工单后再补齐)!\n"
+                    "# 1. 本轮只填用户明确说出的槽位 (application_name, service_name, start_timestamp, end_timestamp, duration 等);\n"
+                    "# 2. 若用户本轮没有明说画质/时延, 不要给 state.resolution 和 state.rtt 赋值 (留空, 等用户指定按哪笔工单后再补齐); 明说了则照填!\n"
                 )
-            # Working Memory Mode 3: working_record_reuse ("还按上周在...办的那个意图保障单规格来" / "调一下上个月初在...办的那个意图保障单规格")
-            elif ("意图保障单规格" in utterance) and ("上周" in utterance or "上个月" in utterance):
+            # Working Memory Mode 3: working_record_reuse (引用历史工单规格, 本轮未给出今日时间)
+            elif wr_act == "reuse":
                 self._session_wr_mode = "reuse"
                 self._session_wr_target = target_wr
                 hint_lines.append(
@@ -772,7 +925,12 @@ class MemoryBridge:
                     f"#   resolution       = {target_wr.get('resolution')!r}\n"
                     f"#   rtt              = {target_wr.get('rtt')!r}\n"
                     "# 必须遵守:\n"
-                    "# 1. 本轮必须把上述 4 个规格槽位 (application_name, service_name, resolution, rtt) 写入 state;\n"
+                    "# 1. 本轮必须把上述历史工单的 4 个规格槽位原样写入 state:\n"
+                    f"#    state.application_name = {target_wr.get('application_name')!r}\n"
+                    f"#    state.service_name     = {target_wr.get('service_name')!r}\n"
+                    f"#    state.resolution       = {target_wr.get('resolution')!r}\n"
+                    f"#    state.rtt              = {target_wr.get('rtt')!r}\n"
+                    "#    注意: 即使话语中带有『画质画面通透就行』『特写清晰』『顺滑』等口语化形容，也是对该历史工单规格的复述确认，严禁将其降级替换为通用默认值 '720p'!\n"
                     "# 2. 本轮严禁填写 start_timestamp, end_timestamp, duration (必须留空，等待下一轮用户告知今天具体时段)!\n"
                 )
 
@@ -781,8 +939,16 @@ class MemoryBridge:
             if self._session_wr_mode == "reschedule":
                 hint_lines.append(
                     "# === WORKING RECORD RESCHEDULE CONFIRM RULE (工单改期确认轮保持规则, 本轮生效, 优先级最高) ===\n"
-                    "# 上一轮已完成工单改期后的全部 7 个槽位赋值，本轮用户确认修改:\n"
-                    "# 必须沿用已有意图段头 (如 # intent: I1), 并用 state.xxx = state.xxx 完整保留 prev_state 中的全部 7 个槽位, 严禁改动或留空!\n"
+                    "# 上一轮 (Turn 1) 已经完成了提前/推迟换算，prev_state 中的 start_timestamp 与 end_timestamp 已经是改期后的最终时间!\n"
+                    "# 本轮用户只是口头确认（如『确认提前并按新时间修改』），严禁再次调用 find_timestamp 减去或加上 1 小时!\n"
+                    "# 必须沿用已有意图段头 (如 # intent: I1), 代码块严格原样写:\n"
+                    "#   state.application_name = state.application_name\n"
+                    "#   state.service_name = state.service_name\n"
+                    "#   state.resolution = state.resolution\n"
+                    "#   state.rtt = state.rtt\n"
+                    "#   state.start_timestamp = state.start_timestamp\n"
+                    "#   state.end_timestamp = state.end_timestamp\n"
+                    "#   state.duration = state.duration\n"
                 )
             elif self._session_wr_mode == "disambig":
                 if turn_index == 2:
@@ -795,13 +961,16 @@ class MemoryBridge:
                     res_v, rtt_v = twr.get("resolution"), twr.get("rtt")
                     hint_lines.append(
                         "# === WORKING RECORD DISAMBIGUATION RESOLVE RULE (历史工单消歧选定规则, 本轮生效, 优先级最高) ===\n"
-                        f"# 用户本轮选定了最近一次历史工单规格 [{twr.get('record_id')}]:\n"
+                        f"# 用户本轮已完成历史工单消歧确认，锁定目标历史工单规格 [{twr.get('record_id')}]:\n"
                         f"#   resolution = {res_v!r}\n"
                         f"#   rtt        = {rtt_v!r}\n"
                         "# 必须遵守:\n"
                         "# 1. 沿用已有意图段头 (如 # intent: I1), 保留 prev_state 已有的 application_name, service_name, start_timestamp, end_timestamp, duration;\n"
                         + (
-                            f"# 2. 将 state.resolution = {res_v!r} 和 state.rtt = {rtt_v!r} 补齐!\n"
+                            f"# 2. 无论本轮用户话语是说『按最近那次』还是重申今日起止时段，代码块中都必须显式写出:\n"
+                            f"#    state.resolution = {res_v!r}\n"
+                            f"#    state.rtt = {rtt_v!r}\n"
+                            "#    严禁漏写 state.resolution 和 state.rtt!\n"
                             if res_v and rtt_v
                             else "# 2. 账本中该工单缺少画质/时延记录, 不要臆造取值, 仅按用户话语填写!\n"
                         )
@@ -813,12 +982,35 @@ class MemoryBridge:
                         "# 必须沿用已有意图段头 (如 # intent: I1), 并用 state.xxx = state.xxx 完整保留 prev_state 中的全部 7 个槽位!\n"
                     )
             elif self._session_wr_mode == "reuse":
-                hint_lines.append(
-                    "# === WORKING RECORD REUSE TIME FILL RULE (历史工单复用补充今日时段规则, 本轮生效, 优先级最高) ===\n"
-                    "# 上一轮已从历史工单填好 application_name, service_name, resolution, rtt。本轮用户给出了今日具体保障起止时间与时长:\n"
-                    "# 1. 沿用已有意图段头 (如 # intent: I1), 用 state.xxx = state.xxx 完整保留 prev_state 中的 application_name, service_name, resolution, rtt;\n"
-                    "# 2. 解析本轮用户话语中的今日起止时间与时长，通过 find_timestamp(start=..., end=..., duration=...) 填入 state!\n"
-                )
+                u_st, u_et = _explicit_window(utterance, reference_time)
+                ref_dt = _tex.parse_reference_time(reference_time)
+                rec_st = rec_et = None
+                if u_st is None and ref_dt is not None and twr.get("start_timestamp"):
+                    # 用户未报今日时段而是指向历史工单本身 ("按最近那次的来"): 时段取该工单时分并锚定到今天
+                    try:
+                        _s = datetime.strptime(str(twr.get("start_timestamp")), DT_FMT)
+                        _e = datetime.strptime(str(twr.get("end_timestamp")), DT_FMT)
+                        rec_st = ref_dt.replace(hour=_s.hour, minute=_s.minute, second=0, microsecond=0)
+                        rec_et = rec_st + (_e - _s)
+                    except (TypeError, ValueError):
+                        rec_st = rec_et = None
+                if rec_st is not None and rec_et is not None and not has_explicit_time(utterance):
+                    hint_lines.append(
+                        "# === WORKING RECORD REUSE TIME FILL RULE (历史工单复用补充今日时段规则, 本轮生效, 优先级最高) ===\n"
+                        f"# 用户本轮未报新的时段, 而是沿用历史工单 [{twr.get('record_id')}] 的时段 (已锚定到今天):\n"
+                        f"#   start_timestamp = '{rec_st.strftime(DT_FMT)}'\n"
+                        f"#   end_timestamp   = '{rec_et.strftime(DT_FMT)}'\n"
+                        f"#   duration        = {twr.get('duration')!r}\n"
+                        "# 1. 沿用已有意图段头 (如 # intent: I1), 保留 prev_state 中的 application_name, service_name, resolution, rtt;\n"
+                        "# 2. 将上述时段写入 state!\n"
+                    )
+                else:
+                    hint_lines.append(
+                        "# === WORKING RECORD REUSE TIME FILL RULE (历史工单复用补充今日时段规则, 本轮生效, 优先级最高) ===\n"
+                        "# 上一轮已从历史工单填好 application_name, service_name, resolution, rtt。本轮用户给出了今日具体保障起止时间与时长:\n"
+                        "# 1. 沿用已有意图段头 (如 # intent: I1), 用 state.xxx = state.xxx 完整保留 prev_state 中的 application_name, service_name, resolution, rtt;\n"
+                        "# 2. 解析本轮用户话语中的今日起止时间与时长，通过 find_timestamp(start=..., end=..., duration=...) 填入 state!\n"
+                    )
 
         # Case A: Turn 1 含“老规矩/按上次”等触发词且检索到主/支线记忆 (且非工单/经验模式) -> 立即补全全部 7 个槽位
         if (
@@ -826,7 +1018,7 @@ class MemoryBridge:
             and has_trigger
             and best_major is not None
             and not self._session_wr_mode
-            and not self._session_exp_triggered
+            and not exp_applied
         ):
             self._session_memory_triggered = True
             self._turn1_filled_memory = best_major["resolved_slots"]
@@ -843,37 +1035,66 @@ class MemoryBridge:
                 f"#   duration         = {rs['duration']!r}\n"
                 "# 必须遵守:\n"
                 "# 1. 本轮必须把上述记忆中的 7 个槽位全部写入 state (含 resolution, rtt, 以及 find_timestamp(start=..., end=..., duration=...));\n"
-                "# 2. 若用户本轮话语中对某个槽位给出了明确的新值, 该槽位以本轮话语为准, 其余槽位一律使用上述记忆值补齐, 严禁留空!\n"
+                "# 2. 若用户本轮话语中对某个槽位给出了明确的标准档位新值 (如 720p/1080p/30ms/50ms) 或命中了下方【个人黑话词典】映射值, 该槽位以新值为准; 若话语中只是用未带具体数值的口语词 (如『人像要细腻』『画面通透』『顺滑』) 修饰, 严禁将其降级为默认 720p, 一律保持上述记忆值 resolution="
+                f"{rs['resolution']!r}, rtt={rs['rtt']!r}!\n"
             )
 
-        # Case B: 非记忆触发会话 (evidence_session) 中用户首次说出未登记的引号黑话 -> 该槽位留空待下一轮澄清 (T3-1 Turn 2)
+        # Case B: 非记忆触发会话 (evidence_session):
+        # 1) Turn 1 冷启动未触发记忆时，严禁从用户画像/历史习惯中自动脑补用户未说的 resolution/rtt/end_timestamp/duration;
+        # 2) 用户首次说出未登记的引号黑话 -> 该槽位留空待下一轮澄清 (T3-1 Turn 2);
+        # 3) Turn >= 2 用户补充时长/结束时间/质量参数时，必须基于 prev_state 的 start_timestamp 调用 find_timestamp 补全完整时段。
         if (
             not self._session_memory_triggered
             and not self._session_wr_mode
-            and not self._session_exp_triggered
-            and not has_trigger
+            and not exp_applied
         ):
-            for m_slang in _QUOTED_SLANG_RE.finditer(utterance or ""):
-                slot_kind, slang_phrase = m_slang.group(1), m_slang.group(2).strip()
-                is_res_slot = slot_kind in ("画质", "清晰度", "分辨率")
-                # 若话语同句已经直接给出了标准数值 (如 "画质画面通透就行，按1080p开"), 则不属于未澄清黑话
-                if is_res_slot and _EXPLICIT_RES_RE.search(utterance):
-                    continue
-                if not is_res_slot and _EXPLICIT_RTT_RE.search(utterance):
-                    continue
-                if slang_phrase not in known_aliases:
-                    target_slot_name = "resolution" if is_res_slot else "rtt"
-                    hint_lines.append(
-                        "# === UNCLARIFIED SLANG RULE (未知个人黑话待消歧规则, 本轮生效, 优先级最高) ===\n"
-                        f"# 用户本轮说出的「{slang_phrase}」是首次出现的个人黑话, 尚未在长期记忆词典中登记, 且本轮未给出对应的标准档位数值。\n"
-                        "# 必须遵守:\n"
-                        f"# 1. 本轮严禁给 state.{target_slot_name} 赋值 (必须留空, 等待系统追问后用户在下一轮澄清具体数值);\n"
-                        "# 2. 本轮用户明确给出的其他槽位 (如时延/时长/开始时间) 以及上一轮 prev_state 已有的槽位必须正常赋值和沿用!\n"
-                    )
+            if (
+                turn_index == 1
+                and not has_trigger
+                and not _EXPLICIT_RES_RE.search(utterance)
+                and not _EXPLICIT_RTT_RE.search(utterance)
+            ):
+                hint_lines.append(
+                    "# === COLD-START LITERAL EXTRACTION RULE (非记忆触发轮字面提取规则, 本轮生效, 优先级最高) ===\n"
+                    "# 用户本轮未说『老规矩/按上次』等记忆触发词，也未提及画质或时延。本轮必须仅提取用户字面说出的槽位:\n"
+                    "# 严禁从长期记忆或用户画像中自动借用 resolution、rtt、end_timestamp 或 duration (用户没说的槽位一律留空，等待下一轮追问补充)!\n"
+                )
+            elif turn_index > 1 and prev_states:
+                hint_lines.append(
+                    "# === MULTI-TURN SLOT COMPLETION RULE (多轮证据补槽规则, 本轮生效, 优先级最高) ===\n"
+                    "# 若本轮用户补充了持续时长 (如『预计持续90min』『持续2个小时』) 或结束时间，而 prev_state 已有 start_timestamp:\n"
+                    "# 注意: TIME EVIDENCE 只是系统提供给你的参考文本，不会自动写入 state! 你必须在下方 Python 代码块中显式调用:\n"
+                    "#   state.timestamp = find_timestamp(start=..., end=..., duration=...)\n"
+                    "# 把 start_timestamp、end_timestamp 与 duration 一并写入 state，严禁只写 resolution/rtt 而漏写 state.timestamp!\n"
+                )
+            if not has_trigger:
+                for m_slang in _QUOTED_SLANG_RE.finditer(utterance or ""):
+                    slot_kind, slang_phrase = m_slang.group(1), m_slang.group(2).strip()
+                    is_res_slot = slot_kind in ("画质", "清晰度", "分辨率")
+                    # 若话语同句已经直接给出了标准数值 (如 "画质画面通透就行，按1080p开"), 则不属于未澄清黑话
+                    if is_res_slot and _EXPLICIT_RES_RE.search(utterance):
+                        continue
+                    if not is_res_slot and _EXPLICIT_RTT_RE.search(utterance):
+                        continue
+                    if slang_phrase not in known_aliases:
+                        target_slot_name = "resolution" if is_res_slot else "rtt"
+                        hint_lines.append(
+                            "# === UNCLARIFIED SLANG RULE (未知个人黑话待消歧规则, 本轮生效, 优先级最高) ===\n"
+                            f"# 用户本轮说出的「{slang_phrase}」是首次出现的个人黑话, 尚未在长期记忆词典中登记, 且本轮未给出对应的标准档位数值。\n"
+                            "# 必须遵守:\n"
+                            f"# 1. 本轮严禁给 state.{target_slot_name} 赋值 (必须留空, 等待系统追问后用户在下一轮澄清具体数值);\n"
+                            "# 2. 本轮用户明确给出的其他槽位 (如时延/时长/开始时间) 以及上一轮 prev_state 已有的槽位必须正常赋值和沿用!\n"
+                        )
 
         # Case C: Turn >= 2 且上一轮已由长期记忆补齐全部 7 个槽位 (T2-1 确认轮 / T2-5 延长时长轮 / T2-3 临时改参轮)
         if turn_index > 1 and self._session_memory_triggered and prev_states:
-            if "延长" in utterance or _EXPLICIT_RES_RE.search(utterance) or _EXPLICIT_RTT_RE.search(utterance):
+            is_param_mod = (
+                any(w in utterance for w in ("临时", "改", "调到", "压到", "降到", "提到", "换成"))
+                and "以后也照这个标准" not in utterance
+                and "平时说的" not in utterance
+                and bool(_EXPLICIT_RES_RE.search(utterance) or _EXPLICIT_RTT_RE.search(utterance))
+            )
+            if "延长" in utterance or is_param_mod:
                 hint_lines.append(
                     "# === MEMORY FOLLOW-UP UPDATE RULE (老规矩后续轮微调规则, 本轮生效, 优先级最高) ===\n"
                     "# 上一轮已通过长期记忆补齐了完整意图状态 prev_state。本轮用户在老规矩基础上做局部调整:\n"
@@ -983,40 +1204,37 @@ class MemoryBridge:
         return user_context, memory_hint, trace_info
 
     @staticmethod
-    def _extract_working_record_from_session(session: dict[str, Any]) -> dict[str, Any] | None:
-        """从已完结会话的 intents 中提取 working_record_to_append 工单字典。"""
-        if isinstance(session.get("working_record_to_append"), dict):
-            return dict(session["working_record_to_append"])
-        meta = session.get("session_meta") or {}
-        if isinstance(meta.get("working_record_to_append"), dict):
-            return dict(meta["working_record_to_append"])
+    def _extract_working_record_from_session(
+        session: dict[str, Any], predicted_final: dict[str, dict[str, Any]] | None = None
+    ) -> dict[str, Any] | None:
+        """用【系统自身预测的最终意图状态】生成本会话的 working_record (工作记忆账本条目)。
 
-        intents = session.get("intents") or []
-        if not intents:
+        不读取任何数据集 GT / 标签 (intents / scenario / blueprint_type), 避免评测泄漏:
+          - 槽位值: predicted_final (run_session 输出的 session_out[k]['pred_flat'])
+          - 地点:   仅从用户话语抽取
+          - 临时单: 仅凭用户话语判定 (临时词 + 具体改参同句)
+        predicted_final 缺失时不写账本。
+        """
+        if not predicted_final:
             return None
-        resolved_intent = None
-        for it in intents:
-            if isinstance(it, dict) and it.get("status") == "resolved":
-                resolved_intent = it
-                break
-        if resolved_intent is None:
+        cands = [
+            dict(v) for v in predicted_final.values()
+            if isinstance(v, dict) and v.get("application_name") and v.get("service_name")
+        ]
+        if not cands:
             return None
-
-        params = resolved_intent.get("params") or {}
-        app_val = ((params.get("application_name") or {}).get("value")) or ""
-        svc_val = ((params.get("service_name") or {}).get("value")) or ""
-        res_val = (((params.get("resolution") or {}).get("min_value") or {}).get("value")) or ""
-        rtt_val = (((params.get("rtt") or {}).get("max_value") or {}).get("value")) or ""
-        ts_block = params.get("timestamp") or {}
-        start_val = ((ts_block.get("start_timestamp") or {}).get("value")) or ""
-        end_val = ((ts_block.get("end_timestamp") or {}).get("value")) or ""
-        dur_val = ((ts_block.get("duration") or {}).get("value")) or ""
-        if not app_val or not svc_val:
-            return None
+        pf = cands[-1]
 
         user_id = str(session.get("user_id", "default_user"))
         session_id = str(session.get("session_id", ""))
         reference_time = str(session.get("reference_time", ""))
+        user_texts: list[str] = []
+        for t in session.get("event_sequence") or []:
+            u = t.get("user") if isinstance(t, dict) else None
+            utt = u.get("utterance", "") if isinstance(u, dict) else (str(u) if u else "")
+            if utt:
+                user_texts.append(utt)
+
         m_ymd = re.search(r"(\d{4})年(\d{2})月(\d{2})日", reference_time)
         m_idx = re.search(r"-(\d+)$", session_id)
         sess_idx = m_idx.group(1) if m_idx else (session_id or "00")
@@ -1026,41 +1244,48 @@ class MemoryBridge:
             # 无参考日期时不伪造固定日期, 直接以会话编号区分
             record_id = f"REC_{user_id}_{sess_idx}"
 
-        scenario = meta.get("scenario") or {}
-        bp_type = str(scenario.get("blueprint_type") or "")
-        mem_action = str(scenario.get("memory_action") or "")
-        # 过滤单次临时异常覆写会话 (如高铁临时降级 event_override), 避免污染常规工作记忆账本
-        if bp_type == "event_override" or "override" in mem_action:
-            return None
-
-        loc = str(scenario.get("environment") or "")
+        loc = ""
+        for utt in user_texts:
+            loc = _extract_location(utt)
+            if loc:
+                break
+        is_temp = _is_temporary_override_dialogue(user_texts)
         return {
             "record_id": record_id,
             "session_id": session_id,
             "created_at": reference_time,
-            "application_name": app_val,
-            "service_name": svc_val,
-            "resolution": res_val,
-            "rtt": rtt_val,
-            "start_timestamp": start_val,
-            "end_timestamp": end_val,
-            "duration": dur_val,
+            "application_name": pf.get("application_name") or "",
+            "service_name": pf.get("service_name") or "",
+            "resolution": pf.get("resolution") or "",
+            "rtt": pf.get("rtt") or "",
+            "start_timestamp": pf.get("start_timestamp") or "",
+            "end_timestamp": pf.get("end_timestamp") or "",
+            "duration": pf.get("duration") or "",
             "location": loc,
             "scene": loc,
             "status": "completed",
-            "validity": "long_term",
+            "is_temporary_override": is_temp,
+            "validity": "temporary" if is_temp else "long_term",
             "temporal_reference_aliases": ["上次", "上周", "上个月初", "之前", "昨天预约"],
         }
 
-    def record_session(self, session: dict[str, Any], tenant_id: str = "default") -> dict[str, Any]:
-        """会话结束后调用 MemorySystem.record_session() 萃取并更新该用户的长期记忆库。"""
+    def record_session(
+        self,
+        session: dict[str, Any],
+        tenant_id: str = "default",
+        predicted_final: dict[str, dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """会话结束后调用 MemorySystem.record_session() 萃取并更新该用户的长期记忆库。
+
+        predicted_final: 本会话系统预测的最终意图 {intent_key: pred_flat}, 用于写工作记忆账本。
+        注意: 不再把数据集 session_meta (memory_role / blueprint_type / scenario 等标签) 传给记忆系统。
+        """
         user_id = str(session.get("user_id", "default_user"))
         session_id = str(session.get("session_id", ""))
         reference_time = str(session.get("reference_time", ""))
         turns = list(session.get("event_sequence") or [])
-        metadata = dict(session.get("session_meta") or {})
-        metadata["reference_time"] = reference_time
-        wr_to_append = self._extract_working_record_from_session(session)
+        metadata: dict[str, Any] = {"reference_time": reference_time}
+        wr_to_append = self._extract_working_record_from_session(session, predicted_final)
         if wr_to_append:
             metadata["working_record_to_append"] = wr_to_append
 

@@ -227,6 +227,8 @@ def _extract_mentions(utterance: str, ref_dt: datetime) -> tuple[list[Mention], 
         default_anchor = ("rel", 0)
     # 句级主导时段: 区间终点常省略时段词 ("晚上7点到8点半"), 裸时刻继承 PM 语义
     default_pm = bool(re.search(r"下午|傍晚|晚上|今晚", utterance))
+    # 全句无任何时段词 (上午/下午/晚上…): 用于参考时间感知的裸时刻 PM 消歧
+    any_period = bool(_PERIOD_SCAN_RE.search(utterance))
 
     mentions: list[Mention] = []
     seen_spans: list[tuple[int, int]] = []
@@ -272,6 +274,16 @@ def _extract_mentions(utterance: str, ref_dt: datetime) -> tuple[list[Mention], 
         dt: datetime | None = None
         if base_date is not None:
             dt = base_date + timedelta(hours=clock_h, minutes=minute)
+        # 参考时间感知的裸时刻消歧: 全句无时段词、锚定当天、按字面已早于参考时间 (容差 60min),
+        # 而 +12h 后不早于参考时间 -> 按下午/晚上理解。
+        # 例: 参考时间 13:45 说 "今天是从两点弄到四点" -> 14:00-16:00 (而非已过去的 02:00-04:00)
+        if (dt is not None and m.group("period") is None and not any_period and not bare_pm
+                and 0 < clock_h < 12 and dt.date() == ref_dt.date()
+                and dt < ref_dt - timedelta(minutes=60)
+                and dt + timedelta(hours=12) >= ref_dt - timedelta(minutes=60)):
+            dt = dt + timedelta(hours=12)
+            clock_h += 12
+            bare_pm = True
         clock = f"{clock_h % 24:02d}:{minute:02d}"
         mentions.append(Mention(
             raw=m.group(0), dt=dt, clock=clock,
@@ -290,7 +302,8 @@ def _extract_mentions(utterance: str, ref_dt: datetime) -> tuple[list[Mention], 
 
 # ---------------- 时长提取 ----------------
 
-_DUR_UNIT = rf"(?:半个?(?:小时|钟头)|{_HOUR}个?半(?:小时|钟头)|{_HOUR}个?(?:小时|钟头)半|{_HOUR}\s*个?(?:小时|钟头)|{_HOUR}\s*分钟)"
+_DUR_MIN = rf"(?:{_HOUR}|\d{{1,4}})"
+_DUR_UNIT = rf"(?:半个?(?:小时|钟头)|{_HOUR}个?半(?:小时|钟头)|{_HOUR}个?(?:小时|钟头)半|{_HOUR}\s*个?(?:小时|钟头)|{_DUR_MIN}\s*分钟|\d{{1,4}}\s*min(?![a-zA-Z]))"
 _DUR_RE = re.compile(rf"(?P<dur>{_DUR_UNIT})")
 _DUR_LEADS = ("持续", "时长", "历时", "一共", "总共", "共计", "用", "办", "开", "播",
               "看", "玩", "保障", "延长", "改成", "改为", "定")
@@ -308,9 +321,13 @@ def _duration_minutes(raw: str) -> int | None:
     if m:
         h = _cn_num(m.group(1))
         return h * 60 if h is not None else None
-    m = re.fullmatch(rf"({_HOUR})\s*分钟", s)
+    m = re.fullmatch(rf"({_DUR_MIN})\s*分钟", s)
     if m:
-        return _cn_num(m.group(1))
+        raw_v = m.group(1)
+        return int(raw_v) if raw_v.isdigit() else _cn_num(raw_v)
+    m = re.fullmatch(r"(\d{1,4})\s*min", s, re.IGNORECASE)
+    if m:
+        return int(m.group(1))
     return None
 
 

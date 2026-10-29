@@ -86,7 +86,9 @@ def _eval_persona(p_dir: Path, work_data_root: Path, cfg: Dict[str, Any]) -> Dic
         t_ok_cnt, t_tot_cnt, t_details = judge_turn(t_gts, per_turn_pred)
 
         # Session 结束后写入 MemorySystem (含三层记忆事件处理与工单入库)
-        mem_after = bridge.record_session(sess)
+        # 工作记忆账本用【系统预测的最终意图】写入, 不使用 GT intents / 数据集标签 (避免评测泄漏)
+        predicted_final = {k: v.get("pred_flat") for k, v in session_out.items() if (v.get("pred_flat") or {}).get("application_name")}
+        mem_after = bridge.record_session(sess, predicted_final=predicted_final)
         elapsed = round(time.time() - t0, 2)
 
         if s_ok:
@@ -179,7 +181,12 @@ def _eval_persona(p_dir: Path, work_data_root: Path, cfg: Dict[str, Any]) -> Dic
     }
 
 
-def run_evaluation(selected_dirs: List[Path], work_data_root: Path) -> Dict[str, Any]:
+def run_evaluation(
+    selected_dirs: List[Path],
+    work_data_root: Path,
+    cfg_path: Path | None = None,
+    max_workers: int = 5,
+) -> Dict[str, Any]:
     if work_data_root.exists():
         shutil.rmtree(work_data_root)
     work_data_root.mkdir(parents=True, exist_ok=True)
@@ -187,11 +194,11 @@ def run_evaluation(selected_dirs: List[Path], work_data_root: Path) -> Dict[str,
     old_cwd = os.getcwd()
     os.chdir(str(QWEN_INTENT_DIR))
     try:
-        cfg_path = QWEN_INTENT_DIR / "configs" / "config_memory_qwen38_flash.json"
+        cfg_path = cfg_path or (QWEN_INTENT_DIR / "configs" / "config_memory_qwen38_flash.json")
         cfg = load_config(str(cfg_path))
         bridge_probe = MemoryBridge(data_root=work_data_root)
 
-        with ThreadPoolExecutor(max_workers=5) as pool:
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
             futures = [pool.submit(_eval_persona, p_dir, work_data_root, cfg) for p_dir in selected_dirs]
             all_user_reports = [f.result() for f in futures]
 
@@ -257,14 +264,35 @@ def run_evaluation(selected_dirs: List[Path], work_data_root: Path) -> Dict[str,
 
 
 if __name__ == "__main__":
+    import argparse
+
     from tools.generate_cognitive_samples_html import generate_html_report
 
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--personas", default="", help="逗号分隔的 persona 编号, 如 014,016 (默认全部)")
+    ap.add_argument("--config", default="", help="意图模型 config 路径")
+    ap.add_argument("--out", default="", help="输出目录 (默认 eval_results/run_02_cognitive_samples)")
+    ap.add_argument("--workers", type=int, default=5)
+    ap.add_argument("--no_html", action="store_true")
+    args = ap.parse_args()
+
     selected = list_all_personas()
-    print("Evaluating all personas in cognitive_samples:", [p.name for p in selected], flush=True)
-    work_root = QWEN_INTENT_DIR / "data" / "evals" / "cognitive_work_root"
-    report = run_evaluation(selected, work_root)
-    out_dir = QWEN_INTENT_DIR / "eval_results" / "run_02_cognitive_samples"
-    generate_html_report(report, out_dir=out_dir)
+    if args.personas:
+        wanted = {x.strip().zfill(3) for x in args.personas.split(",") if x.strip()}
+        selected = [p for p in selected if p.name[-3:] in wanted]
+    print("Evaluating personas:", [p.name for p in selected], flush=True)
+    tag = Path(args.out).name if args.out else "default"
+    work_root = QWEN_INTENT_DIR / "data" / "evals" / f"cognitive_work_root_{tag}"
+    report = run_evaluation(
+        selected, work_root,
+        cfg_path=Path(args.config) if args.config else None,
+        max_workers=args.workers,
+    )
+    out_dir = Path(args.out) if args.out else QWEN_INTENT_DIR / "eval_results" / "run_02_cognitive_samples"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "summary.json").write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
+    if not args.no_html:
+        generate_html_report(report, out_dir=out_dir)
     print("\n============================================================", flush=True)
     print(
         f"OVERALL SUMMARY: Session JGA = {report['total_session_ok']}/{report['total_sessions']} "

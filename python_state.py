@@ -276,6 +276,9 @@ def _split_intent_segments(code: str) -> list[tuple[str, str]]:
                   "", code, flags=re.MULTILINE | re.DOTALL)
     matches = list(_INTENT_HDR.finditer(code))
     if not matches:
+        m_id_comment = re.search(r"^#\s*身份判定\s*[:：]\s*.*?\b(I\d+)\b", code, flags=re.MULTILINE)
+        if m_id_comment:
+            return [(m_id_comment.group(1).strip(), code)]
         return [("", code)]
     segs = []
     for i, m in enumerate(matches):
@@ -312,8 +315,12 @@ def execute_program_multi(
         # v27.2 补: 本轮有 cancel 段时, 被取消意图不计入剩余数——"cancel I2 + 无头补参段"
         # 场景 (S-000012 型) 剩余意图唯一, 无头段应归并到未被取消的那个
         remaining = {k: v for k, v in prev_states.items() if k not in cancels}
-        if (not key or key == "none") and len(remaining) == 1:
-            key = next(iter(remaining))
+        non_alias_keys = [k for k in remaining if not re.match(r"^I\d+$", str(k))]
+        if (not key or key == "none"):
+            if len(remaining) == 1:
+                key = next(iter(remaining))
+            elif len(non_alias_keys) == 1:
+                key = non_alias_keys[0]
         # 匹配 prev_state: 优先精确 key, 否则按 app/service 提示匹配
         prev = _match_prev(key, prev_states)
         try:

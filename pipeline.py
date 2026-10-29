@@ -1333,6 +1333,11 @@ class MultiIntentPipeline(IntentPipeline):
         from intent_ids import parse_id_header
 
         iid, is_new = parse_id_header(key)
+        if is_new and (not key or key == "none" or key in prev_states) and len(prev_states) == 1:
+            sole_ck = next(iter(prev_states))
+            sole_iid = idbook.iid_of(sole_ck)
+            if sole_iid:
+                iid, is_new = sole_iid, False
         if is_new or (iid and idbook.key_of(iid) is None):
             # --- 新建(引用不存在的 id 也按新建兜底) ---
             final = validate({"intent": "unknown", "params": delta}, reference_time, {})
