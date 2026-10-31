@@ -4,10 +4,17 @@
 ③ required_roles 校验能拦住缺字段数据
 ④ match 按键签名在多个已注册格式中选对
 """
-import json, os, sys, tempfile
+import json
+import logging
+import os
+import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from format_registry import load, project, validate_view, register, match, list_formats
+from format_registry import load, match, project, register, validate_view
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 # ① 原生格式
 spec = load("semi_261022")
@@ -17,7 +24,7 @@ assert validate_view(view, spec) == [], f"原生卡片校验失败: {validate_vi
 assert view["goal"] == card["goal"] and view["latency_ms"] == card["sla"]["max_latency_ms"]
 assert view["time_start"] == card["lifetime"]["start_timestamp"]
 assert view["identity"]["application_name"] == card["context"]["application_name"]
-print("[OK] 261022 原生格式投影+校验")
+logger.info("[OK] 261022 原生格式投影+校验")
 
 # ② 改名新格式：注册即可用，不改代码（合成数据，非测试集内容）
 tmp = tempfile.mkdtemp()
@@ -45,17 +52,18 @@ view2 = project(fake, load("demo_renamed", registry_dir=tmp))
 assert validate_view(view2, new_spec) == []
 assert view2["latency_ms"] == 50 and view2["identity"]["application_name"] == "测试应用"
 assert view2["time_start"] == "2026年10月23日20时00分"
-print("[OK] 新格式注册零代码改动（合成改名结构投影正确）")
+logger.info("[OK] 新格式注册零代码改动（合成改名结构投影正确）")
 
 # ③ 缺字段拦截
-bad = dict(fake); bad["latency_sla"] = {}
+bad = dict(fake)
+bad["latency_sla"] = {}
 errs = validate_view(project(bad, new_spec), new_spec)
 assert any("latency_ms" in e for e in errs), errs
-print("[OK] required_roles 缺字段拦截")
+logger.info("[OK] required_roles 缺字段拦截")
 
 # ④ match 签名匹配（两格式共存时各选各的）
 assert match(card, registry_dir=tmp)["format_id"] == "semi_261022"
 assert match(fake, registry_dir=tmp)["format_id"] == "demo_renamed"
-print("[OK] match 按键签名正确分流")
+logger.info("[OK] match 按键签名正确分流")
 
-print("format_registry 全部自检通过 [ALL OK]")
+logger.info("format_registry 全部自检通过 [ALL OK]")

@@ -16,8 +16,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from report_metrics import (
     APPSVC_FIELDS,
@@ -179,23 +182,29 @@ def generate(
     rate_s = n_sess_match / max(n_sess, 1)
     rate_t = n_turn_match / max(n_turn, 1)
 
-    print(
-        f"\n[error_report] session {n_sess_match}/{n_sess}={rate_s:.2%}  "
-        f"turn {n_turn_match}/{n_turn}={rate_t:.2%}"
+    logger.info(
+        "[error_report] session %d/%d=%.2f%%  turn %d/%d=%.2f%%",
+        n_sess_match,
+        n_sess,
+        rate_s * 100,
+        n_turn_match,
+        n_turn,
+        rate_t * 100,
     )
-    print(" [turn 级]")
+    logger.info(" [turn 级]")
     for c in CAT_ORDER:
         if cases.get(c):
-            print(f"  {CAT_META[c]['title']}: {len(cases[c])}")
-    print(" [二级标签·原因维度]")
+            logger.info("  %s: %d", CAT_META[c]["title"], len(cases[c]))
+    logger.info(" [二级标签·原因维度]")
     for t in TAG_ORDER:
         if tag_counter.get(t):
-            print(f"  {t} {TAG_META[t]['name']}: {tag_counter[t]}")
-    print(
-        f" [session 级] 意图集合不一致: {len(sess_set_mismatch)}  "
-        f"字段错误: {len(sess_field_wrong)}"
+            logger.info("  %s %s: %d", t, TAG_META[t]["name"], tag_counter[t])
+    logger.info(
+        " [session 级] 意图集合不一致: %d  字段错误: %d",
+        len(sess_set_mismatch),
+        len(sess_field_wrong),
     )
-    print(f"[error_report] HTML -> {out_path}")
+    logger.info("[error_report] HTML -> %s", out_path)
     return {
         "cases": {k: len(v) for k, v in cases.items()},
         "tags": dict(tag_counter),
@@ -204,6 +213,7 @@ def generate(
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     ap = argparse.ArgumentParser()
     ap.add_argument("--eval", required=True, help="session_eval 产出的 eval_dual_*.jsonl")
     ap.add_argument("--dataset", default=os.environ.get("DST_DATASET", "data/dataset_merged"))

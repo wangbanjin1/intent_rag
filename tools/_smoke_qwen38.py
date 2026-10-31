@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
 """qwen3.8-27b 能力冒烟: 8 个靶向 session(覆盖 new 重建/补全/改口/取消/多意图/消歧)。
 评估 v26.2b id 协议下该模型档的行为与遵从, 输出 vs qwen-plus 同 session 对照。"""
-import json, os, sys, re
+import json
+import logging
+import os
+import re
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import session_eval as se
 from pipeline import MultiIntentPipeline, load_config
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 TARGETS = ["S-000040", "S-000183", "S-000263", "S-000416", "S-000318",
            "S-000392", "S-000082", "S-000487"]
@@ -35,8 +43,14 @@ for sid in TARGETS:
             n_hdr += 1
             if re.match(r"^I\d+$", h) or h in ("new", "none", ""):
                 n_ok += 1
-    print(f"{sid} ({s['session_meta']['template_id']}): {'PASS' if ok else 'FAIL'} "
-          f"(plus 双跑: {'/'.join('✓' if x else '✗' for x in plus.get(sid, []))}) {etype[:55]}")
+    logger.info(
+        "%s (%s): %s (plus 双跑: %s) %s",
+        sid,
+        s["session_meta"]["template_id"],
+        "PASS" if ok else "FAIL",
+        "/".join("✓" if x else "✗" for x in plus.get(sid, [])),
+        etype[:55],
+    )
     if not ok:
-        print(f"    pred keys: {sorted(pred.keys())}")
-print(f"\n命中 {ok_n}/{len(TARGETS)}  段头遵从 {n_ok}/{n_hdr}")
+        logger.info("    pred keys: %s", sorted(pred.keys()))
+logger.info("命中 %d/%d  段头遵从 %d/%d", ok_n, len(TARGETS), n_ok, n_hdr)

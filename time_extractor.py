@@ -208,8 +208,8 @@ def _negated(utterance: str, start: int) -> bool:
     return any(w in utterance[max(0, start - 6):start] for w in _NEGATE_WORDS)
 
 
-def _extract_mentions(utterance: str, ref_dt: datetime) -> tuple[list[Mention], bool]:
-    """提取全部时间点候选并预解析。返回 (mentions, has_relative_day)。"""
+def _resolve_sentence_date_anchor(utterance: str) -> tuple[tuple[str, object] | None, bool]:
+    """解析句级日期锚点及是否包含相对日期词。"""
     anchors: list[tuple[str, object]] = []
     has_relative = False
     for m in _DATE_ONLY_RE.finditer(utterance):
@@ -223,20 +223,44 @@ def _extract_mentions(utterance: str, ref_dt: datetime) -> tuple[list[Mention], 
     uniq = {a[1] for a in anchors}
     default_anchor = anchors[0] if len(uniq) == 1 else None
     if default_anchor is None and not anchors:
-        # 全句无任何日期锚 -> 兜底锚定今天 (d6 扫描 0 例, 纯稳健性兜底, 跨夜滚动依赖 dt)
         default_anchor = ("rel", 0)
-    # 句级主导时段: 区间终点常省略时段词 ("晚上7点到8点半"), 裸时刻继承 PM 语义
+    return default_anchor, has_relative
+
+
+def _resolve_mention_base_date(
+    m: re.Match[str],
+    ref_dt: datetime,
+    default_anchor: tuple[str, object] | None,
+) -> tuple[datetime | None, bool]:
+    """根据正则匹配与句级默认锚点计算日期基准。"""
+    day_inherited = False
+    base_date: datetime | None = None
+    if m.group("date"):
+        md = _parse_date_str(m.group("date"))
+        if md:
+            base_date = ref_dt.replace(month=md[0], day=md[1], hour=0, minute=0)
+    elif m.group("day"):
+        base_date = ref_dt.replace(hour=0, minute=0) + timedelta(days=_RELATIVE_DAYS[m.group("day")])
+    elif default_anchor is not None:
+        if default_anchor[0] == "abs":
+            base_date = ref_dt.replace(month=default_anchor[1][0], day=default_anchor[1][1], hour=0, minute=0)
+        else:
+            base_date = ref_dt.replace(hour=0, minute=0) + timedelta(days=default_anchor[1])
+        day_inherited = True
+    return base_date, day_inherited
+
+
+def _extract_mentions(utterance: str, ref_dt: datetime) -> tuple[list[Mention], bool]:
+    """提取全部时间点候选并预解析。返回 (mentions, has_relative_day)。"""
+    default_anchor, has_relative = _resolve_sentence_date_anchor(utterance)
     default_pm = bool(re.search(r"下午|傍晚|晚上|今晚", utterance))
-    # 全句无任何时段词 (上午/下午/晚上…): 用于参考时间感知的裸时刻 PM 消歧
     any_period = bool(_PERIOD_SCAN_RE.search(utterance))
 
     mentions: list[Mention] = []
     seen_spans: list[tuple[int, int]] = []
     for m in _POINT_RE.finditer(utterance):
         span = m.span()
-        if any(s <= span[0] and span[1] <= e for s, e in seen_spans):
-            continue
-        if _negated(utterance, span[0]):
+        if any(s <= span[0] and span[1] <= e for s, e in seen_spans) or _negated(utterance, span[0]):
             continue
         hour = _cn_num(m.group("hour"))
         if hour is None:
@@ -253,30 +277,12 @@ def _extract_mentions(utterance: str, ref_dt: datetime) -> tuple[list[Mention], 
             continue
         if (m.group("period") is None and m.group("day") is None
                 and m.group("date") is None and default_anchor is None):
-            continue  # 裸 "X点" 且无句级日期锚可继承: 歧义大, 放弃 (宁缺毋滥)
+            continue
 
-        day_inherited = False
-        base_date: datetime | None = None
-        if m.group("date"):
-            md = _parse_date_str(m.group("date"))
-            if md:
-                base_date = ref_dt.replace(month=md[0], day=md[1], hour=0, minute=0)
-        elif m.group("day"):
-            base_date = ref_dt.replace(hour=0, minute=0) + timedelta(days=_RELATIVE_DAYS[m.group("day")])
-        elif default_anchor is not None:
-            if default_anchor[0] == "abs":
-                base_date = ref_dt.replace(month=default_anchor[1][0],
-                                           day=default_anchor[1][1], hour=0, minute=0)
-            else:
-                base_date = ref_dt.replace(hour=0, minute=0) + timedelta(days=default_anchor[1])
-            day_inherited = True
-
-        dt: datetime | None = None
-        if base_date is not None:
-            dt = base_date + timedelta(hours=clock_h, minutes=minute)
-        # 参考时间感知的裸时刻消歧: 全句无时段词、锚定当天、按字面已早于参考时间 (容差 60min),
-        # 而 +12h 后不早于参考时间 -> 按下午/晚上理解。
-        # 例: 参考时间 13:45 说 "今天是从两点弄到四点" -> 14:00-16:00 (而非已过去的 02:00-04:00)
+        base_date, day_inherited = _resolve_mention_base_date(m, ref_dt, default_anchor)
+        dt: datetime | None = (
+            base_date + timedelta(hours=clock_h, minutes=minute) if base_date is not None else None
+        )
         if (dt is not None and m.group("period") is None and not any_period and not bare_pm
                 and 0 < clock_h < 12 and dt.date() == ref_dt.date()
                 and dt < ref_dt - timedelta(minutes=60)

@@ -11,13 +11,16 @@ import argparse
 import collections
 import glob
 import json
+import logging
 import os
 import random
 import sys
-import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 from case_format import extract_turn_cases, gt_final_flat, is_guarantee_intent
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+logger = logging.getLogger(__name__)
 
 DATASET_DIR = os.environ.get("DST_DATASET", "data/dataset_5")
 
@@ -136,6 +139,7 @@ def build_test_cases(test_sessions: list[dict], users: dict) -> list[dict]:
 
 
 def main():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     ap = argparse.ArgumentParser()
     ap.add_argument("--test_ratio", type=float, default=0.2)
     ap.add_argument("--seed", type=int, default=42)
@@ -145,7 +149,7 @@ def main():
 
     sessions = load_all_sessions()
     train, test = stratified_split(sessions, args.test_ratio, args.seed)
-    print(f"总 sessions={len(sessions)} train={len(train)} test={len(test)}")
+    logger.info("总 sessions=%d train=%d test=%d", len(sessions), len(train), len(test))
 
     os.makedirs(os.path.dirname(args.split_out) or ".", exist_ok=True)
     json.dump(
@@ -154,7 +158,7 @@ def main():
          "test_sessions": [s["session_id"] for s in test]},
         open(args.split_out, "w", encoding="utf-8"), ensure_ascii=False, indent=2,
     )
-    print(f"写入 {args.split_out}")
+    logger.info("写入 %s", args.split_out)
 
     cases = build_test_cases(test, load_users())
     with open(args.cases_out, "w", encoding="utf-8") as f:
@@ -164,8 +168,8 @@ def main():
     # 统计
     by_tpl = collections.Counter(c["template"] for c in cases)
     g = sum(1 for c in cases if c["is_guarantee"])
-    print(f"test cases={len(cases)} 保障={g} 非保障={len(cases)-g}")
-    print("按 template:", dict(sorted(by_tpl.items())))
+    logger.info("test cases=%d 保障=%d 非保障=%d", len(cases), g, len(cases) - g)
+    logger.info("按 template: %s", dict(sorted(by_tpl.items())))
 
 
 if __name__ == "__main__":

@@ -151,62 +151,15 @@ class MemoryBridge:
     ) -> str:
         return render_experience_rule(card, utterance, reference_time, all_working_records)
 
-    def prepare_turn(
-        self,
-        user_id: str,
-        utterance: str,
-        reference_time: str,
-        prev_states: dict[str, dict[str, Any]] | None = None,
-        turn_index: int = 1,
-        tenant_id: str = "default",
-    ) -> tuple[dict[str, Any], str, dict[str, Any]]:
-        """在单轮意图理解前检索 MemorySystem 并生成 (user_context, memory_prompt_hint, trace_info)。"""
-        prev_states = prev_states or {}
-        if turn_index == 1:
-            self._session_memory_triggered = False
-            self._turn1_filled_memory = None
-            self._session_wr_mode = None
-            self._session_wr_target = None
-            self._session_exp_triggered = None
-            self._session_turn1_utterance = utterance or ""
-
-        raw_hits = self.ms.search(
-            user_id=user_id,
-            query=utterance,
-            top_k=10,
-            levels="L0+L1",
-            bump_heat=True,
-            now_ts=reference_time,
-            tenant_id=tenant_id,
-        )
-
-        ns = user_namespace(user_id=user_id, tenant_id=tenant_id)
-
-        param_hits: list[dict[str, Any]] = []
-        periodic_hits: list[dict[str, Any]] = []
-        service_hits: list[dict[str, Any]] = []
-        expression_hits: list[dict[str, Any]] = []
-        working_hits: list[dict[str, Any]] = []
-        experience_hits: list[dict[str, Any]] = []
-
-        for h in raw_hits:
-            st = h.get("subtype", "")
-            if h.get("validity") == "temporary":
-                continue
-            if st in ("preferred_value", "scene_preference", "application_business"):
-                param_hits.append(h)
-            elif st == "periodic_preference":
-                periodic_hits.append(h)
-            elif st == "service_to_app":
-                service_hits.append(h)
-            elif st == "expression":
-                expression_hits.append(h)
-            elif st == "working_record":
-                working_hits.append(h)
-            elif st == "experience":
-                experience_hits.append(h)
-
-        # 加载当前用户已入库的全部有效 working_record 与 active experience 卡片
+    def _load_filestore_indexes(
+        self, ns: Any, periodic_hits: list[dict[str, Any]]
+    ) -> tuple[
+        list[dict[str, Any]],
+        dict[str, dict[str, Any]],
+        dict[tuple[str, str], list[dict[str, Any]]],
+        dict[str, dict[str, Any]],
+    ]:
+        """从文件存储加载全量有效工作记忆工单、已激活经验卡片、周期时间窗路由与个性化表述映射。"""
         all_working_records: list[dict[str, Any]] = []
         for node in self.ms.filestore.iter_nodes(ns, memory_type="working_memory", subtype="working_record"):
             if node.status in ("archived", "expired", "superseded"):
@@ -222,7 +175,6 @@ class MemoryBridge:
             if eid:
                 active_experiences[eid] = dict(node.content)
 
-        # 建立 (application, business) -> 正交 periodic_preference 时间窗路由列表
         periodic_list_by_app_biz: dict[tuple[str, str], list[dict[str, Any]]] = {}
         seen_pp_keys: set[str] = set()
         for ph in periodic_hits:
@@ -263,6 +215,58 @@ class MemoryBridge:
             if al:
                 known_aliases[al] = dict(node.content)
 
+        return all_working_records, active_experiences, periodic_list_by_app_biz, known_aliases
+
+    def _retrieve_all_memory_layers(
+        self,
+        user_id: str,
+        utterance: str,
+        reference_time: str,
+        tenant_id: str,
+    ) -> dict[str, Any]:
+        """执行混合检索、分层归类与事实记忆二阶段关联补全。"""
+        raw_hits = self.ms.search(
+            user_id=user_id,
+            query=utterance,
+            top_k=10,
+            levels="L0+L1",
+            bump_heat=True,
+            now_ts=reference_time,
+            tenant_id=tenant_id,
+        )
+        ns = user_namespace(user_id=user_id, tenant_id=tenant_id)
+
+        param_hits: list[dict[str, Any]] = []
+        periodic_hits: list[dict[str, Any]] = []
+        service_hits: list[dict[str, Any]] = []
+        expression_hits: list[dict[str, Any]] = []
+        working_hits: list[dict[str, Any]] = []
+        experience_hits: list[dict[str, Any]] = []
+
+        for h in raw_hits:
+            st = h.get("subtype", "")
+            if h.get("validity") == "temporary":
+                continue
+            if st in ("preferred_value", "scene_preference", "application_business"):
+                param_hits.append(h)
+            elif st == "periodic_preference":
+                periodic_hits.append(h)
+            elif st == "service_to_app":
+                service_hits.append(h)
+            elif st == "expression":
+                expression_hits.append(h)
+            elif st == "working_record":
+                working_hits.append(h)
+            elif st == "experience":
+                experience_hits.append(h)
+
+        (
+            all_working_records,
+            active_experiences,
+            periodic_list_by_app_biz,
+            known_aliases,
+        ) = self._load_filestore_indexes(ns, periodic_hits)
+
         major_hits, best_major, user_context = enrich_factual_hits(
             param_hits=param_hits,
             periodic_list_by_app_biz=periodic_list_by_app_biz,
@@ -272,35 +276,56 @@ class MemoryBridge:
             reference_time=reference_time,
             is_temp_fn=_is_temp_record,
         )
+        return {
+            "raw_hits": raw_hits,
+            "major_hits": major_hits,
+            "best_major": best_major,
+            "user_context": user_context,
+            "periodic_hits": periodic_hits,
+            "service_hits": service_hits,
+            "expression_hits": expression_hits,
+            "working_hits": working_hits,
+            "experience_hits": experience_hits,
+            "all_working_records": all_working_records,
+            "active_experiences": active_experiences,
+            "known_aliases": known_aliases,
+        }
 
+    def _resolve_cross_layer_priorities(
+        self,
+        turn_index: int,
+        utterance: str,
+        reference_time: str,
+        prev_states: dict[str, dict[str, Any]],
+        retrieved_layers: dict[str, Any],
+    ) -> tuple[bool, list[str]]:
+        """按 Tier 3 (经验记忆) > Tier 2 (工作记忆) > Tier 1 (事实记忆/冷启动) 优先级消解并生成规则行。"""
         hint_lines = render_retrieval_header_lines(
-            major_hits=major_hits,
-            periodic_hits=periodic_hits,
-            service_hits=service_hits,
-            expression_hits=expression_hits,
-            working_hits=working_hits,
-            experience_hits=experience_hits,
+            major_hits=retrieved_layers["major_hits"],
+            periodic_hits=retrieved_layers["periodic_hits"],
+            service_hits=retrieved_layers["service_hits"],
+            expression_hits=retrieved_layers["expression_hits"],
+            working_hits=retrieved_layers["working_hits"],
+            experience_hits=retrieved_layers["experience_hits"],
             utterance=utterance,
         )
 
-        # Tier 3: 经验记忆规则 (Experiential Memory)
         self._session_exp_triggered, exp_lines = evaluate_experience_tier(
             turn_index=turn_index,
             utterance=utterance,
             reference_time=reference_time,
             prev_states=prev_states,
-            experience_hits=experience_hits,
-            active_experiences=active_experiences,
-            all_working_records=all_working_records,
+            experience_hits=retrieved_layers["experience_hits"],
+            active_experiences=retrieved_layers["active_experiences"],
+            all_working_records=retrieved_layers["all_working_records"],
             session_exp_triggered=self._session_exp_triggered,
         )
         hint_lines.extend(exp_lines)
 
-        # Tier 2: 工作记忆工单规则 (Working Memory)
         target_wr = select_target_working_record(
-            working_hits=working_hits,
-            all_working_records=all_working_records,
-            best_major=best_major,
+            working_hits=retrieved_layers["working_hits"],
+            all_working_records=retrieved_layers["all_working_records"],
+            best_major=retrieved_layers["best_major"],
             utterance=utterance,
         )
         exp_applied = bool(self._session_exp_triggered) and not str(self._session_exp_triggered).endswith(":LEARNING")
@@ -311,30 +336,40 @@ class MemoryBridge:
             prev_states=prev_states,
             exp_applied=exp_applied,
             target_wr=target_wr,
-            all_working_records=all_working_records,
+            all_working_records=retrieved_layers["all_working_records"],
             session_wr_mode=self._session_wr_mode,
             session_wr_target=self._session_wr_target,
             session_turn1_utterance=self._session_turn1_utterance,
         )
         hint_lines.extend(wr_lines)
 
-        # Tier 1: 事实记忆触发规则、冷启动字面提取规则与多轮补槽规则
         has_trigger = bool(_MEMORY_TRIGGER_RE.search(utterance or ""))
         self._session_memory_triggered, filled_mem, factual_lines = render_factual_and_cold_start_rules(
             turn_index=turn_index,
             utterance=utterance,
             has_trigger=has_trigger,
-            best_major=best_major,
+            best_major=retrieved_layers["best_major"],
             session_wr_mode=self._session_wr_mode,
             exp_applied=exp_applied,
             session_memory_triggered=self._session_memory_triggered,
             prev_states=prev_states,
-            known_aliases=known_aliases,
+            known_aliases=retrieved_layers["known_aliases"],
         )
         if filled_mem is not None:
             self._turn1_filled_memory = filled_mem
         hint_lines.extend(factual_lines)
+        return has_trigger, hint_lines
 
+    def _assemble_turn_memory_bundle(
+        self,
+        turn_index: int,
+        utterance: str,
+        reference_time: str,
+        has_trigger: bool,
+        hint_lines: list[str],
+        retrieved_layers: dict[str, Any],
+    ) -> tuple[dict[str, Any], str, dict[str, Any]]:
+        """组装单轮输出的 (user_context, memory_hint, trace_info) 三元组。"""
         memory_hint = "\n".join(hint_lines)
         trace_info = build_trace_info(
             turn_index=turn_index,
@@ -344,16 +379,57 @@ class MemoryBridge:
             session_memory_triggered=self._session_memory_triggered,
             session_wr_mode=self._session_wr_mode,
             session_exp_triggered=self._session_exp_triggered,
-            raw_hits=raw_hits,
-            major_hits=major_hits,
-            periodic_hits=periodic_hits,
-            service_hits=service_hits,
-            expression_hits=expression_hits,
-            working_hits=working_hits,
-            experience_hits=experience_hits,
-            best_major=best_major,
+            raw_hits=retrieved_layers["raw_hits"],
+            major_hits=retrieved_layers["major_hits"],
+            periodic_hits=retrieved_layers["periodic_hits"],
+            service_hits=retrieved_layers["service_hits"],
+            expression_hits=retrieved_layers["expression_hits"],
+            working_hits=retrieved_layers["working_hits"],
+            experience_hits=retrieved_layers["experience_hits"],
+            best_major=retrieved_layers["best_major"],
         )
-        return user_context, memory_hint, trace_info
+        return retrieved_layers["user_context"], memory_hint, trace_info
+
+    def prepare_turn(
+        self,
+        user_id: str,
+        utterance: str,
+        reference_time: str,
+        prev_states: dict[str, dict[str, Any]] | None = None,
+        turn_index: int = 1,
+        tenant_id: str = "default",
+    ) -> tuple[dict[str, Any], str, dict[str, Any]]:
+        """在单轮意图理解前检索 MemorySystem 并生成 (user_context, memory_prompt_hint, trace_info)。"""
+        prev_states = prev_states or {}
+        if turn_index == 1:
+            self._session_memory_triggered = False
+            self._turn1_filled_memory = None
+            self._session_wr_mode = None
+            self._session_wr_target = None
+            self._session_exp_triggered = None
+            self._session_turn1_utterance = utterance or ""
+
+        retrieved_layers = self._retrieve_all_memory_layers(
+            user_id=user_id,
+            utterance=utterance,
+            reference_time=reference_time,
+            tenant_id=tenant_id,
+        )
+        has_trigger, hint_lines = self._resolve_cross_layer_priorities(
+            turn_index=turn_index,
+            utterance=utterance,
+            reference_time=reference_time,
+            prev_states=prev_states,
+            retrieved_layers=retrieved_layers,
+        )
+        return self._assemble_turn_memory_bundle(
+            turn_index=turn_index,
+            utterance=utterance,
+            reference_time=reference_time,
+            has_trigger=has_trigger,
+            hint_lines=hint_lines,
+            retrieved_layers=retrieved_layers,
+        )
 
     @staticmethod
     def _extract_working_record_from_session(

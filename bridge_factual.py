@@ -13,6 +13,16 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import time_extractor as _tex
+from prompts.memory_hint_templates import (
+    COLD_START_LITERAL_RULE,
+    MEMORY_FOLLOWUP_CONFIRM_RULE,
+    MEMORY_FOLLOWUP_UPDATE_RULE,
+    MULTI_TURN_SLOT_COMPLETION_RULE,
+    SERVICE_NAME_GAME_RULE,
+    SERVICE_NAME_SHORT_VIDEO_RULE,
+    format_memory_fill_rule,
+    format_unclarified_slang_rule,
+)
 
 DT_FMT = "%Y年%m月%d日%H时%M分"
 
@@ -100,11 +110,7 @@ def _ref_year(reference_time: str) -> int | None:
 
 
 def _explicit_window(utterance: str, reference_time: str) -> tuple[datetime | None, datetime | None]:
-    """从当前话语解析用户明说的 (开始, 结束) 时刻 (复用 time_extractor, 不写死任何时刻)。
-
-    裸时刻 (全句无上午/下午等时段词) 若早于参考时间且 +12h 后不早于参考时间, 整体按下午理解
-    (例: 参考时间 13:45 说 "两点到四点" -> 14:00-16:00, 而非已过去的 02:00-04:00)。
-    """
+    """从当前话语解析用户明说的 (开始, 结束) 时刻 (复用 time_extractor, 不写死任何时刻)。"""
     ref_dt = _tex.parse_reference_time(reference_time)
     if ref_dt is None:
         return None, None
@@ -215,106 +221,99 @@ def select_best_periodic(
     return pp_cands[0]
 
 
-def enrich_factual_hits(
-    param_hits: list[dict[str, Any]],
+def _enrich_single_param_hit(
+    h: dict[str, Any],
     periodic_list_by_app_biz: dict[tuple[str, str], list[dict[str, Any]]],
     all_working_records: list[dict[str, Any]],
-    known_aliases: dict[str, dict[str, Any]],
     utterance: str,
     reference_time: str,
+    ref_minutes_now: int | None,
     is_temp_fn: Any,
-) -> tuple[list[dict[str, Any]], dict[str, Any] | None, dict[str, Any]]:
-    """将检索到的参数偏好与周期时间窗配对补全, 并构造 user_context。"""
-    ref_dt_now = _tex.parse_reference_time(reference_time)
-    ref_minutes_now = (ref_dt_now.hour * 60 + ref_dt_now.minute) if ref_dt_now is not None else None
-
-    major_hits: list[dict[str, Any]] = []
-    for h in param_hits:
-        c = h.get("content") or {}
-        app_raw = str(c.get("application") or "")
-        biz_raw = str(c.get("business") or "")
-        sc_val = str(c.get("scene") or "").strip()
-        app_cn, svc_cn = resolve_cn_app_svc(c, utterance)
-        paired_pp = select_best_periodic(
-            app_raw, biz_raw, app_cn, svc_cn, sc_val,
-            periodic_list_by_app_biz, all_working_records, ref_minutes_now, is_temp_fn,
-        )
-        tw = str((paired_pp or {}).get("time_window") or c.get("time_window") or "")
-        res_val = c.get("resolution")
-        rtt_val = c.get("latency") or c.get("rtt")
-        if not res_val or not rtt_val or not tw:
-            matching_wrs = [
-                r for r in all_working_records
-                if not is_temp_fn(r)
-                and r.get("application_name") == app_cn
-                and r.get("service_name") == svc_cn
-            ]
-            if matching_wrs:
-                sc_wrs = [r for r in matching_wrs if sc_val and sc_val in str(r.get("location") or "")]
-                ref_wr = (sc_wrs or matching_wrs)[0]
-                if not res_val and ref_wr.get("resolution"):
-                    res_val = ref_wr.get("resolution")
-                if not rtt_val and ref_wr.get("rtt"):
-                    rtt_val = ref_wr.get("rtt")
-                if not tw and ref_wr.get("start_timestamp") and ref_wr.get("end_timestamp"):
-                    try:
-                        _s = datetime.strptime(str(ref_wr["start_timestamp"]), DT_FMT)
-                        _e = datetime.strptime(str(ref_wr["end_timestamp"]), DT_FMT)
-                        tw = f"{_s.strftime('%H:%M')}-{_e.strftime('%H:%M')}"
-                    except (TypeError, ValueError):
-                        pass
-        anchored = anchor_time_window_to_ref(tw, reference_time) if tw else None
-        enriched = dict(h)
-        enriched["paired_periodic_key"] = (paired_pp or {}).get("memory_key") or ""
-        enriched["resolved_slots"] = {
-            "application_name": app_cn,
-            "service_name": svc_cn,
-            "resolution": res_val,
-            "rtt": rtt_val,
-            "time_window": tw,
-            "scene": sc_val,
-            "start_timestamp": anchored[0] if anchored else None,
-            "end_timestamp": anchored[1] if anchored else None,
-            "duration": anchored[2] if anchored else None,
-        }
-        major_hits.append(enriched)
-
-    best_major: dict[str, Any] | None = None
-    if major_hits:
-        candidates = list(major_hits)
-        explicit_app_matches = [
-            m for m in candidates
-            if m["resolved_slots"]["application_name"]
-            and m["resolved_slots"]["application_name"] in utterance
+) -> dict[str, Any]:
+    """将单条参数偏好记忆与二阶段周期偏好及工作记忆配对补全。"""
+    c = h.get("content") or {}
+    app_raw = str(c.get("application") or "")
+    biz_raw = str(c.get("business") or "")
+    sc_val = str(c.get("scene") or "").strip()
+    app_cn, svc_cn = resolve_cn_app_svc(c, utterance)
+    paired_pp = select_best_periodic(
+        app_raw, biz_raw, app_cn, svc_cn, sc_val,
+        periodic_list_by_app_biz, all_working_records, ref_minutes_now, is_temp_fn,
+    )
+    tw = str((paired_pp or {}).get("time_window") or c.get("time_window") or "")
+    res_val = c.get("resolution")
+    rtt_val = c.get("latency") or c.get("rtt")
+    if not res_val or not rtt_val or not tw:
+        matching_wrs = [
+            r for r in all_working_records
+            if not is_temp_fn(r)
+            and r.get("application_name") == app_cn
+            and r.get("service_name") == svc_cn
         ]
-        if explicit_app_matches:
-            candidates = explicit_app_matches
+        if matching_wrs:
+            sc_wrs = [r for r in matching_wrs if sc_val and sc_val in str(r.get("location") or "")]
+            ref_wr = (sc_wrs or matching_wrs)[0]
+            if not res_val and ref_wr.get("resolution"):
+                res_val = ref_wr.get("resolution")
+            if not rtt_val and ref_wr.get("rtt"):
+                rtt_val = ref_wr.get("rtt")
+            if not tw and ref_wr.get("start_timestamp") and ref_wr.get("end_timestamp"):
+                try:
+                    _s = datetime.strptime(str(ref_wr["start_timestamp"]), DT_FMT)
+                    _e = datetime.strptime(str(ref_wr["end_timestamp"]), DT_FMT)
+                    tw = f"{_s.strftime('%H:%M')}-{_e.strftime('%H:%M')}"
+                except (TypeError, ValueError):
+                    pass
+    anchored = anchor_time_window_to_ref(tw, reference_time) if tw else None
+    enriched = dict(h)
+    enriched["paired_periodic_key"] = (paired_pp or {}).get("memory_key") or ""
+    enriched["resolved_slots"] = {
+        "application_name": app_cn,
+        "service_name": svc_cn,
+        "resolution": res_val,
+        "rtt": rtt_val,
+        "time_window": tw,
+        "scene": sc_val,
+        "start_timestamp": anchored[0] if anchored else None,
+        "end_timestamp": anchored[1] if anchored else None,
+        "duration": anchored[2] if anchored else None,
+    }
+    return enriched
 
-        explicit_svc_matches = [
+
+def _select_best_major_hit(
+    major_hits: list[dict[str, Any]], utterance: str
+) -> dict[str, Any] | None:
+    """按话语明说的应用、业务、场景过滤并按激活态与检索得分选出最佳主干事实记忆。"""
+    if not major_hits:
+        return None
+    candidates = list(major_hits)
+    for slot_key in ("application_name", "service_name", "scene"):
+        explicit_matches = [
             m for m in candidates
-            if m["resolved_slots"]["service_name"]
-            and m["resolved_slots"]["service_name"] in utterance
+            if m["resolved_slots"].get(slot_key)
+            and m["resolved_slots"][slot_key] in utterance
         ]
-        if explicit_svc_matches:
-            candidates = explicit_svc_matches
+        if explicit_matches:
+            candidates = explicit_matches
 
-        explicit_scene_matches = [
-            m for m in candidates
-            if m["resolved_slots"].get("scene")
-            and m["resolved_slots"]["scene"] in utterance
-        ]
-        if explicit_scene_matches:
-            candidates = explicit_scene_matches
+    candidates.sort(
+        key=lambda m: (
+            1 if m.get("status") in ("active", "reinforced") else 0,
+            float(m.get("score", 0.0)),
+        ),
+        reverse=True,
+    )
+    return candidates[0]
 
-        candidates.sort(
-            key=lambda m: (
-                1 if m.get("status") in ("active", "reinforced") else 0,
-                float(m.get("score", 0.0)),
-            ),
-            reverse=True,
-        )
-        best_major = candidates[0]
 
+def _build_user_context_dict(
+    best_major: dict[str, Any] | None,
+    major_hits: list[dict[str, Any]],
+    all_working_records: list[dict[str, Any]],
+    known_aliases: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """根据最佳事实记忆、历史工单与个性化表述映射组装 user_context。"""
     recent_records: list[dict[str, Any]] = []
     for wr in all_working_records[-5:]:
         recent_records.append(
@@ -367,10 +366,36 @@ def enrich_factual_hits(
             for k, v in known_aliases.items()
         }
 
-    user_context: dict[str, Any] = {
+    return {
         "profile": profile_dict,
         "recent_records": recent_records,
     }
+
+
+def enrich_factual_hits(
+    param_hits: list[dict[str, Any]],
+    periodic_list_by_app_biz: dict[tuple[str, str], list[dict[str, Any]]],
+    all_working_records: list[dict[str, Any]],
+    known_aliases: dict[str, dict[str, Any]],
+    utterance: str,
+    reference_time: str,
+    is_temp_fn: Any,
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None, dict[str, Any]]:
+    """将检索到的参数偏好与周期时间窗配对补全, 并构造 user_context。"""
+    ref_dt_now = _tex.parse_reference_time(reference_time)
+    ref_minutes_now = (ref_dt_now.hour * 60 + ref_dt_now.minute) if ref_dt_now is not None else None
+
+    major_hits = [
+        _enrich_single_param_hit(
+            h, periodic_list_by_app_biz, all_working_records,
+            utterance, reference_time, ref_minutes_now, is_temp_fn,
+        )
+        for h in param_hits
+    ]
+    best_major = _select_best_major_hit(major_hits, utterance)
+    user_context = _build_user_context_dict(
+        best_major, major_hits, all_working_records, known_aliases
+    )
     return major_hits, best_major, user_context
 
 
@@ -436,16 +461,43 @@ def render_retrieval_header_lines(
         hint_lines.append("")
 
     if "短视频" in utterance:
-        hint_lines.append(
-            "# === SERVICE NAME RULE (服务名精确口径) ===\n"
-            "# 用户本轮明确说了“短视频”, 矩阵中该应用支持 '短视频', 请直接填 state.service_name = '短视频' (不要改写为 '视频')。\n"
-        )
+        hint_lines.append(SERVICE_NAME_SHORT_VIDEO_RULE)
     elif "游戏" in utterance and "云游戏" not in utterance:
-        hint_lines.append(
-            "# === SERVICE NAME RULE (服务名精确口径) ===\n"
-            "# 用户本轮明确说了“游戏”, 请直接填 state.service_name = '游戏'。\n"
-        )
+        hint_lines.append(SERVICE_NAME_GAME_RULE)
     return hint_lines
+
+
+def _collect_cold_start_and_slang_rules(
+    turn_index: int,
+    utterance: str,
+    has_trigger: bool,
+    prev_states: dict[str, dict[str, Any]],
+    known_aliases: dict[str, dict[str, Any]],
+) -> list[str]:
+    """收集非记忆触发会话的冷启动字面提取、多轮补槽与未知自定义表述消歧规则。"""
+    lines: list[str] = []
+    if (
+        turn_index == 1
+        and not has_trigger
+        and not _EXPLICIT_RES_RE.search(utterance)
+        and not _EXPLICIT_RTT_RE.search(utterance)
+    ):
+        lines.append(COLD_START_LITERAL_RULE)
+    elif turn_index > 1 and prev_states:
+        lines.append(MULTI_TURN_SLOT_COMPLETION_RULE)
+
+    if not has_trigger:
+        for m_slang in _QUOTED_SLANG_RE.finditer(utterance or ""):
+            slot_kind, slang_phrase = m_slang.group(1), m_slang.group(2).strip()
+            is_res_slot = slot_kind in ("画质", "清晰度", "分辨率")
+            if is_res_slot and _EXPLICIT_RES_RE.search(utterance):
+                continue
+            if not is_res_slot and _EXPLICIT_RTT_RE.search(utterance):
+                continue
+            if slang_phrase not in known_aliases:
+                target_slot_name = "resolution" if is_res_slot else "rtt"
+                lines.append(format_unclarified_slang_rule(slang_phrase, target_slot_name))
+    return lines
 
 
 def render_factual_and_cold_start_rules(
@@ -463,7 +515,6 @@ def render_factual_and_cold_start_rules(
     hint_lines: list[str] = []
     filled_memory: dict[str, Any] | None = None
 
-    # Case A: Turn 1 含“老规矩/按上次”等触发词且检索到主/支线记忆 (且非工单/经验模式)
     if (
         turn_index == 1
         and has_trigger
@@ -473,63 +524,19 @@ def render_factual_and_cold_start_rules(
     ):
         session_memory_triggered = True
         filled_memory = best_major["resolved_slots"]
-        rs = best_major["resolved_slots"]
         hint_lines.append(
-            "# === MEMORY FILL RULE (老规矩/长期记忆命中有据可查, 本轮生效, 优先级最高) ===\n"
-            f"# 用户本轮触发了长期记忆指代, 记忆系统检索到唯一匹配的长期记忆 [{best_major['subtype']}: {best_major['memory_key']}]:\n"
-            f"#   application_name = {rs['application_name']!r}\n"
-            f"#   service_name     = {rs['service_name']!r}\n"
-            f"#   resolution       = {rs['resolution']!r}\n"
-            f"#   rtt              = {rs['rtt']!r}\n"
-            f"#   start_timestamp  = {rs['start_timestamp']!r}\n"
-            f"#   end_timestamp    = {rs['end_timestamp']!r}\n"
-            f"#   duration         = {rs['duration']!r}\n"
-            "# 必须遵守:\n"
-            "# 1. 本轮必须把上述记忆中的 7 个槽位全部写入 state (含 resolution, rtt, 以及 find_timestamp(start=..., end=..., duration=...));\n"
-            "# 2. 若用户本轮话语中对某个槽位给出了明确的标准档位新值 (如 720p/1080p/30ms/50ms) 或命中了下方【个人黑话词典】映射值, 该槽位以新值为准; 若话语中只是用未带具体数值的口语词 (如『人像要细腻』『画面通透』『顺滑』) 修饰, 严禁将其降级为默认 720p, 一律保持上述记忆值 resolution="
-            f"{rs['resolution']!r}, rtt={rs['rtt']!r}!\n"
+            format_memory_fill_rule(
+                best_major["subtype"], best_major["memory_key"], best_major["resolved_slots"]
+            )
         )
 
-    # Case B: 非记忆触发会话 (evidence_session)
     if not session_memory_triggered and not session_wr_mode and not exp_applied:
-        if (
-            turn_index == 1
-            and not has_trigger
-            and not _EXPLICIT_RES_RE.search(utterance)
-            and not _EXPLICIT_RTT_RE.search(utterance)
-        ):
-            hint_lines.append(
-                "# === COLD-START LITERAL EXTRACTION RULE (非记忆触发轮字面提取规则, 本轮生效, 优先级最高) ===\n"
-                "# 用户本轮未说『老规矩/按上次』等记忆触发词，也未提及画质或时延。本轮必须仅提取用户字面说出的槽位:\n"
-                "# 严禁从长期记忆或用户画像中自动借用 resolution、rtt、end_timestamp 或 duration (用户没说的槽位一律留空，等待下一轮追问补充)!\n"
+        hint_lines.extend(
+            _collect_cold_start_and_slang_rules(
+                turn_index, utterance, has_trigger, prev_states, known_aliases
             )
-        elif turn_index > 1 and prev_states:
-            hint_lines.append(
-                "# === MULTI-TURN SLOT COMPLETION RULE (多轮证据补槽规则, 本轮生效, 优先级最高) ===\n"
-                "# 若本轮用户补充了持续时长 (如『预计持续90min』『持续2个小时』) 或结束时间，而 prev_state 已有 start_timestamp:\n"
-                "# 注意: TIME EVIDENCE 只是系统提供给你的参考文本，不会自动写入 state! 你必须在下方 Python 代码块中显式调用:\n"
-                "#   state.timestamp = find_timestamp(start=..., end=..., duration=...)\n"
-                "# 把 start_timestamp、end_timestamp 与 duration 一并写入 state，严禁只写 resolution/rtt 而漏写 state.timestamp!\n"
-            )
-        if not has_trigger:
-            for m_slang in _QUOTED_SLANG_RE.finditer(utterance or ""):
-                slot_kind, slang_phrase = m_slang.group(1), m_slang.group(2).strip()
-                is_res_slot = slot_kind in ("画质", "清晰度", "分辨率")
-                if is_res_slot and _EXPLICIT_RES_RE.search(utterance):
-                    continue
-                if not is_res_slot and _EXPLICIT_RTT_RE.search(utterance):
-                    continue
-                if slang_phrase not in known_aliases:
-                    target_slot_name = "resolution" if is_res_slot else "rtt"
-                    hint_lines.append(
-                        "# === UNCLARIFIED SLANG RULE (未知个人黑话待消歧规则, 本轮生效, 优先级最高) ===\n"
-                        f"# 用户本轮说出的「{slang_phrase}」是首次出现的个人黑话, 尚未在长期记忆词典中登记, 且本轮未给出对应的标准档位数值。\n"
-                        "# 必须遵守:\n"
-                        f"# 1. 本轮严禁给 state.{target_slot_name} 赋值 (代码块中严禁写 state.{target_slot_name} = ...，严禁按通用规则兜底填 '720p'，必须留空等待系统追问后用户在下一轮澄清具体数值);\n"
-                        "# 2. 本轮用户明确给出的其他槽位 (如时延/时长/开始时间) 以及上一轮 prev_state 已有的槽位必须正常赋值和沿用!\n"
-                    )
+        )
 
-    # Case C: Turn >= 2 且上一轮已由长期记忆补齐全部 7 个槽位
     if turn_index > 1 and session_memory_triggered and prev_states:
         is_param_mod = (
             any(w in utterance for w in ("临时", "改", "调到", "压到", "降到", "提到", "换成"))
@@ -538,51 +545,21 @@ def render_factual_and_cold_start_rules(
             and bool(_EXPLICIT_RES_RE.search(utterance) or _EXPLICIT_RTT_RE.search(utterance))
         )
         if "延长" in utterance or is_param_mod:
-            hint_lines.append(
-                "# === MEMORY FOLLOW-UP UPDATE RULE (老规矩后续轮微调规则, 本轮生效, 优先级最高) ===\n"
-                "# 上一轮已通过长期记忆补齐了完整意图状态 prev_state。本轮用户在老规矩基础上做局部调整:\n"
-                "# 1. 必须沿用已有意图段头 (如 # intent: I1), 严禁新建意图或丢弃已有槽位;\n"
-                "# 2. 未调整的槽位一律从 prev_state 沿用 (state.application_name = state.application_name 等);\n"
-                "# 3. 若用户延长了保障时长 (如延长到 180 分钟), 更新 duration='180min', 并基于 state.start_timestamp 重新推算 end_timestamp;\n"
-                "# 4. 若用户临时调整了画质或时延 (如画质临时调到 720p、时延压到 30ms), 将 state.resolution 和 state.rtt 更新为本轮新值, 时间字段继续沿用 prev_state!\n"
-            )
+            hint_lines.append(MEMORY_FOLLOWUP_UPDATE_RULE)
         else:
-            hint_lines.append(
-                "# === MEMORY FOLLOW-UP CONFIRM RULE (老规矩确认轮保持规则, 本轮生效, 优先级最高) ===\n"
-                "# 上一轮已通过长期记忆补齐了完整 7 个槽位, 本轮用户是在确认直接开通 (即使顺带重申了黑话定义含义, 参数也已在上一轮补齐):\n"
-                "# 必须沿用已有意图段头 (如 # intent: I1), 并用 state.xxx = state.xxx 完整保留 prev_state 中的全部 7 个槽位, 严禁改动或留空!\n"
-            )
+            hint_lines.append(MEMORY_FOLLOWUP_CONFIRM_RULE)
 
     return session_memory_triggered, filled_memory, hint_lines
 
 
-def build_trace_info(
-    turn_index: int,
-    utterance: str,
-    reference_time: str,
-    has_trigger: bool,
-    session_memory_triggered: bool,
-    session_wr_mode: str | None,
-    session_exp_triggered: str | None,
-    raw_hits: list[dict[str, Any]],
+def _serialize_factual_trace_hits(
     major_hits: list[dict[str, Any]],
     periodic_hits: list[dict[str, Any]],
     service_hits: list[dict[str, Any]],
     expression_hits: list[dict[str, Any]],
-    working_hits: list[dict[str, Any]],
-    experience_hits: list[dict[str, Any]],
-    best_major: dict[str, Any] | None,
-) -> dict[str, Any]:
-    """构造单轮记忆检索与触发状态追踪字典。"""
+) -> dict[str, list[dict[str, Any]]]:
+    """序列化事实记忆层的四类检索命中快照。"""
     return {
-        "turn": turn_index,
-        "query": utterance,
-        "reference_time": reference_time,
-        "has_memory_trigger": has_trigger,
-        "session_memory_triggered": session_memory_triggered,
-        "session_wr_mode": session_wr_mode,
-        "session_exp_triggered": session_exp_triggered,
-        "raw_hit_count": len(raw_hits),
         "major_hits": [
             {
                 "memory_id": m["memory_id"],
@@ -633,6 +610,15 @@ def build_trace_info(
             }
             for e in expression_hits
         ],
+    }
+
+
+def _serialize_working_and_exp_trace_hits(
+    working_hits: list[dict[str, Any]],
+    experience_hits: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """序列化工作记忆与经验记忆层的检索命中快照。"""
+    return {
         "working_hits": [
             {
                 "memory_id": w["memory_id"],
@@ -662,5 +648,40 @@ def build_trace_info(
             }
             for ex in experience_hits
         ],
-        "selected_best_major": best_major["resolved_slots"] if best_major else None,
     }
+
+
+def build_trace_info(
+    turn_index: int,
+    utterance: str,
+    reference_time: str,
+    has_trigger: bool,
+    session_memory_triggered: bool,
+    session_wr_mode: str | None,
+    session_exp_triggered: str | None,
+    raw_hits: list[dict[str, Any]],
+    major_hits: list[dict[str, Any]],
+    periodic_hits: list[dict[str, Any]],
+    service_hits: list[dict[str, Any]],
+    expression_hits: list[dict[str, Any]],
+    working_hits: list[dict[str, Any]],
+    experience_hits: list[dict[str, Any]],
+    best_major: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """构造单轮记忆检索与触发状态追踪字典。"""
+    trace: dict[str, Any] = {
+        "turn": turn_index,
+        "query": utterance,
+        "reference_time": reference_time,
+        "has_memory_trigger": has_trigger,
+        "session_memory_triggered": session_memory_triggered,
+        "session_wr_mode": session_wr_mode,
+        "session_exp_triggered": session_exp_triggered,
+        "raw_hit_count": len(raw_hits),
+    }
+    trace.update(
+        _serialize_factual_trace_hits(major_hits, periodic_hits, service_hits, expression_hits)
+    )
+    trace.update(_serialize_working_and_exp_trace_hits(working_hits, experience_hits))
+    trace["selected_best_major"] = best_major["resolved_slots"] if best_major else None
+    return trace

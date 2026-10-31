@@ -11,35 +11,38 @@
 """
 from __future__ import annotations
 
-import os, sys, io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-
 import json
+import logging
+import sys
 
-from case_format import extract_turn_cases, flatten_params, nested_from_flat
 from pipeline import IntentPipeline, load_config
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+logger = logging.getLogger(__name__)
 
 
 def show(result, title):
-    print("=" * 70)
-    print(title)
-    print("=" * 70)
-    print(f"utterance: {result.utterance}")
-    print(f"reference_time: {result.reference_time}")
-    print(f"prev_state: {json.dumps(result.prev_state, ensure_ascii=False)}")
-    print("-" * 70)
-    print("MMR 检索 E_k:")
+    logger.info("=" * 70)
+    logger.info("%s", title)
+    logger.info("=" * 70)
+    logger.info("utterance: %s", result.utterance)
+    logger.info("reference_time: %s", result.reference_time)
+    logger.info("prev_state: %s", json.dumps(result.prev_state, ensure_ascii=False))
+    logger.info("-" * 70)
+    logger.info("MMR 检索 E_k:")
     for r in result.retrieved:
-        print(f"  {r['case_id']:>16}  intent={r['intent']:>14}  validity={r['validity']:>7}  score={r['score']}")
-    print("-" * 70)
-    print(f"-> best Δy: {json.dumps(result.best.get('params',{}), ensure_ascii=False)[:200]}")
-    print("-" * 70)
-    print("Rule Validator (执行程序得Δy → apply到prev → 校验):")
-    print(json.dumps(result.final, ensure_ascii=False, indent=2))
-    print("=" * 70)
+        logger.info("  %16s  intent=%14s  validity=%7s  score=%s", r["case_id"], r["intent"], r["validity"], r["score"])
+    logger.info("-" * 70)
+    logger.info("-> best Δy: %s", json.dumps(result.best.get("params", {}), ensure_ascii=False)[:200])
+    logger.info("-" * 70)
+    logger.info("Rule Validator (执行程序得Δy → apply到prev → 校验):")
+    logger.info("%s", json.dumps(result.final, ensure_ascii=False, indent=2))
+    logger.info("=" * 70)
 
 
 def main():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     cfg = load_config("configs/config_d5_qwen_plus_qmap.json")
     pipe = IntentPipeline(cfg)
 
@@ -61,18 +64,24 @@ def main():
     r3 = pipe.run("我要腾讯视频的视频保障,2160P,100ms,明天12点到13点。", ref, prev_state={})
     show(r3, "场景3: 域内 query (应 valid)")
 
-    print("\n回归断言:")
-    print(f"  场景1 reason   = {r1.final.get('invalid_reason')}  "
-          f"({'OK' if r1.final.get('invalid_reason') == 'matrix_out_application' else 'X'})")
-    print(f"  场景2 reason   = {r2.final.get('invalid_reason')}  "
-          f"({'OK' if r2.final.get('invalid_reason') == 'matrix_out_application' else 'X'})")
+    logger.info("回归断言:")
+    logger.info(
+        "  场景1 reason   = %s  (%s)",
+        r1.final.get("invalid_reason"),
+        "OK" if r1.final.get("invalid_reason") == "matrix_out_application" else "X",
+    )
+    logger.info(
+        "  场景2 reason   = %s  (%s)",
+        r2.final.get("invalid_reason"),
+        "OK" if r2.final.get("invalid_reason") == "matrix_out_application" else "X",
+    )
     if r3.final.get("validity") == "valid":
         fs = r3.final.get("final_state", {})
         rtt = (fs.get("rtt") or {}).get("max_value", {}).get("value")
         start = (fs.get("timestamp") or {}).get("start_timestamp", {}).get("value")
-        print(f"  场景3 validity=valid  start={start}  rtt={rtt}  (OK)")
+        logger.info("  场景3 validity=valid  start=%s  rtt=%s  (OK)", start, rtt)
     else:
-        print(f"  场景3 = {r3.final.get('invalid_reason')}  (X)")
+        logger.info("  场景3 = %s  (X)", r3.final.get("invalid_reason"))
 
 
 if __name__ == "__main__":

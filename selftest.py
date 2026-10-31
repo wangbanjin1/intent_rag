@@ -4,20 +4,25 @@
 """
 from __future__ import annotations
 
-import os, sys, io
+import json
+import logging
+import os
+import sys
+
+import numpy as np
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 os.environ.setdefault("DASHSCOPE_API_KEY", "dummy")
 
-import json
-import numpy as np
-
-from case_format import flatten_params, nested_from_flat
-from python_state import execute_program, schema_python_text
-from prompt_builder import build_prompt, _case_to_program
+from case_format import flatten_params
+from prompt_builder import _case_to_program, build_prompt
+from python_state import execute_program
 from retrieval_bank import CaseBank
 from retriever import DiverseRetriever
 from validator import validate
+
+logger = logging.getLogger(__name__)
 
 
 def _nested_douban():
@@ -66,7 +71,7 @@ def test_sandbox_execute():
     assert delta["resolution"]["min_value"]["value"] == "2160p"
     assert delta["timestamp"]["start_timestamp"]["value"] == "2026年07月21日12时00分"
     assert delta["timestamp"]["duration"]["value"] == "90min"
-    print("[OK] 沙箱执行 LLM 程序 -> 嵌套 params Δy 格式正确")
+    logger.info("[OK] 沙箱执行 LLM 程序 -> 嵌套 params Δy 格式正确")
 
 
 def test_sandbox_coreference():
@@ -83,7 +88,7 @@ def test_sandbox_coreference():
     assert delta["rtt"]["max_value"]["value"] == "100ms", delta["rtt"]
     assert delta["timestamp"]["start_timestamp"]["value"] == "2026年07月21日12时00分"
     assert delta["timestamp"]["end_timestamp"]["value"] == "2026年07月21日13时30分"
-    print("[OK] coreference: state.xxx 直接解析 prev_state 值 (Python 变量引用)")
+    logger.info("[OK] coreference: state.xxx 直接解析 prev_state 值 (Python 变量引用)")
 
 
 def test_sandbox_security():
@@ -91,11 +96,11 @@ def test_sandbox_security():
     for bad in ['import os', 'open("x")', '__import__("os")', 'exec("print(1)")']:
         try:
             execute_program(bad, {})
-            print(f"[X] 安全失败: {bad!r} 未被拦截")
+            logger.error("[X] 安全失败: %r 未被拦截", bad)
             raise AssertionError(bad)
         except Exception:
             pass
-    print("[OK] 沙箱安全: import/open/exec/__import__ 均被拦截")
+    logger.info("[OK] 沙箱安全: import/open/exec/__import__ 均被拦截")
 
 
 def test_case_to_program_roundtrip():
@@ -117,7 +122,7 @@ def test_case_to_program_roundtrip():
     assert flatten_params(delta2)["application_name"] == "豆瓣"
     assert flatten_params(delta2)["resolution"] == "2160p"
     assert flatten_params(delta2)["start_timestamp"] == "2026年07月21日12时00分"
-    print("[OK] Δy -> 程序 -> 再执行 -> 等价(论文 §3.3.2 canonicalize 可行)")
+    logger.info("[OK] Δy -> 程序 -> 再执行 -> 等价(论文 §3.3.2 canonicalize 可行)")
 
 
 def test_validator_nested():
@@ -126,13 +131,13 @@ def test_validator_nested():
     out = validate({"intent": "腾讯视频视频保障", "params": nested}, ref, prev_state={})
     assert out["validity"] == "valid", out
     assert out["final_state"]["application_name"]["value"] == "腾讯视频"
-    print("[OK] validator: 嵌套 params Δy(腾讯视频) -> final_state -> valid")
+    logger.info("[OK] validator: 嵌套 params Δy(腾讯视频) -> final_state -> valid")
 
     # 豆瓣不在受理矩阵 -> matrix_out_application
     douban = _nested_douban()
     out = validate({"intent": "豆瓣视频保障", "params": douban}, ref, prev_state={})
     assert out["invalid_reason"] == "matrix_out_application", out
-    print("[OK] validator: 豆瓣视频 -> matrix_out_application (豆瓣不在受理矩阵)")
+    logger.info("[OK] validator: 豆瓣视频 -> matrix_out_application (豆瓣不在受理矩阵)")
 
 
 class _FakeEmbedder:
@@ -156,8 +161,8 @@ def test_prompt_and_mmr():
     assert "class State" in task
     assert "find_timestamp" in task
     assert "state.application_name" in task or "state." in task
-    print(f"[OK] Text-to-Python prompt: class State + find_* + demonstrations是Python程序")
-    print(f"[OK] MMR: {len(hits)} 条, 多样性 {len({frozenset((h.delta or {}).keys()) for h in hits})} 种组合")
+    logger.info("[OK] Text-to-Python prompt: class State + find_* + demonstrations是Python程序")
+    logger.info("[OK] MMR: %d 条, 多样性 %d 种组合", len(hits), len({frozenset((h.delta or {}).keys()) for h in hits}))
 
 
 def test_record_selector():
@@ -223,7 +228,61 @@ def test_record_selector():
     ev = rs.record_evidence("拼多多开直播的时延按上次记录", {"recent_records": recs}, None,
                             disambiguation_active=False)
     assert ev and ev.mode == "latest"
-    print("[OK] record_selector: 悬空/定位/选择轮退出/零命中回退/沿用式排除 全过")
+    logger.info("[OK] record_selector: 悬空/定位/选择轮退出/零命中回退/沿用式排除 全过")
+
+
+def _assert_time_extractor_candidates_and_pm(tex, rd):
+    """验证候选时段、多意图及区间 PM 继承与跨夜滚动。"""
+    # 候选时段信号 (S-000185): 或者 + 还没定 -> 不组装三元组
+    ev = tex.extract("我想申请虎牙开直播保障，时延最高80毫秒，直播一个半小时，画质要流畅，"
+                     "时间还没定，8月2号凌晨2点到3点半，或者凌晨2点半到4点。",
+                     tex.parse_reference_time("2026年08月01日09时00分"))
+    assert ev.has_candidate and ev.start is None and ev.end is None
+    assert ev.duration_min == 90 and len(ev.mentions) == 4
+
+    # 多意图句不组装 (S-000154/S-000146): 绑定留给模型, 证据全列出
+    ev = tex.extract("明天上午11点结束、用一个小时；爱奇艺到下午1点半结束、用三个小时",
+                     tex.parse_reference_time("2026年07月05日10时00分"))
+    assert ev.start is None and ev.end is None and len(ev.mentions) == 2
+    assert tex._fmt(ev.mentions[1].dt) == "2026年07月06日13时30分"  # 跨子句继承明天
+    assert sorted(d for _, d in ev.durations) == [60, 180]
+
+    # 明说 end 唯一直接组装 (S-000099 turn1)
+    ev = tex.extract("7月22号晚上9点半结束，开始时间我还不确定是19点半还是20点整",
+                     tex.parse_reference_time("2026年07月22日19时00分"))
+    assert ev.has_candidate and tex._fmt(ev.end) == "2026年07月22日21时30分"
+
+    # 无时间信息 -> None (不注入)
+    assert tex.extract("清晰度至少720P，时延不超过80毫秒", rd) is None
+    assert tex.extract("帮我按平时常用的保障时段和时长来", rd) is None
+
+    # 区间终点省略时段词 -> 继承句级 PM (v27 run1 破窗根因: S-000005/073/079)
+    rd5 = tex.parse_reference_time("2026年07月22日07时00分")
+    ev = tex.extract("帮我安排明天下午2点到4点的保障", rd5)
+    assert tex._fmt(ev.end) == "2026年07月23日16时00分", ev.end
+    assert not ev.has_contradiction
+    ev = tex.extract("明天晚上7点到8点半的A保障，7点半到9点半的B保障", rd5)
+    clocks = sorted(m.clock for m in ev.mentions)
+    assert clocks == ["19:00", "19:30", "20:30", "21:30"], clocks
+    ev = tex.extract("7月15号上午10点到10点半", rd5)
+    assert ev.mentions[0].clock == "10:00" and ev.mentions[1].clock == "10:30"
+
+    # 跨夜滚动与时长候选
+    ev = tex.extract("从晚上11点到凌晨1点", rd5)
+    assert tex._fmt(ev.start) == "2026年07月22日23时00分"
+    assert tex._fmt(ev.end) == "2026年07月23日01时00分" and not ev.has_contradiction
+    ev = tex.extract("从晚上11点到1点", rd5)
+    assert tex._fmt(ev.end) == "2026年07月23日01时00分" and not ev.has_contradiction
+    ev = tex.extract("今天9点开始、8点半结束",
+                     tex.parse_reference_time("2026年07月14日07时00分"))
+    assert ev.has_contradiction and tex._fmt(ev.end) == "2026年07月14日08时30分"
+
+    ev = tex.extract("今天8点开始用网易云游戏，时长我还没拿准，不知道选三个半小时还是三个小时",
+                     tex.parse_reference_time("2026年07月28日06时00分"))
+    assert sorted(d for _, d in ev.durations) == [180, 210], ev.durations
+    assert ev.dur_candidate and not ev.has_candidate
+    assert ev.duration_min is None
+    assert tex._fmt(ev.start) == "2026年07月28日08时00分" and ev.end is None
 
 
 def test_time_extractor():
@@ -262,67 +321,12 @@ def test_time_extractor():
     assert len(ev.mentions) == 1 and tex._fmt(ev.mentions[0].dt) == "2026年07月14日12时00分"
     assert ev.mentions[0].role == "end"
 
-    # 候选时段信号 (S-000185): 或者 + 还没定 -> 不组装三元组
-    ev = tex.extract("我想申请虎牙开直播保障，时延最高80毫秒，直播一个半小时，画质要流畅，"
-                     "时间还没定，8月2号凌晨2点到3点半，或者凌晨2点半到4点。",
-                     tex.parse_reference_time("2026年08月01日09时00分"))
-    assert ev.has_candidate and ev.start is None and ev.end is None
-    assert ev.duration_min == 90 and len(ev.mentions) == 4
-
-    # 多意图句不组装 (S-000154/S-000146): 绑定留给模型, 证据全列出
-    ev = tex.extract("明天上午11点结束、用一个小时；爱奇艺到下午1点半结束、用三个小时",
-                     tex.parse_reference_time("2026年07月05日10时00分"))
-    assert ev.start is None and ev.end is None and len(ev.mentions) == 2
-    assert tex._fmt(ev.mentions[1].dt) == "2026年07月06日13时30分"  # 跨子句继承明天
-    assert sorted(d for _, d in ev.durations) == [60, 180]
-
-    # 明说 end 唯一直接组装 (S-000099 turn1)
-    ev = tex.extract("7月22号晚上9点半结束，开始时间我还不确定是19点半还是20点整",
-                     tex.parse_reference_time("2026年07月22日19时00分"))
-    assert ev.has_candidate and tex._fmt(ev.end) == "2026年07月22日21时30分"
-
-    # 无时间信息 -> None (不注入)
-    assert tex.extract("清晰度至少720P，时延不超过80毫秒", rd) is None
-    # 画像句无明说时间 -> None (S-000063)
-    assert tex.extract("帮我按平时常用的保障时段和时长来", rd) is None
-
-    # 区间终点省略时段词 -> 继承句级 PM (v27 run1 破窗根因: S-000005/073/079)
-    rd5 = tex.parse_reference_time("2026年07月22日07时00分")
-    ev = tex.extract("帮我安排明天下午2点到4点的保障", rd5)
-    assert tex._fmt(ev.end) == "2026年07月23日16时00分", ev.end  # 4点 -> 16:00 非 04:00
-    assert not ev.has_contradiction
-    # 句级 PM 覆盖后续裸区间 (S-000002 第二段 "7点半到9点半" 也是晚上)
-    ev = tex.extract("明天晚上7点到8点半的A保障，7点半到9点半的B保障", rd5)
-    clocks = sorted(m.clock for m in ev.mentions)
-    assert clocks == ["19:00", "19:30", "20:30", "21:30"], clocks
-    # 上午主导句不位移 (S-000146 回归)
-    ev = tex.extract("7月15号上午10点到10点半", rd5)
-    assert ev.mentions[0].clock == "10:00" and ev.mentions[1].clock == "10:30"
-
-    # 跨夜滚动: "晚上11点到凌晨1点" -> end 次日01:00, 不判矛盾
-    ev = tex.extract("从晚上11点到凌晨1点", rd5)
-    assert tex._fmt(ev.start) == "2026年07月22日23时00分"
-    assert tex._fmt(ev.end) == "2026年07月23日01时00分" and not ev.has_contradiction
-    # 裸时刻 PM 继承后仍倒挂 -> 重解读为次日凌晨 ("晚上11点到1点")
-    ev = tex.extract("从晚上11点到1点", rd5)
-    assert tex._fmt(ev.end) == "2026年07月23日01时00分" and not ev.has_contradiction
-    # 真矛盾不误滚 (S-000066: 无 PM 词, 保字面)
-    ev = tex.extract("今天9点开始、8点半结束",
-                     tex.parse_reference_time("2026年07月14日07时00分"))
-    assert ev.has_contradiction and tex._fmt(ev.end) == "2026年07月14日08时30分"
-
-    # 时长候选 (S-000133): 两个时长都收, 不断言 duration/不推导 end, start 照常组装,
-    # 且不是时段候选 (has_candidate=False, 不触发"候选不落槽")
-    ev = tex.extract("今天8点开始用网易云游戏，时长我还没拿准，不知道选三个半小时还是三个小时",
-                     tex.parse_reference_time("2026年07月28日06时00分"))
-    assert sorted(d for _, d in ev.durations) == [180, 210], ev.durations
-    assert ev.dur_candidate and not ev.has_candidate
-    assert ev.duration_min is None
-    assert tex._fmt(ev.start) == "2026年07月28日08时00分" and ev.end is None
-    print("[OK] time_extractor: 日期表/预解析/矛盾/候选/多意图/否定防呆/区间PM继承/跨夜滚动/时长候选 全过")
+    _assert_time_extractor_candidates_and_pm(tex, rd)
+    logger.info("[OK] time_extractor: 日期表/预解析/矛盾/候选/多意图/否定防呆/区间PM继承/跨夜滚动/时长候选 全过")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     test_sandbox_execute()
     test_sandbox_coreference()
     test_sandbox_security()
@@ -331,4 +335,4 @@ if __name__ == "__main__":
     test_prompt_and_mmr()
     test_time_extractor()
     test_record_selector()
-    print("\n所有离线自检通过 ✅")
+    logger.info("所有离线自检通过 ✅")

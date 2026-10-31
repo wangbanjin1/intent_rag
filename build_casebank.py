@@ -14,10 +14,13 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import logging
 import os
 import sys
-import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+logger = logging.getLogger(__name__)
 
 
 DATASET_DIR = os.environ.get("DST_DATASET", "data/dataset_5")
@@ -48,6 +51,7 @@ def load_all_sessions() -> list[dict]:
 
 
 def main():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     ap = argparse.ArgumentParser()
     ap.add_argument("--all", action="store_true", help="用全部 dataset(含测试集, 仅分析用)")
     ap.add_argument("--split", default="data/split.json", help="split.json 路径")
@@ -59,18 +63,18 @@ def main():
         sel = sessions
     else:
         if not os.path.exists(args.split):
-            print(f"[!] split 文件不存在: {args.split}, 先运行 make_split.py。可用 --all 兜底。")
+            logger.error("[!] split 文件不存在: %s, 先运行 make_split.py。可用 --all 兜底。", args.split)
             sys.exit(1)
         split = json.load(open(args.split, "r", encoding="utf-8"))
         train_ids = set(split["train_sessions"])
         sel = [s for s in sessions if s["session_id"] in train_ids]
-        print(f"split train_sessions={len(train_ids)}  匹配到 {len(sel)} 条")
+        logger.info("split train_sessions=%d  匹配到 %d 条", len(train_ids), len(sel))
 
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         for s in sel:
             f.write(json.dumps(s, ensure_ascii=False) + "\n")
-    print(f"写入 {len(sel)} 条 session -> {args.out}")
+    logger.info("写入 %d 条 session -> %s", len(sel), args.out)
 
 
 if __name__ == "__main__":

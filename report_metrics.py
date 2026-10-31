@@ -531,6 +531,44 @@ def _pred_by_turn(r: dict[str, Any]) -> dict[int, dict[str, dict[str, Any]]]:
     return out
 
 
+def _collect_session_turn_errors(
+    r: dict[str, Any],
+    session: dict[str, Any],
+    smap: dict[str, Any],
+    cases: dict[str, list[dict[str, Any]]],
+    tag_counter: collections.Counter[str],
+    tag_x_cat: dict[str, collections.Counter[str]],
+) -> collections.Counter[str]:
+    """统计单条 session 的 turn 级错误并更新聚合容器。"""
+    sess_tag_c: collections.Counter[str] = collections.Counter()
+    for d in r["turn_detail"]:
+        if d["match"]:
+            continue
+        cat, diffs = categorize(d, smap)
+        tag = scenario_tag(cat, d, diffs, smap, session, r.get("template", ""))
+        tag_counter[tag] += 1
+        tag_x_cat[tag][cat] += 1
+        sess_tag_c[tag] += 1
+        nk = []
+        if cat == "missed_intent":
+            nk = near_keys(
+                (d.get("gt") or {}).get("application_name"),
+                (d.get("gt") or {}).get("service_name"),
+                r.get("pred_intents"),
+            )
+        cases[cat].append(
+            {
+                "session": r,
+                "detail": d,
+                "diffs": diffs,
+                "session_raw": session,
+                "tag": tag,
+                "near": nk,
+            }
+        )
+    return sess_tag_c
+
+
 def aggregate_eval_metrics(
     results: list[dict[str, Any]],
     sessions: dict[str, dict[str, Any]],
@@ -552,34 +590,8 @@ def aggregate_eval_metrics(
 
     for r in results:
         sid = r["session_id"]
-        smap = src_maps[sid]
         session = sessions.get(sid) or {}
-        sess_tag_c: collections.Counter[str] = collections.Counter()
-        for d in r["turn_detail"]:
-            if d["match"]:
-                continue
-            cat, diffs = categorize(d, smap)
-            tag = scenario_tag(cat, d, diffs, smap, session, r.get("template", ""))
-            tag_counter[tag] += 1
-            tag_x_cat[tag][cat] += 1
-            sess_tag_c[tag] += 1
-            nk = []
-            if cat == "missed_intent":
-                nk = near_keys(
-                    (d.get("gt") or {}).get("application_name"),
-                    (d.get("gt") or {}).get("service_name"),
-                    r.get("pred_intents"),
-                )
-            cases[cat].append(
-                {
-                    "session": r,
-                    "detail": d,
-                    "diffs": diffs,
-                    "session_raw": session,
-                    "tag": tag,
-                    "near": nk,
-                }
-            )
+        sess_tag_c = _collect_session_turn_errors(r, session, src_maps[sid], cases, tag_counter, tag_x_cat)
         if not r["session_match"]:
             et = r.get("session_error_type", "")
             primary = sess_tag_c.most_common(1)[0][0] if sess_tag_c else "INT"

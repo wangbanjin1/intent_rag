@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import html
 import json
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 EVAL_RUN_DIR = Path(r"D:\coding\qwen_intent_rag\eval_results\run_02_cognitive_samples")
 SOURCE_REPORT_JSON = EVAL_RUN_DIR / "summary.json"
@@ -1038,9 +1041,10 @@ def generate_html_report(report_data: Optional[Dict[str, Any]] = None, out_dir: 
     master_html = render_master_index_html(report_data)
     index_html_path = out_dir / "index.html"
     index_html_path.write_text(master_html, encoding="utf-8")
-    print(f"Generated master index: {index_html_path}")
-    print(f"Generated per-user HTML+JSON files in: {users_dir}")
+    logger.info("Generated master index: %s", index_html_path)
+    logger.info("Generated per-user HTML+JSON files in: %s", users_dir)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     generate_html_report()

@@ -17,10 +17,13 @@ from __future__ import annotations
 import argparse
 import glob
 import io
+import logging
 import os
 import re
 import sys
 import zipfile
+
+logger = logging.getLogger(__name__)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -29,7 +32,7 @@ ROOT_FILES = sorted(glob.glob(os.path.join(ROOT, "*.py"))) + [
     os.path.join(ROOT, "README.md"),
     os.path.join(ROOT, "requirements.txt"),
 ]
-DIRS = ["docs", "configs", "tools"]
+DIRS = ["docs", "configs", "tools", "prompts"]
 DATA_FILES = [
     "data/split_d5.json",
     "data/split_d6_full.json",
@@ -59,7 +62,7 @@ def collect() -> list[str]:
         if os.path.isfile(f) and not _excluded(f):
             files.append(f)
         elif not os.path.isfile(f):
-            print(f"[warn] 缺失: {os.path.relpath(f, ROOT)}")
+            logger.warning("[warn] 缺失: %s", os.path.relpath(f, ROOT))
     for d in DIRS + DATA_DIRS:
         base = os.path.join(ROOT, d)
         for root, dirs, names in os.walk(base):
@@ -117,9 +120,11 @@ def verify(zip_path: str) -> None:
         # 敏感信息不外带
         leak = [n for n in names if "keys" in n.lower() or "embed_cache" in n]
         assert not leak, f"敏感/缓存文件泄漏: {leak}"
-        print(f"[verify] dataset_5={len(d5)} 文件, dataset_6_clean={len(d6)} 文件, "
-              f"dataset_930={len(d930)} 文件, must-have={len(must)} 全在, 无敏感泄漏")
-    print(f"[verify] OK -> {zip_path}")
+        logger.info(
+            "[verify] dataset_5=%d 文件, dataset_6_clean=%d 文件, dataset_930=%d 文件, must-have=%d 全在, 无敏感泄漏",
+            len(d5), len(d6), len(d930), len(must),
+        )
+    logger.info("[verify] OK -> %s", zip_path)
 
 
 def verify_local_vs_zip(zip_path: str) -> bool:
@@ -132,7 +137,7 @@ def verify_local_vs_zip(zip_path: str) -> bool:
     返回 True=完全一致。任何不一致打印明细并返回 False。
     """
     if not os.path.isfile(zip_path):
-        print(f"[verify-local] 包不存在: {zip_path}")
+        logger.error("[verify-local] 包不存在: %s", zip_path)
         return False
     with zipfile.ZipFile(zip_path) as zf:
         zip_files = {n: zf.read(n) for n in zf.namelist() if not n.endswith("/")}
@@ -147,14 +152,17 @@ def verify_local_vs_zip(zip_path: str) -> bool:
                 changed.append(n)
 
     ok = not (only_zip or only_local or changed)
-    print(f"[verify-local] 本地 {len(local_files)} 文件 vs 包 {len(zip_files)} 文件")
+    logger.info("[verify-local] 本地 %d 文件 vs 包 %d 文件", len(local_files), len(zip_files))
     if only_zip:
-        print(f"  包内有而本地白名单缺失({len(only_zip)}): {only_zip[:5]}...")
+        logger.warning("  包内有而本地白名单缺失(%d): %s...", len(only_zip), only_zip[:5])
     if only_local:
-        print(f"  本地有而包缺失({len(only_local)}): {only_local[:5]}...")
+        logger.warning("  本地有而包缺失(%d): %s...", len(only_local), only_local[:5])
     if changed:
-        print(f"  内容不一致({len(changed)}): {changed[:8]}{'...' if len(changed) > 8 else ''}")
-    print(f"[verify-local] {'[OK] 本地与包完全一致' if ok else '[DRIFT] 存在漂移 (改代码后请重跑 python tools/package.py)'}")
+        logger.warning("  内容不一致(%d): %s%s", len(changed), changed[:8], "..." if len(changed) > 8 else "")
+    logger.info(
+        "[verify-local] %s",
+        "[OK] 本地与包完全一致" if ok else "[DRIFT] 存在漂移 (改代码后请重跑 python tools/package.py)",
+    )
     return ok
 
 
@@ -166,6 +174,7 @@ def latest_zip() -> str:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="")
     ap.add_argument("--verify", action="store_true",
@@ -174,7 +183,7 @@ def main() -> None:
     if args.verify:
         zp = args.out or latest_zip()
         if not zp:
-            print("[verify-local] dist/ 下无 zip, 先运行 python tools/package.py")
+            logger.error("[verify-local] dist/ 下无 zip, 先运行 python tools/package.py")
             sys.exit(2)
         sys.exit(0 if verify_local_vs_zip(zp) else 1)
     # 从 CHANGELOG 抓最新版本号命名（## 与 ### 级都算，v28 链为 ### 条目；
@@ -188,7 +197,7 @@ def main() -> None:
                 ver = m.group(1)
     out = args.out or os.path.join(ROOT, "dist", f"qwen_intent_rag_{ver}.zip")
     files = collect()
-    print(f"collect: {len(files)} files")
+    logger.info("collect: %d files", len(files))
     package(out)
 
 

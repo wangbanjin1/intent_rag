@@ -10,15 +10,24 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from session_eval import (load_test_sessions, run_session, session_gt,
-                          judge_session, turn_gt, judge_turn)
-from pipeline import MultiIntentPipeline, load_config
 from features import Features
+from pipeline import MultiIntentPipeline, load_config
+from session_eval import (
+    judge_session,
+    judge_turn,
+    load_test_sessions,
+    run_session,
+    session_gt,
+    turn_gt,
+)
+
+logger = logging.getLogger(__name__)
 
 TARGETS = ["S-000056", "S-000123", "S-000192", "S-000114", "S-000169", "S-000026"]
 CONTROLS = ["S-000031", "S-000097", "S-000114", "S-000183",   # T1-4 record_rule 高频 (114 兼目标)
@@ -50,43 +59,56 @@ def run_cfg(cfg_path: str, sessions: list[dict], mi_on: bool) -> dict:
                                 ("application_name", "service_name", "resolution", "rtt")))
         out[sid] = {"session_match": sok, "session_err": setype,
                     "turn_match": tm, "turn_total": tt, "rec_wrong": rec_wrong}
-        print(f"  [{os.path.basename(cfg_path)}] {sid}: sess={sok} turn={tm}/{tt} rec_wrong={rec_wrong}",
-              flush=True)
+        logger.info("  [%s] %s: sess=%s turn=%d/%d rec_wrong=%d", os.path.basename(cfg_path), sid, sok, tm, tt, rec_wrong)
     return out
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     all_sessions = {s["session_id"]: s
                     for s in load_test_sessions("data/split_d6_full.json")}
     ids = [i for i in TARGETS + CONTROLS if i in all_sessions]
     sessions = [all_sessions[i] for i in ids]
     mi_on = Features.from_config(load_config("configs/config_d6_qwen_plus_best.json")).multi_instance_key
 
-    print(f"回放 {len(sessions)} sessions x 2 配置 (目标 {len(TARGETS)}, 对照 {len(CONTROLS)})")
+    logger.info("回放 %d sessions x 2 配置 (目标 %d, 对照 %d)", len(sessions), len(TARGETS), len(CONTROLS))
     base = run_cfg("configs/config_d6_qwen_plus_best.json", sessions, mi_on)
     new = run_cfg("configs/config_d6_qwen_plus_rec.json", sessions, mi_on)
 
-    print("\n==== 翻转对比 (v27.0 -> v27.1) ====")
+    logger.info("==== 翻转对比 (v27.0 -> v27.1) ====")
     rescued, broken = [], []
     for sid in ids:
         b, n = base.get(sid, {}), new.get(sid, {})
         if "error" in b or "error" in n:
-            print(f"{sid}: ERROR base={b.get('error')} new={n.get('error')}")
+            logger.error("%s: ERROR base=%s new=%s", sid, b.get("error"), n.get("error"))
             continue
         flip = ""
         if not b["session_match"] and n["session_match"]:
-            flip = "修(session)"; rescued.append(sid)
+            flip = "修(session)"
+            rescued.append(sid)
         elif b["session_match"] and not n["session_match"]:
-            flip = "破(session)"; broken.append(sid)
+            flip = "破(session)"
+            broken.append(sid)
         mark = "TARGET" if sid in TARGETS else "ctrl  "
-        print(f"{mark} {sid}: sess {b['session_match']}->{n['session_match']} "
-              f"turn {b['turn_match']}/{b['turn_total']}->{n['turn_match']}/{n['turn_total']} "
-              f"rec_wrong {b['rec_wrong']}->{n['rec_wrong']} {flip}")
-    print(f"\n修: {len(rescued)} {rescued}")
-    print(f"破: {len(broken)} {broken}")
+        logger.info(
+            "%s %s: sess %s->%s turn %d/%d->%d/%d rec_wrong %d->%d %s",
+            mark,
+            sid,
+            b["session_match"],
+            n["session_match"],
+            b["turn_match"],
+            b["turn_total"],
+            n["turn_match"],
+            n["turn_total"],
+            b["rec_wrong"],
+            n["rec_wrong"],
+            flip,
+        )
+    logger.info("修: %d %s", len(rescued), rescued)
+    logger.info("破: %d %s", len(broken), broken)
     with open("data/evals/_replay_v271_record.json", "w", encoding="utf-8") as f:
         json.dump({"base": base, "new": new}, f, ensure_ascii=False, indent=1)
-    print("明细: data/evals/_replay_v271_record.json")
+    logger.info("明细: data/evals/_replay_v271_record.json")
 
 
 if __name__ == "__main__":

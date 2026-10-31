@@ -230,43 +230,16 @@ def load_config(path: str = "configs/config_d6_qwen_plus_best.json") -> dict[str
 
 
 class MultiIntentPipeline(IntentPipeline):
-    """方案 A: 一次 LLM 调用输出多意图 (B2 IDIC-DST 多意图并发范式)。
+    """方案 A: 一次 LLM 调用输出多意图 (B2 IDIC-DST 多意图并发范式)。"""
 
-    run_multi(utterance, reference_time, prev_states, user_context) -> {intent_key: final}
-    含 PAR 校验回路 + record coreference 兜底。
-    """
-
-    def run_multi(
+    def _resolve_turn_disambig_and_corr(
         self,
         utterance: str,
-        reference_time: str,
-        prev_states: dict[str, dict[str, Any]] | None = None,
-        user_context: dict[str, Any] | None = None,
-        agent_reply: str | None = None,
-        prev_statuses: dict[str, str] | None = None,
-        session_disambig: bool = False,
-        memory_hint: str | None = None,
-    ) -> dict[str, dict[str, Any]]:
-        prev_states = prev_states or {}
-        merged_prev: dict[str, Any] = {}
-        for v in prev_states.values():
-            merged_prev.update(v or {})
-
-        retrieved = self.retriever.retrieve(utterance, merged_prev)
-
-        if self.features.correction_demo and _is_correction(utterance):
-            extra = _retrieve_correction_demos(
-                self.retriever,
-                utterance,
-                merged_prev,
-                n=int((self.cfg.get("correction_demo") or {}).get("n", 2)),
-                exclude={c.case_id for c in retrieved},
-            )
-            retrieved = extra + retrieved
-
-        ac_on = self.features.agent_context
-        sp_on = self.features.status_prompt
-
+        agent_reply: str | None,
+        prev_states: dict[str, dict[str, Any]],
+        user_context: dict[str, Any] | None,
+    ) -> tuple[list[str] | None, list[dict[str, Any]] | None, list[str] | None]:
+        """解析消歧轮候选列表与改口轮意图键列表。"""
         disamb_keys: list[str] | None = None
         disamb_cands: list[dict[str, Any]] | None = None
         if self.features.disambiguation_rule and _is_disambiguation_turn(
@@ -285,14 +258,42 @@ class MultiIntentPipeline(IntentPipeline):
         corr_keys: list[str] | None = None
         if self.features.correction_rule and prev_states and _is_correction(utterance):
             corr_keys = sorted(prev_states.keys())
+        return disamb_keys, disamb_cands, corr_keys
 
+    def _prepare_multi_turn_context(
+        self,
+        utterance: str,
+        reference_time: str,
+        prev_states: dict[str, dict[str, Any]],
+        user_context: dict[str, Any] | None,
+        agent_reply: str | None,
+        prev_statuses: dict[str, str] | None,
+        memory_hint: str | None,
+    ) -> dict[str, Any]:
+        """检索示例、解析消歧/改口/时间证据并构造系统提示与任务提示词。"""
+        merged_prev: dict[str, Any] = {}
+        for v in prev_states.values():
+            merged_prev.update(v or {})
+
+        retrieved = self.retriever.retrieve(utterance, merged_prev)
+        if self.features.correction_demo and _is_correction(utterance):
+            extra = _retrieve_correction_demos(
+                self.retriever, utterance, merged_prev,
+                n=int((self.cfg.get("correction_demo") or {}).get("n", 2)),
+                exclude={c.case_id for c in retrieved},
+            )
+            retrieved = extra + retrieved
+
+        disamb_keys, disamb_cands, corr_keys = self._resolve_turn_disambig_and_corr(
+            utterance, agent_reply, prev_states, user_context
+        )
         record_rule_hint, record_ev_hint = build_record_hints(
             self, utterance, user_context, agent_reply, disamb_keys
         )
         quality_hint = build_quality_hint(
             self.features, utterance, record_rule_hint, record_ev_hint
         )
-        cand_mode_hint, _listed_this_turn = build_candidate_mode_hint(
+        cand_mode_hint, listed_this_turn = build_candidate_mode_hint(
             self, utterance, user_context, agent_reply, disamb_cands
         )
 
@@ -302,36 +303,46 @@ class MultiIntentPipeline(IntentPipeline):
         self._mi_on = self.features.multi_instance_key
 
         pending_app_hint = build_pending_app_hint(self.features, utterance, id_states)
-        time_hint, _time_ev = _build_time_hint(
+        time_hint, time_ev = _build_time_hint(
             self.features, utterance, reference_time, user_context
         )
 
         import candidate_book as _cb
         system, task_prompt = build_prompt(
-            utterance,
-            reference_time,
-            merged_prev,
-            retrieved,
-            user_context,
-            agent_reply=agent_reply if ac_on else None,
-            prev_statuses=prev_statuses if sp_on else None,
-            disamb_keys=disamb_keys,
-            disamb_cands=disamb_cands,
-            corr_keys=corr_keys,
-            record_rule_hint=record_rule_hint,
-            record_ev_hint=record_ev_hint,
-            cand_mode_hint=cand_mode_hint,
-            quality_hint=quality_hint,
-            pending_app_hint=pending_app_hint,
-            time_hint=time_hint,
+            utterance, reference_time, merged_prev, retrieved, user_context,
+            agent_reply=agent_reply if self.features.agent_context else None,
+            prev_statuses=prev_statuses if self.features.status_prompt else None,
+            disamb_keys=disamb_keys, disamb_cands=disamb_cands, corr_keys=corr_keys,
+            record_rule_hint=record_rule_hint, record_ev_hint=record_ev_hint,
+            cand_mode_hint=cand_mode_hint, quality_hint=quality_hint,
+            pending_app_hint=pending_app_hint, time_hint=time_hint,
             time_anchor_on=self.features.time_anchor,
             cand_landing=bool(cand_mode_hint) and _cb.select_phrase(utterance),
-            idbook=idbook,
-            id_states=id_states,
-            memory_hint=memory_hint,
+            idbook=idbook, id_states=id_states, memory_hint=memory_hint,
         )
-        raw = self.llm.gen_raw_code(system, task_prompt)
+        return {
+            "merged_prev": merged_prev, "id_on": id_on, "idbook": idbook,
+            "listed_this_turn": listed_this_turn, "time_ev": time_ev,
+            "system": system, "task_prompt": task_prompt,
+        }
 
+    def _execute_and_fuse_multi_turn(
+        self,
+        utterance: str,
+        prev_states: dict[str, dict[str, Any]],
+        user_context: dict[str, Any] | None,
+        ctx: dict[str, Any],
+    ) -> list[tuple[str, Any]]:
+        """调用大模型生成代码、执行 PAR 校验重采样、沙箱运行与兜底补齐。"""
+        system = ctx["system"]
+        task_prompt = ctx["task_prompt"]
+        merged_prev = ctx["merged_prev"]
+        id_on = ctx["id_on"]
+        idbook = ctx["idbook"]
+        listed_this_turn = ctx["listed_this_turn"]
+        time_ev = ctx["time_ev"]
+
+        raw = self.llm.gen_raw_code(system, task_prompt)
         if (
             (_need_par(utterance, merged_prev) and (not _summaries_ok(raw) or not _cancel_check_ok(utterance, raw)))
             or not check_id_headers_ok(raw, id_on, idbook)
@@ -354,19 +365,29 @@ class MultiIntentPipeline(IntentPipeline):
             for _iid, _ck in list(idbook._by_id.items()):
                 if _ck in prev_states and _iid not in exec_prevs:
                     exec_prevs[_iid] = prev_states[_ck]
+
         segs = execute_program_multi(raw, exec_prevs)
         segs = strip_cand_listing_jump_run(
-            segs, utterance, _listed_this_turn, getattr(self, "_cand_listing", None)
+            segs, utterance, listed_this_turn, getattr(self, "_cand_listing", None)
         )
 
         self.last_raw = raw
         self.last_task_prompt = getattr(self.llm, "last_task_prompt", "")
         self.last_system_prompt = getattr(self.llm, "last_system_prompt", "")
 
-        segs = apply_record_and_time_stub_fallbacks(
-            segs, utterance, user_context, merged_prev, _listed_this_turn, _time_ev
+        return apply_record_and_time_stub_fallbacks(
+            segs, utterance, user_context, merged_prev, listed_this_turn, time_ev
         )
 
+    def _finalize_multi_turn_result(
+        self,
+        segs: list[tuple[str, Any]],
+        utterance: str,
+        reference_time: str,
+        prev_states: dict[str, dict[str, Any]],
+        idbook: Any | None,
+    ) -> dict[str, dict[str, Any]]:
+        """归并取消段、ID 协议段或内容键段并返回多意图结果字典。"""
         results: dict[str, dict[str, Any]] = {}
         for key, delta in segs:
             if key == "__cancel__":
@@ -382,8 +403,33 @@ class MultiIntentPipeline(IntentPipeline):
                 self._process_key_segment(
                     key, delta, prev_states, reference_time, results
                 )
-
         return results
+
+    def run_multi(
+        self,
+        utterance: str,
+        reference_time: str,
+        prev_states: dict[str, dict[str, Any]] | None = None,
+        user_context: dict[str, Any] | None = None,
+        agent_reply: str | None = None,
+        prev_statuses: dict[str, str] | None = None,
+        session_disambig: bool = False,
+        memory_hint: str | None = None,
+    ) -> dict[str, dict[str, Any]]:
+        prev_states = prev_states or {}
+        ctx = self._prepare_multi_turn_context(
+            utterance=utterance,
+            reference_time=reference_time,
+            prev_states=prev_states,
+            user_context=user_context,
+            agent_reply=agent_reply,
+            prev_statuses=prev_statuses,
+            memory_hint=memory_hint,
+        )
+        segs = self._execute_and_fuse_multi_turn(utterance, prev_states, user_context, ctx)
+        return self._finalize_multi_turn_result(
+            segs, utterance, reference_time, prev_states, ctx["idbook"]
+        )
 
     def _handle_cancel_segment(
         self,

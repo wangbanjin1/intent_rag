@@ -8,15 +8,21 @@
   只补缺失不覆盖; cancel_case 不动; correction_case 在 real_gt 上推导后仍豁免被更正字段。
 双向翻转都统计 (理论上前向口径只补 GT 缺失字段, 对->错只可能发生在 pred 该字段也空的 case)。
 """
-import json, sys, collections, os
+import collections
+import json
+import logging
+import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import session_eval as se
 from case_format import EVAL_SLOTS
 
+logger = logging.getLogger(__name__)
+
 
 def main(src):
-    rows = [json.loads(l) for l in open(src, encoding="utf-8")]
+    rows = [json.loads(line) for line in open(src, encoding="utf-8")]
     n_up = 0      # 错 -> 对
     n_down = 0    # 对 -> 错
     n_turn_m = 0
@@ -85,18 +91,19 @@ def main(src):
     }
     json.dump(summary, open(out.replace(".jsonl", "_summary.json"), "w", encoding="utf-8"),
               ensure_ascii=False, indent=2)
-    print(f"session: {n_sess_m}/{n_sess} = {n_sess_m/n_sess:.4f}")
-    print(f"turn:    {n_turn_m}/{n_turn_t} = {n_turn_m/n_turn_t:.4f}")
-    print(f"转正(+): {n_up}   翻错(-): {n_down}")
+    logger.info("session: %d/%d = %.4f", n_sess_m, n_sess, n_sess_m / n_sess)
+    logger.info("turn:    %d/%d = %.4f", n_turn_m, n_turn_t, n_turn_m / n_turn_t)
+    logger.info("转正(+): %d   翻错(-): %d", n_up, n_down)
     for x in flips_up:
-        print("  +:", x)
+        logger.info("  +: %s", x)
     for x in flips_down:
-        print("  -:", x)
+        logger.info("  -: %s", x)
     for t, v in sorted(by_tpl.items()):
         tr = f"{v[2]/v[3]:.3f}" if v[3] else "n/a"
-        print(f"  {t}: session {v[1]}/{v[0]}={v[1]/v[0]:.3f}  turn {v[2]}/{v[3]}={tr}")
-    print("->", out)
+        logger.info("  %s: session %d/%d=%.3f  turn %d/%d=%s", t, v[1], v[0], v[1] / v[0], v[2], v[3], tr)
+    logger.info("-> %s", out)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     main(sys.argv[1])

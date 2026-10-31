@@ -6,14 +6,21 @@
 逻辑与 session_eval.judge_turn 的 correction 分支一致:
   错误值轮 case, pred 空(拒收) -> 命中; pred 非空 -> 豁免被更正字段后比对其余字段。
 """
-import json, sys, collections, os
+import collections
+import glob
+import json
+import logging
+import os
+import sys
+
 import session_eval as se
 from case_format import EVAL_SLOTS
 
+logger = logging.getLogger(__name__)
 DATA = "data/dataset_5"
 
+
 def load_sessions():
-    import glob
     out = {}
     for f in glob.glob(os.path.join(DATA, "sessions.*.jsonl")):
         for line in open(f, encoding="utf-8"):
@@ -21,9 +28,10 @@ def load_sessions():
             out[d["session_id"]] = d
     return out
 
+
 def main(src):
     sessions = load_sessions()
-    rows = [json.loads(l) for l in open(src, encoding="utf-8")]
+    rows = [json.loads(line) for line in open(src, encoding="utf-8")]
     n_flip = 0
     n_turn_m = 0
     n_turn_t = 0
@@ -86,15 +94,17 @@ def main(src):
     }
     json.dump(summary, open(out.replace(".jsonl", "_summary.json"), "w", encoding="utf-8"),
               ensure_ascii=False, indent=2)
-    print(f"session: {n_sess_m}/{n_sess} = {n_sess_m/n_sess:.4f}")
-    print(f"turn:    {n_turn_m}/{n_turn_t} = {n_turn_m/n_turn_t:.4f}")
-    print(f"correction 转正: {n_flip}")
+    logger.info("session: %d/%d = %.4f", n_sess_m, n_sess, n_sess_m / n_sess)
+    logger.info("turn:    %d/%d = %.4f", n_turn_m, n_turn_t, n_turn_m / n_turn_t)
+    logger.info("correction 转正: %d", n_flip)
     for x in flips:
-        print("  转正:", x)
+        logger.info("  转正: %s", x)
     for t, v in sorted(by_tpl.items()):
         tr = f"{v[2]/v[3]:.3f}" if v[3] else "n/a"
-        print(f"  {t}: session {v[1]}/{v[0]}={v[1]/v[0]:.3f}  turn {v[2]}/{v[3]}={tr}")
-    print("->", out)
+        logger.info("  %s: session %d/%d=%.3f  turn %d/%d=%s", t, v[1], v[0], v[1] / v[0], v[2], v[3], tr)
+    logger.info("-> %s", out)
+
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     main(sys.argv[1])
