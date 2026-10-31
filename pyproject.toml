@@ -1,0 +1,43 @@
+[project]
+name = "qwen-intent-rag"
+version = "0.2.0"
+description = "Multi-turn intent understanding and memory-bridged hybrid retrieval engine"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.24.0",
+    "openai>=1.12.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+]
+ignore = [
+    "E501",  # line length handled by formatter / prompt templates
+    "F401",  # facade re-exports for backward compatibility
+]
+
+[tool.ruff.lint.per-file-ignores]
+"memory_bridge.py" = ["F401", "F403"]
+"pipeline.py" = ["F401", "F403"]
+"error_report.py" = ["F401", "F403"]
+"prompt_builder.py" = ["F401", "F403"]
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+python_files = ["*selftest*.py", "test_*.py"]
+addopts = [
+    "-ra",
+    "--tb=short",
+    "-s",
+]

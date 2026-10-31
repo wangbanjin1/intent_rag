@@ -119,12 +119,13 @@ class CaseBank:
     def _build_index(self) -> None:
         if not self.cases or self.embedder is None:
             return
-        cached_cases = [
-            c for c in self.cases
-            if self.embedder._key(self._case_text(c)) in self.embedder._cache
-        ]
-        if len(cached_cases) >= 100:
-            self.cases = cached_cases
+        if hasattr(self.embedder, "_key") and hasattr(self.embedder, "_cache"):
+            cached_cases = [
+                c for c in self.cases
+                if self.embedder._key(self._case_text(c)) in self.embedder._cache
+            ]
+            if len(cached_cases) >= 100:
+                self.cases = cached_cases
         texts = [self._case_text(c) for c in self.cases]
         vecs = self.embedder.embed_batch(texts)
         self.matrix = [_l2_normalize(v) for v in vecs]

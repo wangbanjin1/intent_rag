@@ -5,7 +5,8 @@
 from __future__ import annotations
 
 import os, sys, io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 os.environ.setdefault("DASHSCOPE_API_KEY", "dummy")
 
 import json

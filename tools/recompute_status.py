@@ -6,7 +6,7 @@ from intent_status import (build_gt_status_trajectory, derive_status, is_affirm,
                            has_pending_choice, in_matrix)
 from session_eval import load_test_sessions
 all_sessions={s['session_id']:s for s in load_test_sessions('data/split_d6_full.json')}
-total_old=0; total_new=0; total=0
+total_old=0; total_new=0; total=0; n_old_worse=0; n_new_worse=0
 for n in [1,2,3]:
     rows={json.loads(l)['session_id']:json.loads(l) for l in open(f'data/evals/eval_dual_v272_cand_run{n}.jsonl',encoding='utf-8')}
     for sid,r in rows.items():
@@ -39,4 +39,7 @@ for n in [1,2,3]:
         nm,nt,nd=judge_status(gt_new, pred_traj)
         om,ot=r.get('status_match',0), r.get('status_total',0)
         total_old+=om; total_new+=nm; total+=ot
+        if nm<om: n_old_worse+=1
+        if nm>om: n_new_worse+=1
 print(f'三跑状态机: 旧GT口径 {total_old}/{total}={total_old/total*100:.2f}%  新GT口径(重放pred) {total_new}/{total}={total_new/total*100:.2f}%')
+print(f'逐session: 新口径变差 {n_old_worse} 个, 变好 {n_new_worse} 个')
