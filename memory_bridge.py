@@ -74,9 +74,11 @@ from bridge_working import (
     _is_temporary_override_dialogue,
     _pick_working_record,
     _rec_sort_key,
+    build_predicted_session_turns,
     extract_working_record_from_session,
     render_working_memory_rules,
     select_target_working_record,
+    synthesize_predicted_agent_reply,
 )
 
 __all__ = [
@@ -442,12 +444,14 @@ class MemoryBridge:
         session: dict[str, Any],
         tenant_id: str = "default",
         predicted_final: dict[str, dict[str, Any]] | None = None,
+        per_turn_pred: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        """会话结束后调用 MemorySystem.record_session() 萃取并更新该用户的长期记忆库。"""
+        """会话结束后调用 MemorySystem.record_session() 萃取并更新该用户的长期记忆库（客服台词严格由模型预测合成，隔离数据集静态 GT 台词）。"""
         user_id = str(session.get("user_id", "default_user"))
         session_id = str(session.get("session_id", ""))
         reference_time = str(session.get("reference_time", ""))
-        turns = list(session.get("event_sequence") or [])
+        raw_turns = list(session.get("event_sequence") or [])
+        turns = build_predicted_session_turns(raw_turns, per_turn_pred, predicted_final)
         metadata: dict[str, Any] = {"reference_time": reference_time}
         wr_to_append = self._extract_working_record_from_session(session, predicted_final)
         if wr_to_append:

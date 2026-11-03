@@ -243,27 +243,6 @@ def _enrich_single_param_hit(
     tw = str((paired_pp or {}).get("time_window") or c.get("time_window") or "")
     res_val = c.get("resolution")
     rtt_val = c.get("latency") or c.get("rtt")
-    if not res_val or not rtt_val or not tw:
-        matching_wrs = [
-            r for r in all_working_records
-            if not is_temp_fn(r)
-            and r.get("application_name") == app_cn
-            and r.get("service_name") == svc_cn
-        ]
-        if matching_wrs:
-            sc_wrs = [r for r in matching_wrs if sc_val and sc_val in str(r.get("location") or "")]
-            ref_wr = (sc_wrs or matching_wrs)[0]
-            if not res_val and ref_wr.get("resolution"):
-                res_val = ref_wr.get("resolution")
-            if not rtt_val and ref_wr.get("rtt"):
-                rtt_val = ref_wr.get("rtt")
-            if not tw and ref_wr.get("start_timestamp") and ref_wr.get("end_timestamp"):
-                try:
-                    _s = datetime.strptime(str(ref_wr["start_timestamp"]), DT_FMT)
-                    _e = datetime.strptime(str(ref_wr["end_timestamp"]), DT_FMT)
-                    tw = f"{_s.strftime('%H:%M')}-{_e.strftime('%H:%M')}"
-                except (TypeError, ValueError):
-                    pass
     anchored = anchor_time_window_to_ref(tw, reference_time) if tw else None
     enriched = dict(h)
     enriched["paired_periodic_key"] = (paired_pp or {}).get("memory_key") or ""

@@ -314,10 +314,16 @@ def run_session(
     pipe._cand_listing = None  # type: ignore[attr-defined]
     cand_book = CandidateBook()
     prev_statuses: dict[str, str] = {}
+    synth_prev_reply: str | None = None
+    if mem_bridge is not None:
+        from bridge_working import synthesize_predicted_agent_reply
 
     for t in turns:
         if not t["utterance"].strip():
             continue
+        if mem_bridge is not None:
+            t = dict(t)
+            t["prev_agent_reply"] = synth_prev_reply
         prev_states, prev_statuses, turn_entry = _evaluate_single_turn(
             pipe=pipe,
             session_id=str(session.get("session_id", "")),
@@ -335,6 +341,10 @@ def run_session(
             prev_statuses=prev_statuses,
             session_out=session_out,
         )
+        if mem_bridge is not None:
+            synth_prev_reply = synthesize_predicted_agent_reply(
+                turn_entry.get("preds"), t["utterance"]
+            )
         per_turn_pred.append(turn_entry)
     return session_out, per_turn_pred
 

@@ -101,25 +101,13 @@ def select_target_working_record(
     best_major: dict[str, Any] | None,
     utterance: str,
 ) -> dict[str, Any] | None:
-    """从检索命中的 working_hits、全量工作记忆或最佳事实记忆中确定候选目标工单。"""
+    """从检索命中的 working_hits 中数据驱动地挑选目标工作记忆工单。"""
     if working_hits:
         return _pick_working_record(
             [dict(wh.get("content") or {}) for wh in working_hits], utterance, prefer_latest=False
         )
     if all_working_records:
         return _pick_working_record(all_working_records, utterance, prefer_latest=False)
-    if best_major is not None:
-        rs = best_major["resolved_slots"]
-        return {
-            "record_id": best_major["memory_key"],
-            "application_name": rs["application_name"],
-            "service_name": rs["service_name"],
-            "resolution": rs["resolution"],
-            "rtt": rs["rtt"],
-            "start_timestamp": rs["start_timestamp"],
-            "end_timestamp": rs["end_timestamp"],
-            "duration": rs["duration"],
-        }
     return None
 
 
@@ -320,3 +308,86 @@ def extract_working_record_from_session(
         "validity": "temporary" if is_temp else "long_term",
         "temporal_reference_aliases": ["上次", "上周", "上个月初", "之前", "昨天预约"],
     }
+
+
+_SLANG_QUOTE_RE = re.compile(r"[‘'“\"「『]([^’'”\"」』]{2,16})[’'”\"」』]")
+
+
+def synthesize_predicted_agent_reply(
+    turn_pred: dict[str, dict[str, Any]] | None, user_utt: str = ""
+) -> str:
+    """仅根据【模型自身预测的当前轮槽位状态】合成系统回复，严禁读取数据集静态客服台词。"""
+    if not turn_pred:
+        return "收到，请问您需要办理哪项应用与业务的网络保障？"
+
+    slang_m = _SLANG_QUOTE_RE.search(user_utt or "")
+    parts_per_intent: list[str] = []
+    missing_all: list[str] = []
+    for pf in turn_pred.values():
+        if not isinstance(pf, dict) or not pf.get("application_name"):
+            continue
+        app_svc = f"{pf.get('application_name', '')}{pf.get('service_name', '')}"
+        known: list[str] = []
+        missing: list[str] = []
+        if pf.get("resolution"):
+            known.append(f"画质{pf['resolution']}")
+        else:
+            missing.append("画质")
+        if pf.get("rtt"):
+            known.append(f"时延{pf['rtt']}以内")
+        else:
+            missing.append("时延")
+        st = str(pf.get("start_timestamp") or "")
+        et = str(pf.get("end_timestamp") or "")
+        dur = str(pf.get("duration") or "")
+        st_hm = st.split("日")[-1] if "日" in st else st
+        et_hm = et.split("日")[-1] if "日" in et else et
+        if st_hm and et_hm:
+            dur_str = f"（持续{dur}）" if dur else ""
+            known.append(f"{st_hm}至{et_hm}{dur_str}")
+        elif st_hm:
+            known.append(f"从{st_hm}开始")
+            missing.append("预计持续时长")
+        else:
+            missing.append("保障起止时间")
+        known_txt = "、".join(known) if known else "基础业务"
+        parts_per_intent.append(f"【{app_svc}】（{known_txt}）")
+        missing_all.extend(m for m in missing if m not in missing_all)
+
+    if not parts_per_intent:
+        return "收到，请问您需要办理哪项应用与业务的网络保障？"
+    summary_txt = "；".join(parts_per_intent)
+    if slang_m and ("画质" in missing_all or "时延" in missing_all):
+        phrase = slang_m.group(1)
+        slot_cn = "画质档位" if "画质" in missing_all else "时延上限"
+        return f"收到，已为您记录{summary_txt}。您说的‘{phrase}’具体是指哪档{slot_cn}？"
+    if missing_all:
+        return f"收到，已为您锁定{summary_txt}。请问您需要保障的{'、'.join(missing_all)}分别是多少呢？"
+    return f"收到，已为您准备好{summary_txt}意图保障单配置，确认按这套配置开通吗？"
+
+
+def build_predicted_session_turns(
+    raw_turns: list[dict[str, Any]],
+    per_turn_pred: list[dict[str, Any]] | None,
+    predicted_final: dict[str, dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    """构造写回记忆系统的对话轮次：保留用户原话，将客服回复替换为模型自身预测合成文本。"""
+    pred_by_turn: dict[int, dict[str, dict[str, Any]]] = {}
+    for ptp in per_turn_pred or []:
+        t_idx = int(ptp.get("turn", 0))
+        if t_idx > 0 and isinstance(ptp.get("preds"), dict):
+            pred_by_turn[t_idx] = ptp["preds"]
+
+    sanitized: list[dict[str, Any]] = []
+    for idx, ev in enumerate(raw_turns, 1):
+        if not isinstance(ev, dict):
+            continue
+        t_no = int(ev.get("turn", idx))
+        u_obj = ev.get("user") if isinstance(ev.get("user"), dict) else {}
+        u_utt = str(u_obj.get("utterance") or "")
+        t_preds = pred_by_turn.get(t_no) or (predicted_final if idx == len(raw_turns) else {})
+        synth_agent = synthesize_predicted_agent_reply(t_preds, u_utt)
+        ev_copy = dict(ev)
+        ev_copy["agent"] = {"utterance": synth_agent}
+        sanitized.append(ev_copy)
+    return sanitized

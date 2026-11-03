@@ -44,9 +44,10 @@ def load_sessions(persona_dir: Path) -> List[Dict[str, Any]]:
     return out
 
 
-def list_all_personas() -> List[Path]:
+def list_all_personas(data_dir: Path | None = None) -> List[Path]:
+    target_dir = data_dir or COG_DATA_DIR
     return sorted(
-        [d for d in COG_DATA_DIR.iterdir() if d.is_dir() and d.name.startswith("mobile_persona_")],
+        [d for d in target_dir.iterdir() if d.is_dir() and d.name.startswith("mobile_persona_")],
         key=lambda p: p.name,
     )
 
@@ -84,7 +85,9 @@ def _eval_single_cognitive_session(
         for k, v in session_out.items()
         if (v.get("pred_flat") or {}).get("application_name")
     }
-    mem_after = bridge.record_session(sess, predicted_final=predicted_final)
+    mem_after = bridge.record_session(
+        sess, predicted_final=predicted_final, per_turn_pred=per_turn_pred
+    )
     elapsed = round(time.time() - t0, 2)
 
     status_str = "PASS" if s_ok else "FAIL"
@@ -276,6 +279,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     ap = argparse.ArgumentParser()
+    ap.add_argument("--dataset_dir", default="", help="数据集根目录 (默认 COG_DATA_DIR)")
     ap.add_argument("--personas", default="", help="逗号分隔的 persona 编号, 如 014,016 (默认全部)")
     ap.add_argument("--config", default="", help="意图模型 config 路径")
     ap.add_argument("--out", default="", help="输出目录 (默认 eval_results/run_02_cognitive_samples)")
@@ -283,7 +287,9 @@ if __name__ == "__main__":
     ap.add_argument("--no_html", action="store_true")
     args = ap.parse_args()
 
-    selected = list_all_personas()
+    if args.dataset_dir:
+        COG_DATA_DIR = Path(args.dataset_dir)
+    selected = list_all_personas(COG_DATA_DIR)
     if args.personas:
         wanted = {x.strip().zfill(3) for x in args.personas.split(",") if x.strip()}
         selected = [p for p in selected if p.name[-3:] in wanted]
