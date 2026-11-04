@@ -19,11 +19,11 @@ EXPERIENCE_DEFAULT_TAIL = "# 按上述经验动作调整, 其余槽位以用户�
 EXPERIENCE_FOLLOWUP_KEEP_RULE = (
     "# === EXPERIENCE FOLLOW-UP KEEP RULE (经验记忆归纳/确认轮状态锁定规则, 本轮生效, 优先级最高) ===\n"
     "# 本轮属于经验记忆归纳学习或确认轮：即使本轮用户口头提及“把开始时间往前提前半小时”、“平时对词我们都是打微信视频电话”或重申经验做法（该语句仅用于向经验库结晶未来规则 EXP_*），\n"
-    "# 当前会话在上一轮已落盘锁定的全部 7 个目标槽位（application_name, service_name, resolution, rtt, start_timestamp, end_timestamp, duration）必须严格保持不变！\n"
+    "# 当前会话在上一轮已落盘锁定的全部目标槽位（application_name, service_name, resolution, rtt, start_timestamp, end_timestamp, duration）必须严格保持不变！\n"
     "# 必须遵守:\n"
     "# 1. 严禁在本轮调用 find_timestamp(...) 或修改 start_timestamp / end_timestamp（忽略 TIME EVIDENCE 的偏移）;\n"
     "# 2. 严禁修改 state.resolution 或 state.rtt（严禁从【用户习惯画像】或长期记忆中拉取其他参数如 100ms 覆盖 prev_state 已有的 resolution 和 rtt）;\n"
-    "# 3. 必须输出 `# 身份判定: 更新已有意图 I1` 与 `# intent: I1`，并用 `state.xxx = state.xxx` 完整保留 prev_state 中的全部 7 个槽位!\n"
+    "# 3. 必须针对 prev_state 中的每一个已有意图（如 # intent: I1；若 prev_state 同时包含 I2，则必须输出第二个代码块 # intent: I2），分别用 `state.xxx = state.xxx` 完整保留各意图在 prev_state 中的全部 7 个槽位!\n"
 )
 
 
@@ -48,15 +48,16 @@ def format_experience_app_service_rule(
     time_lock = ""
     if st_str is not None and et_str is not None and dur_min is not None:
         time_lock = (
-            f"#   start_timestamp = '{st_str}'  (来源: 用户本轮明说时刻, 严禁套用长期记忆中的其他时段)\n"
-            f"#   end_timestamp   = '{et_str}'  (来源: 用户本轮明说时刻)\n"
+            f"#   start_timestamp = '{st_str}'  (来源: 用户本轮明说第一阶段时刻, 严禁套用长期记忆中的其他时段)\n"
+            f"#   end_timestamp   = '{et_str}'  (来源: 用户本轮明说第一阶段时刻)\n"
             f"#   duration        = '{dur_min}min'\n"
         )
     return (
         head
         + time_lock
-        + f"# 1. 必须填 {', '.join(assign_lines)} (按经验识别真实业务载体, 不要被字面词误导);\n"
-        + "# 2. 将本轮话语中给出的画质 (resolution)、时延 (rtt)、起止时间与时长 (start_timestamp / end_timestamp / duration) 完整填入 state (严禁混入 MEMORY SYSTEM RETRIEVAL 中其他会话的时段)!\n"
+        + f"# 1. 必须将彩排/对词看机位/连麦阶段的意图填为 {', '.join(assign_lines)} (按经验识别真实业务载体并补齐画质与时延, 严禁将第一阶段的 resolution 或 rtt 留空!);\n"
+        + "# 2. 将本轮话语中给出的第一阶段起止时间与时长 (start_timestamp / end_timestamp / duration) 完整填入第一笔意图的 state;\n"
+        + "# 3. 若用户本轮同时提出了第二阶段的正式开播/会议需求 (如『接着 12:30 到 13:30 正式用抖音开直播』)，必须额外输出第二个 `# intent: new` 代码块，按第二阶段明说的应用、业务、时间窗、时长、画质和时延完整填入第二笔意图!\n"
     )
 
 
@@ -65,19 +66,26 @@ def format_experience_holiday_shift_rule(
     orig_date_str: str | None = None,
     h_name: str | None = None,
     next_workday_str: str | None = None,
+    fallback_res: str | None = None,
+    fallback_rtt: str | None = None,
 ) -> str:
     """渲染法定节假日顺延类经验规则。"""
+    qos_tail = (
+        f"# 2. 完整填入用户指定的应用、业务，以及画质 state.resolution = {fallback_res!r}、时延 state.rtt = {fallback_rtt!r}!\n"
+        if fallback_res and fallback_rtt
+        else "# 2. 完整填入用户指定的应用、业务、画质 (resolution) 和时延 (rtt)!\n"
+    )
     if orig_date_str and next_workday_str:
         return (
             head
             + f"#   原定日期 {orig_date_str} 为{h_name or '法定节假日'}假期 -> 节后首个工作日 {next_workday_str}\n"
             + f"# 1. start_timestamp 和 end_timestamp 的日期必须写为 '{next_workday_str}' (保留用户指定的具体起止时分与 duration);\n"
-            + "# 2. 完整填入用户指定的应用、业务、画质 (resolution) 和时延 (rtt)!\n"
+            + qos_tail
         )
     return (
         head
         + "# 1. 若用户指定日期为法定节假日, 将 start_timestamp / end_timestamp 的日期顺延至节后首个工作日 (保留起止时分与 duration);\n"
-        + "# 2. 完整填入用户指定的应用、业务、画质 (resolution) 和时延 (rtt)!\n"
+        + qos_tail
     )
 
 
@@ -140,9 +148,9 @@ def format_experience_start_offset_rule(
 
 WORKING_RECORD_DISAMBIG_RULE = (
     "# === WORKING RECORD DISAMBIGUATION RULE (多笔历史工单待消歧规则, 本轮生效, 优先级最高) ===\n"
-    "# 用户引用了历史意图保障单规格并给出了今日时间，但历史账本中存在多笔工单，本轮需向用户确认按哪一笔的规格。\n"
+    "# 用户引用了历史意图保障单规格并给出了今日开始时间，但历史账本中存在多笔不同时长/画质的工单，本轮需向用户确认按哪一笔的规格。\n"
     "# 必须遵守:\n"
-    "# 1. 本轮只填 application_name, service_name 以及用户给出的今日时间 (start_timestamp, end_timestamp, duration);\n"
+    "# 1. 本轮只填 application_name, service_name 以及用户字面明确说出的今日开始时间 start_timestamp (若用户本轮只说了开始时刻而未明说具体持续时长或结束时刻，则只写 state.timestamp = find_timestamp(start=...)，严禁从用户画像借用 duration=60min 或推算 end_timestamp，必须等下一轮选定工单后再填 duration 和 end_timestamp!);\n"
     "# 2. 本轮严禁给 state.resolution 和 state.rtt 赋值 (必须留空，即使话语末尾带有『抓紧别掉链子』等口头催促词也不要查黑话词典填 rtt，必须等下一轮用户选定按哪一笔历史工单后再补齐画质与时延)!\n"
 )
 
@@ -175,13 +183,30 @@ def format_working_reschedule_rule(
     pre_shift_desc: str = "",
 ) -> str:
     """渲染工作记忆历史预约工单改期规则。"""
+    if not (resched_start and resched_end):
+        return (
+            "# === WORKING RECORD RESCHEDULE RULE (历史预约工单改期待定新时段规则, 本轮生效, 优先级最高) ===\n"
+            f"# 用户要求将之前预约的保障工单 [{target_wr.get('record_id')}] 改期，但本轮尚未给出改期后的具体起止时间:\n"
+            f"#   application_name = {target_wr.get('application_name')!r}\n"
+            f"#   service_name     = {target_wr.get('service_name')!r}\n"
+            f"#   resolution       = {target_wr.get('resolution')!r}\n"
+            f"#   rtt              = {target_wr.get('rtt')!r}\n"
+            f"#   duration         = {resched_dur!r}\n"
+            "# 必须遵守:\n"
+            "# 1. 本轮是当前对话的第 1 轮 (prev_state 为空)，段头必须写 # intent: new;\n"
+            "# 2. 代码块中必须显式写出上述 5 个已知槽位赋值，并将 start_timestamp 和 end_timestamp 留空 (等待下一轮用户告知改期后的新时间段):\n"
+            f"#    state.application_name = {target_wr.get('application_name')!r}\n"
+            f"#    state.service_name = {target_wr.get('service_name')!r}\n"
+            f"#    state.resolution = {target_wr.get('resolution')!r}\n"
+            f"#    state.rtt = {target_wr.get('rtt')!r}\n"
+            f"#    state.duration = {resched_dur!r}\n"
+            "# 3. 本轮严禁填写 start_timestamp 和 end_timestamp!\n"
+        )
     time_lines = (
         f"{pre_shift_desc}"
         f"#   改期后最终 start_timestamp = {resched_start!r}\n"
         f"#   改期后最终 end_timestamp   = {resched_end!r}\n"
         f"#   duration                   = {resched_dur!r}\n"
-        if resched_start and resched_end
-        else "#   (目标工单缺少可用时段: 时间按用户话语与工单时段自行换算)\n"
     )
     return (
         "# === WORKING RECORD RESCHEDULE RULE (历史预约工单改期规则, 本轮生效, 优先级最高) ===\n"
@@ -200,6 +225,33 @@ def format_working_reschedule_rule(
         f"#    state.rtt = {target_wr.get('rtt')!r}\n"
         f"#    state.timestamp = find_timestamp(start={resched_start!r}, end={resched_end!r}, duration={resched_dur!r})\n"
         "# 3. 严禁对 start_timestamp 再次做提前/推迟换算!\n"
+    )
+
+
+def format_working_reschedule_time_fill_rule(
+    twr: dict[str, Any],
+    u_st_str: str,
+    u_et_str: str,
+) -> str:
+    """渲染工作记忆改期次轮补充新时段规则。"""
+    dur_v = twr.get("duration") or "60min"
+    return (
+        "# === WORKING RECORD RESCHEDULE TIME FILL RULE (工单改期次轮补充新时段规则, 本轮生效, 优先级最高) ===\n"
+        f"# 用户本轮明确给出了历史工单 [{twr.get('record_id')}] 改期后的新起止时间段:\n"
+        f"#   application_name = {twr.get('application_name')!r}\n"
+        f"#   service_name     = {twr.get('service_name')!r}\n"
+        f"#   resolution       = {twr.get('resolution')!r}\n"
+        f"#   rtt              = {twr.get('rtt')!r}\n"
+        f"#   start_timestamp  = {u_st_str!r}\n"
+        f"#   end_timestamp    = {u_et_str!r}\n"
+        f"#   duration         = {dur_v!r}\n"
+        "# 必须遵守:\n"
+        "# 1. 沿用已有意图段头 (如 # intent: I1), 代码块中显式保留并写出全部 7 个槽位:\n"
+        f"#    state.application_name = {twr.get('application_name')!r}\n"
+        f"#    state.service_name = {twr.get('service_name')!r}\n"
+        f"#    state.resolution = {twr.get('resolution')!r}\n"
+        f"#    state.rtt = {twr.get('rtt')!r}\n"
+        f"#    state.timestamp = find_timestamp(start={u_st_str!r}, end={u_et_str!r}, duration={dur_v!r})\n"
     )
 
 
@@ -225,12 +277,13 @@ def format_working_reuse_rule(target_wr: dict[str, Any]) -> str:
 
 def format_working_disambig_resolve_rule(twr: dict[str, Any]) -> str:
     """渲染工作记忆多工单消歧选定规则。"""
-    res_v, rtt_v = twr.get("resolution"), twr.get("rtt")
+    res_v, rtt_v, dur_v = twr.get("resolution"), twr.get("rtt"), twr.get("duration")
+    dur_hint = f"#   duration   = {dur_v!r}\n" if dur_v else ""
     rule2 = (
         f"# 2. 无论本轮用户话语是说『按最近那次』还是重申今日起止时段，代码块中都必须显式写出:\n"
         f"#    state.resolution = {res_v!r}\n"
         f"#    state.rtt = {rtt_v!r}\n"
-        "#    严禁漏写 state.resolution 和 state.rtt!\n"
+        "#    并结合 prev_state 的 start_timestamp 与本轮话语/工单时长调用 find_timestamp(start=..., end=..., duration=...) 补齐完整时段，严禁漏写 state.resolution、state.rtt 或 state.timestamp!\n"
         if res_v and rtt_v
         else "# 2. 账本中该工单缺少画质/时延记录, 不要臆造取值, 仅按用户话语填写!\n"
     )
@@ -239,8 +292,9 @@ def format_working_disambig_resolve_rule(twr: dict[str, Any]) -> str:
         f"# 用户本轮已完成历史工单消歧确认，锁定目标历史工单规格 [{twr.get('record_id')}]:\n"
         f"#   resolution = {res_v!r}\n"
         f"#   rtt        = {rtt_v!r}\n"
-        "# 必须遵守:\n"
-        "# 1. 沿用已有意图段头 (如 # intent: I1), 保留 prev_state 已有的 application_name, service_name, start_timestamp, end_timestamp, duration;\n"
+        + dur_hint
+        + "# 必须遵守:\n"
+        "# 1. 沿用已有意图段头 (如 # intent: I1), 保留 prev_state 已有的 application_name, service_name, start_timestamp;\n"
         + rule2
     )
 
@@ -285,16 +339,21 @@ SERVICE_NAME_GAME_RULE = (
 
 COLD_START_LITERAL_RULE = (
     "# === COLD-START LITERAL EXTRACTION RULE (非记忆触发轮字面提取规则, 本轮生效, 优先级最高) ===\n"
-    "# 用户本轮未说『老规矩/按上次』等记忆触发词，也未提及画质或时延。本轮必须仅提取用户字面说出的槽位:\n"
-    "# 严禁从长期记忆或用户画像中自动借用 resolution、rtt、end_timestamp 或 duration (用户没说的槽位一律留空，等待下一轮追问补充)!\n"
+    "# 用户本轮未说『老规矩/按上次』等记忆触发词，也未明说具体画质档位(720p/1080p/2K/4K)或时延数值(20ms/50ms/100ms)。本轮必须仅提取用户字面明确说出的槽位:\n"
+    "# 严禁从长期记忆、用户画像或【个人黑话词典】中自动借用或映射 resolution、rtt、end_timestamp 或 duration (即使话语末尾带有『别掉链子/稳住节奏/别断掉』等口头催促词，只要未说具体画质/时延数值，resolution 和 rtt 一律留空 null，等待下一轮追问补充)!\n"
 )
 
 MULTI_TURN_SLOT_COMPLETION_RULE = (
     "# === MULTI-TURN SLOT COMPLETION RULE (多轮证据补槽规则, 本轮生效, 优先级最高) ===\n"
-    "# 若本轮用户补充了持续时长 (如『预计持续90min』『持续2个小时』) 或结束时间，而 prev_state 已有 start_timestamp:\n"
-    "# 注意: TIME EVIDENCE 只是系统提供给你的参考文本，不会自动写入 state! 你必须在下方 Python 代码块中显式调用:\n"
-    "#   state.timestamp = find_timestamp(start=..., end=..., duration=...)\n"
-    "# 把 start_timestamp、end_timestamp 与 duration 一并写入 state，严禁只写 resolution/rtt 而漏写 state.timestamp!\n"
+    "# 1. 若本轮用户补充了持续时长 (如『预计持续90min』『持续2个小时』) 或结束时间，而 prev_state 已有 start_timestamp:\n"
+    "#    注意: TIME EVIDENCE 只是系统提供给你的参考文本，不会自动写入 state! 你必须在下方 Python 代码块中显式调用:\n"
+    "#      state.timestamp = find_timestamp(start=..., end=..., duration=...)\n"
+    "#    把 start_timestamp、end_timestamp 与 duration 一并写入 state，严禁只写 resolution/rtt 而漏写 state.timestamp!\n"
+    "# 2. 若本轮用户话语中明确说出了具体画质档位 (如 720p/1080p/2K/4K) 或具体时延数值 (如 20ms/30ms/50ms/100ms):\n"
+    "#    即使话语中同时带有『照旧』『我平时就管这个叫…』等字眼，只要 prev_state 中 resolution 或 rtt 仍为空，本轮必须在代码块中显式写出:\n"
+    "#      state.resolution = '<用户明说的画质档位>'\n"
+    "#      state.rtt = '<用户明说的时延数值>'\n"
+    "#    严禁误以为 prev_state 已有值而省略 state.resolution 或 state.rtt!\n"
 )
 
 MEMORY_FOLLOWUP_UPDATE_RULE = (
@@ -305,6 +364,25 @@ MEMORY_FOLLOWUP_UPDATE_RULE = (
     "# 3. 若用户延长了保障时长 (如延长到 180 分钟), 更新 duration='180min', 并基于 state.start_timestamp 重新推算 end_timestamp;\n"
     "# 4. 若用户临时调整了画质或时延 (如画质临时调到 720p、时延压到 30ms), 将 state.resolution 和 state.rtt 更新为本轮新值, 时间字段继续沿用 prev_state!\n"
 )
+
+
+def format_memory_followup_update_rule(
+    rs: dict[str, Any] | None = None,
+    prev_state: dict[str, Any] | None = None,
+) -> str:
+    """渲染多轮参数微调规则（若上一轮未补齐 duration/end_timestamp，则从匹配记忆补齐默认时长）。"""
+    ps = prev_state or {}
+    if rs and (not ps.get("duration") or not ps.get("end_timestamp")):
+        st_v = ps.get("start_timestamp") or rs.get("start_timestamp")
+        et_v = rs.get("end_timestamp")
+        dur_v = rs.get("duration")
+        if st_v and et_v and dur_v:
+            return (
+                MEMORY_FOLLOWUP_UPDATE_RULE
+                + f"# 5. 注意: 上一轮 prev_state 尚未填入默认时长与结束时刻，本轮必须同时调用:\n"
+                + f"#    state.timestamp = find_timestamp(start={st_v!r}, end={et_v!r}, duration={dur_v!r})\n"
+            )
+    return MEMORY_FOLLOWUP_UPDATE_RULE
 
 MEMORY_FOLLOWUP_CONFIRM_RULE = (
     "# === MEMORY FOLLOW-UP CONFIRM RULE (老规矩确认轮保持规则, 本轮生效, 优先级最高) ===\n"

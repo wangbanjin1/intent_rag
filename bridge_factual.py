@@ -21,6 +21,7 @@ from prompts.memory_hint_templates import (
     SERVICE_NAME_GAME_RULE,
     SERVICE_NAME_SHORT_VIDEO_RULE,
     format_memory_fill_rule,
+    format_memory_followup_update_rule,
     format_unclarified_slang_rule,
 )
 
@@ -115,9 +116,17 @@ def _explicit_window(utterance: str, reference_time: str) -> tuple[datetime | No
     if ref_dt is None:
         return None, None
     ev = _tex.extract(utterance or "", ref_dt)
-    if ev is None or ev.start is None:
+    if ev is None:
         return None, None
     st, et = ev.start, ev.end
+    if st is None and len(ev.mentions) == 1 and ev.mentions[0].dt is not None:
+        st = ev.mentions[0].dt
+        if et is None and ev.duration_min:
+            et = st + timedelta(minutes=ev.duration_min)
+    elif st is not None and et is None and ev.duration_min:
+        et = st + timedelta(minutes=ev.duration_min)
+    if st is None:
+        return None, None
     has_period = any(mn.period for mn in ev.mentions)
     if (
         not has_period
@@ -129,6 +138,8 @@ def _explicit_window(utterance: str, reference_time: str) -> tuple[datetime | No
         st = st + timedelta(hours=12)
         if et is not None and et.hour < 12:
             et = et + timedelta(hours=12)
+    if et is not None and et <= st and et.hour < 12 and et + timedelta(hours=12) > st:
+        et = et + timedelta(hours=12)
     if et is not None and et <= st:
         et = None
     return st, et
@@ -509,22 +520,32 @@ def render_factual_and_cold_start_rules(
             )
         )
 
+    is_param_mod = (
+        turn_index > 1
+        and bool(prev_states)
+        and any(w in utterance for w in ("临时", "改", "调到", "压到", "降到", "提到", "换成"))
+        and "以后也照这个标准" not in utterance
+        and "平时说的" not in utterance
+        and bool(_EXPLICIT_RES_RE.search(utterance) or _EXPLICIT_RTT_RE.search(utterance))
+    )
+
     if not session_memory_triggered and not session_wr_mode and not exp_applied:
         hint_lines.extend(
             _collect_cold_start_and_slang_rules(
                 turn_index, utterance, has_trigger, prev_states, known_aliases
             )
         )
+        if is_param_mod and best_major is not None:
+            first_ps = next(iter(prev_states.values()), {})
+            hint_lines.append(
+                format_memory_followup_update_rule(best_major.get("resolved_slots"), first_ps)
+            )
 
     if turn_index > 1 and session_memory_triggered and prev_states:
-        is_param_mod = (
-            any(w in utterance for w in ("临时", "改", "调到", "压到", "降到", "提到", "换成"))
-            and "以后也照这个标准" not in utterance
-            and "平时说的" not in utterance
-            and bool(_EXPLICIT_RES_RE.search(utterance) or _EXPLICIT_RTT_RE.search(utterance))
-        )
         if "延长" in utterance or is_param_mod:
-            hint_lines.append(MEMORY_FOLLOWUP_UPDATE_RULE)
+            first_ps = next(iter(prev_states.values()), {})
+            rs = best_major.get("resolved_slots") if best_major else None
+            hint_lines.append(format_memory_followup_update_rule(rs, first_ps))
         else:
             hint_lines.append(MEMORY_FOLLOWUP_CONFIRM_RULE)
 

@@ -63,6 +63,11 @@ def _complete_timestamp(
     end_dt = parse_dt(end) if end else None
     dur_min = parse_duration_minutes(dur) if dur else None
 
+    if start_dt and end_dt and end_dt <= start_dt and end_dt.hour < 12 and end_dt + timedelta(hours=12) > start_dt:
+        end_dt = end_dt + timedelta(hours=12)
+        end = _fmt_dt(end_dt)
+        _set("end_timestamp", end)
+
     # Check if delta updated duration without providing a new literal end_timestamp (e.g. T2-5 duration extension)
     delta_ts = (delta_nested or {}).get("timestamp") if isinstance(delta_nested, dict) else None
     if isinstance(delta_ts, dict) and "duration" in delta_ts and start_dt and dur_min:

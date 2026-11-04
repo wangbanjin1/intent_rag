@@ -141,9 +141,9 @@ class _QwenBackend:
         }
         payload = {"model": self.model, "input": texts}
         last_err: Exception | None = None
-        for attempt in range(4):
+        for attempt in range(6):
             try:
-                if self._client is not None:
+                if self._client is not None and attempt < 3:
                     resp = self._client.post(url, headers=headers, json=payload)
                     if resp.status_code in (429, 500, 502, 503, 504):
                         last_err = RuntimeError(f"HTTP {resp.status_code}: {resp.text[:200]}")
@@ -161,7 +161,7 @@ class _QwenBackend:
             except Exception as e:
                 last_err = e
                 _time.sleep(min(2 ** attempt, 8))
-        raise RuntimeError(f"Embedding failed after 4 retries: {last_err}")
+        raise RuntimeError(f"Embedding failed after 6 retries: {last_err}")
 
 
 class _BGEBackend:

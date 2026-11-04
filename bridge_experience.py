@@ -46,9 +46,14 @@ from prompts.memory_hint_templates import (
 
 
 def _exp_card(eid: str, recalled: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    """合并内置经验模板与用户库中召回的经验卡片 (卡片字段优先)。"""
-    card = dict(_BUILTIN_EXPERIENCE_TEMPLATES.get(eid) or {})
+    """合并内置经验模板与用户库中召回的经验卡片 (内置触发门控优先，防止旧落盘触发词过窄)。"""
+    builtin = dict(_BUILTIN_EXPERIENCE_TEMPLATES.get(eid) or {})
+    card = dict(builtin)
     card.update(recalled.get(eid) or {})
+    if "bridge_trigger" in builtin:
+        card["bridge_trigger"] = builtin["bridge_trigger"]
+    if "bridge_requires_active" in builtin:
+        card["bridge_requires_active"] = builtin["bridge_requires_active"]
     return card
 
 
@@ -57,9 +62,11 @@ def _format_fastpath_experience_rule(
     adj: dict[str, Any],
     utterance: str,
     reference_time: str,
+    best_major: dict[str, Any] | None = None,
 ) -> str | None:
     """渲染无需检索多笔工作记忆账本的直接槽位修正类经验规则（载体替换 / 节假日顺延 / 提前预热偏移）。"""
     if adj.get("application_name") or adj.get("service_name"):
+        rs = (best_major or {}).get("resolved_slots") or {}
         target_app = adj.get("application_name") or _mentioned_app(utterance)
         target_svc = adj.get("service_name")
         lines = []
@@ -67,6 +74,10 @@ def _format_fastpath_experience_rule(
             lines.append(f"state.application_name = {target_app!r}")
         if target_svc:
             lines.append(f"state.service_name = {target_svc!r}")
+        if rs.get("resolution"):
+            lines.append(f"state.resolution = {rs['resolution']!r}")
+        if rs.get("rtt"):
+            lines.append(f"state.rtt = {rs['rtt']!r}")
         st_dt, et_dt = _explicit_window(utterance, reference_time)
         if st_dt is not None and et_dt is not None:
             dur_min = int((et_dt - st_dt).total_seconds() // 60)
@@ -76,6 +87,8 @@ def _format_fastpath_experience_rule(
         return format_experience_app_service_rule(head, lines)
 
     if adj.get("shift_to") == "next_statutory_workday":
+        rs = (best_major or {}).get("resolved_slots") or {}
+        fb_res, fb_rtt = rs.get("resolution"), rs.get("rtt")
         year = _ref_year(reference_time)
         hdates = find_holiday_dates(utterance, year) if year else []
         if hdates:
@@ -87,8 +100,10 @@ def _format_fastpath_experience_rule(
                     h.strftime("%Y年%m月%d日"),
                     holiday_name(h) or "法定节假日",
                     nd.strftime("%Y年%m月%d日"),
+                    fallback_res=fb_res,
+                    fallback_rtt=fb_rtt,
                 )
-        return format_experience_holiday_shift_rule(head)
+        return format_experience_holiday_shift_rule(head, fallback_res=fb_res, fallback_rtt=fb_rtt)
 
     if adj.get("start_offset_minutes") is not None:
         off = int(adj.get("start_offset_minutes") or 0)
@@ -164,6 +179,7 @@ def render_experience_rule(
     utterance: str,
     reference_time: str,
     all_working_records: list[dict[str, Any]],
+    best_major: dict[str, Any] | None = None,
 ) -> str:
     """按经验卡片的 recommended_adjustments 动态渲染 EXPERIENCE RULE。"""
     adj = card.get("recommended_adjustments") or {}
@@ -171,7 +187,7 @@ def render_experience_rule(
     act_txt = str(card.get("action") or "")
     head = format_experience_rule_header(str(card.get("experience_id", "")), cond_txt, act_txt)
 
-    fast_rule = _format_fastpath_experience_rule(head, adj, utterance, reference_time)
+    fast_rule = _format_fastpath_experience_rule(head, adj, utterance, reference_time, best_major=best_major)
     if fast_rule is not None:
         return fast_rule
 
@@ -193,15 +209,24 @@ def evaluate_experience_tier(
     active_experiences: dict[str, dict[str, Any]],
     all_working_records: list[dict[str, Any]],
     session_exp_triggered: str | None,
+    best_major: dict[str, Any] | None = None,
 ) -> tuple[str | None, list[str]]:
     """评估 Tier 3 经验记忆规则触发与后续轮状态锁定规则。"""
     hint_lines: list[str] = []
     recalled_exp_map: dict[str, dict[str, Any]] = {}
+    recalled_structured_eids: set[str] = set()
     for exh in experience_hits:
         exc = exh.get("content") or {}
-        eid = str(exc.get("experience_id") or "").strip()
+        eid = str(exc.get("experience_id") or exh.get("experience_id") or "").strip()
         if eid:
             recalled_exp_map[eid] = exc
+            sm = str(
+                exh.get("structured_match")
+                or (exh.get("explain") or {}).get("structured_match")
+                or ""
+            ).strip()
+            if sm:
+                recalled_structured_eids.add(eid)
     for eid, exc in active_experiences.items():
         if eid not in recalled_exp_map:
             recalled_exp_map[eid] = exc
@@ -212,15 +237,21 @@ def evaluate_experience_tier(
         matched_card: dict[str, Any] = {}
         for eid in _BUILTIN_EXPERIENCE_TEMPLATES:
             card = _exp_card(eid, recalled_exp_map)
-            if trigger_matches(card, "bridge_trigger", utterance, "", ref_year):
+            is_active_structured_hit = (
+                bool(card.get("bridge_requires_active"))
+                and eid in active_experiences
+                and eid in recalled_structured_eids
+            )
+            if trigger_matches(card, "bridge_trigger", utterance, "", ref_year) or is_active_structured_hit:
                 matched_eid, matched_card = eid, card
                 break
         if matched_eid and matched_card.get("bridge_requires_active") and matched_eid not in active_experiences:
-            session_exp_triggered = f"{matched_eid}:LEARNING"
+            if matched_eid != "EXP_CALENDAR_HOLIDAY_EXCEPTION_01":
+                session_exp_triggered = f"{matched_eid}:LEARNING"
         elif matched_eid:
             session_exp_triggered = matched_eid
             rule_txt = render_experience_rule(
-                matched_card, utterance, reference_time, all_working_records
+                matched_card, utterance, reference_time, all_working_records, best_major=best_major
             )
             if rule_txt:
                 hint_lines.append(rule_txt)

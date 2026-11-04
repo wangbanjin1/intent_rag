@@ -27,7 +27,7 @@ class LLMClient:
         self.temperature = cfg.get("temperature", 0.0)
         self.max_tokens = cfg.get("max_tokens", 2048)
         self.timeout = cfg.get("timeout", 60)
-        self.max_retries: int = cfg.get("max_retries", 4)
+        self.max_retries: int = cfg.get("max_retries", 8)
         self._client: Any = None
         try:
             import httpx  # type: ignore
@@ -35,7 +35,7 @@ class LLMClient:
             self._client = httpx.Client(
                 trust_env=False,
                 transport=httpx.HTTPTransport(local_address="0.0.0.0"),
-                timeout=httpx.Timeout(connect=10.0, read=float(self.timeout), write=30.0, pool=10.0),
+                timeout=httpx.Timeout(connect=20.0, read=float(self.timeout), write=30.0, pool=20.0),
             )
         except Exception:
             self._client = None
@@ -61,7 +61,7 @@ class LLMClient:
         last_err: Exception | None = None
         for attempt in range(self.max_retries):
             try:
-                if self._client is not None:
+                if self._client is not None and attempt < 2:
                     resp = self._client.post(url, headers=headers, json=payload)
                     if resp.status_code < 400:
                         return resp.json()

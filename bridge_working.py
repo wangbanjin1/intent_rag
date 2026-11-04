@@ -32,8 +32,13 @@ from prompts.memory_hint_templates import (
     WORKING_RECORD_RESCHEDULE_CONFIRM_RULE,
     format_working_disambig_resolve_rule,
     format_working_reschedule_rule,
+    format_working_reschedule_time_fill_rule,
     format_working_reuse_rule,
     format_working_reuse_time_fill_rule,
+)
+
+_EXPLICIT_SHIFT_UNIT_RE = re.compile(
+    r"(?:推迟|延后|往后挪|往后推|顺延|提前|往前挪|往前提)\s*(?:半|一|两|二|三|四|\d+)\s*个?\s*(?:半)?\s*(?:小时|钟头|分钟)"
 )
 
 _LOC_RE = re.compile(
@@ -125,24 +130,26 @@ def _format_reschedule_constraints(
         target_wr = picked
     resched_start = resched_end = None
     pre_shift_desc = ""
-    try:
-        o_st = datetime.strptime(str(target_wr.get("start_timestamp")), DT_FMT)
-        o_et = datetime.strptime(str(target_wr.get("end_timestamp")), DT_FMT)
-        base = ref_dt if ref_dt is not None else o_st
-        a_st = base.replace(hour=o_st.hour, minute=o_st.minute, second=0, microsecond=0)
-        a_et = a_st + (o_et - o_st)
-        resched_start, resched_end = a_st.strftime(DT_FMT), a_et.strftime(DT_FMT)
-        shift_m = reschedule_shift_minutes(utterance)
-        if shift_m:
-            pre_st = a_st - timedelta(minutes=shift_m)
-            pre_et = a_et - timedelta(minutes=shift_m)
-            pre_shift_desc = (
-                f"#   (注: 原预约基准时段为 {pre_st.strftime('%H:%M')}~{pre_et.strftime('%H:%M')}, "
-                f"系统已执行完您要求的{'提前' if shift_m < 0 else '推迟'}{abs(shift_m)}分钟偏移, "
-                f"最终改期时段即下方 {a_st.strftime('%H:%M')}~{a_et.strftime('%H:%M')}, 严禁在下方时段基础上再次加减1小时!)\n"
-            )
-    except (TypeError, ValueError):
-        resched_start = resched_end = None
+    has_concrete_shift = bool(_EXPLICIT_SHIFT_UNIT_RE.search(utterance or "")) or has_explicit_time(utterance)
+    if has_concrete_shift:
+        try:
+            o_st = datetime.strptime(str(target_wr.get("start_timestamp")), DT_FMT)
+            o_et = datetime.strptime(str(target_wr.get("end_timestamp")), DT_FMT)
+            base = ref_dt if ref_dt is not None else o_st
+            a_st = base.replace(hour=o_st.hour, minute=o_st.minute, second=0, microsecond=0)
+            a_et = a_st + (o_et - o_st)
+            resched_start, resched_end = a_st.strftime(DT_FMT), a_et.strftime(DT_FMT)
+            shift_m = reschedule_shift_minutes(utterance)
+            if shift_m:
+                pre_st = a_st - timedelta(minutes=shift_m)
+                pre_et = a_et - timedelta(minutes=shift_m)
+                pre_shift_desc = (
+                    f"#   (注: 原预约基准时段为 {pre_st.strftime('%H:%M')}~{pre_et.strftime('%H:%M')}, "
+                    f"系统已执行完您要求的{'提前' if shift_m < 0 else '推迟'}{abs(shift_m)}分钟偏移, "
+                    f"最终改期时段即下方 {a_st.strftime('%H:%M')}~{a_et.strftime('%H:%M')}, 严禁在下方时段基础上再次加减1小时!)\n"
+                )
+        except (TypeError, ValueError):
+            resched_start = resched_end = None
     resched_dur = target_wr.get("duration")
     rule_txt = format_working_reschedule_rule(
         target_wr, resched_start, resched_end, resched_dur, pre_shift_desc
@@ -237,7 +244,15 @@ def render_working_memory_rules(
     elif turn_index > 1 and session_wr_mode and prev_states:
         twr = session_wr_target or target_wr or {}
         if session_wr_mode == "reschedule":
-            hint_lines.append(WORKING_RECORD_RESCHEDULE_CONFIRM_RULE)
+            u_st, u_et = _explicit_window(utterance, reference_time)
+            if u_st is not None and u_et is not None:
+                hint_lines.append(
+                    format_working_reschedule_time_fill_rule(
+                        twr, u_st.strftime(DT_FMT), u_et.strftime(DT_FMT)
+                    )
+                )
+            else:
+                hint_lines.append(WORKING_RECORD_RESCHEDULE_CONFIRM_RULE)
         elif session_wr_mode == "disambig":
             hint_lines.append(
                 _format_disambiguation_candidates(

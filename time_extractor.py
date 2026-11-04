@@ -191,7 +191,9 @@ def _role_of(utterance: str, start: int, end: int) -> str:
         return role
     before = utterance[max(0, start - 8):start]
     after = utterance[end:end + 10]
-    if re.search(r"(从|自|起于|始于|开始|就定|定在|定为)$", before):
+    if re.match(r"^(到|至)", after):
+        return "start"  # "A到B" 结构中 A 是起点 (优先于前文"改到/调到/挪到")
+    if re.search(r"(从|自|起于|始于|开始|就定|定在|定为|改到|调到|挪到|换到|定到|排到)$", before):
         return "start"
     if re.search(r"(到|至|直到|截止|止于|结束)$", before):
         return "end"
@@ -199,8 +201,6 @@ def _role_of(utterance: str, start: int, end: int) -> str:
         return "start"
     if re.match(r"^(结束|截止)", after):
         return "end"
-    if re.match(r"^(到|至)", after):
-        return "start"  # "A到B" 结构中 A 是起点
     return ""
 
 
@@ -443,9 +443,9 @@ def extract(utterance: str, ref_dt: datetime) -> TimeEvidence | None:
     if len(ev.durations) == 1:
         ev.duration_min = ev.durations[0][1]
 
-    # 候选信号: 时间点候选("或者/还是"连接) 或未定词 -> has_candidate(抑制组装+候选规则);
+    # 候选信号: 时间点候选("或者/还是"紧邻连接) 或未定词 -> has_candidate(抑制组装+候选规则);
     # 时长候选单独标 dur_candidate (只抑制时长断言, start/end 照常, S-000133)
-    if len(mentions) >= 2 and ("或者" in utterance or "还是" in utterance):
+    if len(mentions) >= 2 and any(m.cand_adj for m in mentions):
         ev.has_candidate = True
     if len(ev.durations) >= 2 and ("或者" in utterance or "还是" in utterance):
         ev.dur_candidate = True

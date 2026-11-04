@@ -275,14 +275,17 @@ class MultiIntentPipeline(IntentPipeline):
         for v in prev_states.values():
             merged_prev.update(v or {})
 
-        retrieved = self.retriever.retrieve(utterance, merged_prev)
-        if self.features.correction_demo and _is_correction(utterance):
-            extra = _retrieve_correction_demos(
-                self.retriever, utterance, merged_prev,
-                n=int((self.cfg.get("correction_demo") or {}).get("n", 2)),
-                exclude={c.case_id for c in retrieved},
-            )
-            retrieved = extra + retrieved
+        try:
+            retrieved = self.retriever.retrieve(utterance, merged_prev)
+            if self.features.correction_demo and _is_correction(utterance):
+                extra = _retrieve_correction_demos(
+                    self.retriever, utterance, merged_prev,
+                    n=int((self.cfg.get("correction_demo") or {}).get("n", 2)),
+                    exclude={c.case_id for c in retrieved},
+                )
+                retrieved = extra + retrieved
+        except Exception:
+            retrieved = []
 
         disamb_keys, disamb_cands, corr_keys = self._resolve_turn_disambig_and_corr(
             utterance, agent_reply, prev_states, user_context

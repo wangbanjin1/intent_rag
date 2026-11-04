@@ -321,6 +321,7 @@ class MemoryBridge:
             active_experiences=retrieved_layers["active_experiences"],
             all_working_records=retrieved_layers["all_working_records"],
             session_exp_triggered=self._session_exp_triggered,
+            best_major=retrieved_layers["best_major"],
         )
         hint_lines.extend(exp_lines)
 
