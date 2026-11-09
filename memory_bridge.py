@@ -15,13 +15,21 @@
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
 
-MEMORY_SYSTEM_SRC = Path(r"D:\coding\memory_system\src")
-if str(MEMORY_SYSTEM_SRC) not in sys.path:
-    sys.path.insert(0, str(MEMORY_SYSTEM_SRC))
+_REPO_PARENT = Path(__file__).resolve().parent.parent
+for _cand_ms in (
+    Path(os.environ["MEMORY_SYSTEM_DIR"]) / "src" if os.environ.get("MEMORY_SYSTEM_DIR") else None,
+    _REPO_PARENT / "memory_system" / "src",
+    _REPO_PARENT / "mem_system" / "src",
+    Path(r"D:\coding\memory_system\src"),
+):
+    if _cand_ms is not None and _cand_ms.exists() and str(_cand_ms) not in sys.path:
+        sys.path.insert(0, str(_cand_ms))
+        break
 
 from memory_system.api import _BUILTIN_EXPERIENCE_TEMPLATES, MemorySystem
 from memory_system.core.experience_rules import (
@@ -76,6 +84,7 @@ from bridge_working import (
     _rec_sort_key,
     build_predicted_session_turns,
     extract_working_record_from_session,
+    preseed_user_static_memory,
     render_working_memory_rules,
     select_target_working_record,
     synthesize_predicted_agent_reply,
@@ -225,6 +234,7 @@ class MemoryBridge:
         utterance: str,
         reference_time: str,
         tenant_id: str,
+        fallback_app: str | None = None,
     ) -> dict[str, Any]:
         """执行混合检索、分层归类与事实记忆二阶段关联补全。"""
         raw_hits = self.ms.search(
@@ -262,6 +272,27 @@ class MemoryBridge:
             elif st == "experience":
                 experience_hits.append(h)
 
+        seen_pkeys = {str(h.get("memory_key") or "") for h in param_hits}
+        for node in self.ms.filestore.iter_nodes(ns, memory_type="preference"):
+            if (
+                node.subtype in ("preferred_value", "scene_preference")
+                and node.status in ("active", "reinforced")
+                and node.validity.type != "temporary"
+                and str(node.memory_key or "") not in seen_pkeys
+            ):
+                seen_pkeys.add(str(node.memory_key or ""))
+                param_hits.append(
+                    {
+                        "memory_id": node.memory_id,
+                        "subtype": node.subtype,
+                        "memory_key": node.memory_key,
+                        "status": node.status,
+                        "validity": node.validity.type,
+                        "score": 0.5,
+                        "content": dict(node.content),
+                    }
+                )
+
         (
             all_working_records,
             active_experiences,
@@ -277,6 +308,7 @@ class MemoryBridge:
             utterance=utterance,
             reference_time=reference_time,
             is_temp_fn=_is_temp_record,
+            fallback_app=fallback_app,
         )
         return {
             "raw_hits": raw_hits,
@@ -393,6 +425,12 @@ class MemoryBridge:
         )
         return retrieved_layers["user_context"], memory_hint, trace_info
 
+    def preseed_static_memory(
+        self, user_id: str, preseed_data: dict[str, Any], tenant_id: str = "default"
+    ) -> None:
+        """在评测序列启动前将外部静态画像与历史记录写入 MemorySystem。"""
+        preseed_user_static_memory(self.ms, user_id, preseed_data, tenant_id=tenant_id)
+
     def prepare_turn(
         self,
         user_id: str,
@@ -412,11 +450,17 @@ class MemoryBridge:
             self._session_exp_triggered = None
             self._session_turn1_utterance = utterance or ""
 
+        fallback_app: str | None = None
+        if len(prev_states) == 1:
+            k, st_val = next(iter(prev_states.items()))
+            fallback_app = str((st_val or {}).get("application_name") or str(k).split("/")[0] or "").strip() or None
+
         retrieved_layers = self._retrieve_all_memory_layers(
             user_id=user_id,
             utterance=utterance,
             reference_time=reference_time,
             tenant_id=tenant_id,
+            fallback_app=fallback_app,
         )
         has_trigger, hint_lines = self._resolve_cross_layer_priorities(
             turn_index=turn_index,
@@ -451,23 +495,27 @@ class MemoryBridge:
         user_id = str(session.get("user_id", "default_user"))
         session_id = str(session.get("session_id", ""))
         reference_time = str(session.get("reference_time", ""))
-        raw_turns = list(session.get("event_sequence") or [])
-        turns = build_predicted_session_turns(raw_turns, per_turn_pred, predicted_final)
-        metadata: dict[str, Any] = {"reference_time": reference_time}
-        wr_to_append = self._extract_working_record_from_session(session, predicted_final)
-        if wr_to_append:
-            metadata["working_record_to_append"] = wr_to_append
+        is_ext = (session.get("session_meta") or {}).get("memory_tier") == "external_distractor"
+        if is_ext:
+            write_res: dict[str, Any] = {"extracted_events": [], "ebbinghaus_decay": {}}
+        else:
+            raw_turns = list(session.get("event_sequence") or [])
+            turns = build_predicted_session_turns(raw_turns, per_turn_pred, predicted_final)
+            metadata: dict[str, Any] = {"reference_time": reference_time}
+            wr_to_append = self._extract_working_record_from_session(session, predicted_final)
+            if wr_to_append:
+                metadata["working_record_to_append"] = wr_to_append
 
-        write_res = self.ms.record_session(
-            user_id=user_id,
-            agent_id="intent_agent",
-            session_id=session_id,
-            turns=turns,
-            metadata=metadata,
-            reference_time=reference_time,
-            tenant_id=tenant_id,
-            async_mode=False,
-        )
+            write_res = self.ms.record_session(
+                user_id=user_id,
+                agent_id="intent_agent",
+                session_id=session_id,
+                turns=turns,
+                metadata=metadata,
+                reference_time=reference_time,
+                tenant_id=tenant_id,
+                async_mode=False,
+            )
 
         ns = user_namespace(user_id=user_id, tenant_id=tenant_id)
         now_ts = normalize_ts_str(reference_time)

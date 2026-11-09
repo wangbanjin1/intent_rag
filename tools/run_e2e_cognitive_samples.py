@@ -10,9 +10,33 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, List
 
-QWEN_INTENT_DIR = Path(r"D:\coding\qwen_intent_rag")
-MEMORY_SYSTEM_DIR = Path(r"D:\coding\memory_system")
-COG_DATA_DIR = Path(r"D:\coding\cross_memory_data\data\cognitive_samples")
+QWEN_INTENT_DIR = Path(__file__).resolve().parent.parent
+_REPO_PARENT = QWEN_INTENT_DIR.parent
+MEMORY_SYSTEM_DIR = next(
+    (
+        p for p in (
+            Path(os.environ["MEMORY_SYSTEM_DIR"]) if os.environ.get("MEMORY_SYSTEM_DIR") else None,
+            _REPO_PARENT / "memory_system",
+            _REPO_PARENT / "mem_system",
+            Path(r"D:\coding\memory_system"),
+        )
+        if p is not None and p.exists()
+    ),
+    _REPO_PARENT / "memory_system",
+)
+COG_DATA_DIR = next(
+    (
+        p for p in (
+            _REPO_PARENT / "cross_memory_data" / "data" / "cognitive_samples_mixed_3to1",
+            _REPO_PARENT / "cross_data_gen" / "data" / "cognitive_samples_mixed_3to1",
+            _REPO_PARENT / "cross_memory_data" / "data" / "cognitive_samples",
+            _REPO_PARENT / "cross_data_gen" / "data" / "cognitive_samples",
+            Path(r"D:\coding\cross_memory_data\data\cognitive_samples_mixed_3to1"),
+        )
+        if p.exists()
+    ),
+    _REPO_PARENT / "cross_memory_data" / "data" / "cognitive_samples_mixed_3to1",
+)
 
 sys.path.insert(0, str(QWEN_INTENT_DIR))
 sys.path.insert(0, str(MEMORY_SYSTEM_DIR / "src"))
@@ -157,6 +181,10 @@ def _eval_persona(p_dir: Path, work_data_root: Path, cfg: Dict[str, Any]) -> Dic
     persona = load_persona_info(p_dir)
     sessions = load_sessions(p_dir)
     uid = sessions[0]["user_id"] if sessions else p_dir.name
+    preseed_file = p_dir / "preseed_memory.json"
+    if preseed_file.exists():
+        preseed_data = json.loads(preseed_file.read_text(encoding="utf-8"))
+        bridge.preseed_static_memory(uid, preseed_data)
     logger.info("============================================================")
     logger.info("Running E2E Cognitive 3-Tier Eval for %s (%s) | %d sessions", p_dir.name, uid, len(sessions))
     logger.info("============================================================")

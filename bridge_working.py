@@ -7,15 +7,23 @@
 """
 from __future__ import annotations
 
+import os
 import re
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-MEMORY_SYSTEM_SRC = Path(r"D:\coding\memory_system\src")
-if str(MEMORY_SYSTEM_SRC) not in sys.path:
-    sys.path.insert(0, str(MEMORY_SYSTEM_SRC))
+_REPO_PARENT = Path(__file__).resolve().parent.parent
+for _cand_ms in (
+    Path(os.environ["MEMORY_SYSTEM_DIR"]) / "src" if os.environ.get("MEMORY_SYSTEM_DIR") else None,
+    _REPO_PARENT / "memory_system" / "src",
+    _REPO_PARENT / "mem_system" / "src",
+    Path(r"D:\coding\memory_system\src"),
+):
+    if _cand_ms is not None and _cand_ms.exists() and str(_cand_ms) not in sys.path:
+        sys.path.insert(0, str(_cand_ms))
+        break
 
 from memory_system.core.working_rules import (
     classify_working_record_reference,
@@ -62,10 +70,13 @@ def _rec_sort_key(rec: dict[str, Any]) -> str:
 def _pick_working_record(
     candidates: list[dict[str, Any]], utterance: str, prefer_latest: bool = False
 ) -> dict[str, Any] | None:
-    """数据驱动地挑选目标工单: 排除临时覆写 -> 地点命中 -> 应用命中 -> (最近 | 检索排序第一)。"""
+    """数据驱动地挑选目标工单: 排除临时覆写与静态预置 -> 地点命中 -> 应用命中 -> (最近 | 检索排序第一)。"""
     if not candidates:
         return None
-    pool = [c for c in candidates if not _is_temp_record(c)] or list(candidates)
+    pool = [
+        c for c in candidates
+        if not _is_temp_record(c) and not c.get("is_preseed_record")
+    ] or [c for c in candidates if not _is_temp_record(c)] or list(candidates)
     loc_hits = [
         c for c in pool
         if str(c.get("location") or "").strip() and str(c["location"]).strip() in (utterance or "")
@@ -406,3 +417,88 @@ def build_predicted_session_turns(
         ev_copy["agent"] = {"utterance": synth_agent}
         sanitized.append(ev_copy)
     return sanitized
+
+
+def preseed_user_static_memory(
+    ms: Any,
+    user_id: str,
+    preseed_data: dict[str, Any],
+    tenant_id: str = "default",
+) -> None:
+    """在会话序列开始前（Stage 0）将外部静态画像（Profile）与历史工单（Records）写入 MemorySystem。"""
+    from memory_system.core.models import Event, EventType
+    from memory_system.core.namespace import user_namespace
+
+    ns = user_namespace(user_id=user_id, tenant_id=tenant_id)
+    ev_ts = str(preseed_data.get("event_time") or "2026-04-01T00:00:00+08:00")
+    for p in preseed_data.get("profiles") or []:
+        if not isinstance(p, dict):
+            continue
+        app = str(p.get("application") or p.get("application_name") or "").strip()
+        biz = str(p.get("business") or p.get("service_name") or "").strip()
+        if not app or not biz:
+            continue
+        pv_content: dict[str, Any] = {
+            "application": app,
+            "business": biz,
+            "app_cn": str(p.get("application_name") or app),
+            "service_cn": str(p.get("service_name") or biz),
+            "declaration_mode": "preseed_profile",
+            "validity": "long_term",
+        }
+        for k_src, k_dst in (
+            ("resolution", "resolution"),
+            ("latency", "latency"),
+            ("rtt", "latency"),
+            ("duration", "duration"),
+            ("default_duration", "default_duration"),
+            ("time_window", "time_window"),
+        ):
+            if p.get(k_src) not in (None, ""):
+                pv_content[k_dst] = p[k_src]
+        if pv_content.get("duration") and not pv_content.get("default_duration"):
+            pv_content["default_duration"] = pv_content["duration"]
+        for ev_type in (EventType.PREFERENCE_SET.value, EventType.PREFERENCE_CONFIRM.value):
+            ev = Event(
+                event_type=ev_type,
+                subtype="preferred_value",
+                memory_key_fields={"application": app, "business": biz},
+                content=dict(pv_content),
+                validity="long_term",
+                confidence=0.95,
+                user_id=user_id,
+                tenant_id=tenant_id,
+                event_time=ev_ts,
+            )
+            ms.updater.apply_event(ns, ev)
+        tw = str(p.get("time_window") or "").strip()
+        if tw:
+            val_str = f"{app}:{biz}"
+            pp_content = {
+                "condition": tw,
+                "value": val_str,
+                "time_window": tw,
+                "application": app,
+                "business": biz,
+                "app_cn": pv_content["app_cn"],
+                "service_cn": pv_content["service_cn"],
+                "declaration_mode": "preseed_profile",
+                "validity": "long_term",
+            }
+            for ev_type in (EventType.PREFERENCE_SET.value, EventType.PREFERENCE_CONFIRM.value):
+                ev_pp = Event(
+                    event_type=ev_type,
+                    subtype="periodic_preference",
+                    memory_key_fields={"condition": tw, "value": val_str},
+                    content=dict(pp_content),
+                    validity="long_term",
+                    confidence=0.95,
+                    user_id=user_id,
+                    tenant_id=tenant_id,
+                    event_time=ev_ts,
+                )
+                ms.updater.apply_event(ns, ev_pp)
+
+    recs = [dict(r, is_preseed_record=True) for r in (preseed_data.get("records") or []) if isinstance(r, dict)]
+    if recs:
+        ms.ingest_working_records(tenant_id, user_id, recs)

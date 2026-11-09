@@ -7,14 +7,22 @@
 """
 from __future__ import annotations
 
+import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-MEMORY_SYSTEM_SRC = Path(r"D:\coding\memory_system\src")
-if str(MEMORY_SYSTEM_SRC) not in sys.path:
-    sys.path.insert(0, str(MEMORY_SYSTEM_SRC))
+_REPO_PARENT = Path(__file__).resolve().parent.parent
+for _cand_ms in (
+    Path(os.environ["MEMORY_SYSTEM_DIR"]) / "src" if os.environ.get("MEMORY_SYSTEM_DIR") else None,
+    _REPO_PARENT / "memory_system" / "src",
+    _REPO_PARENT / "mem_system" / "src",
+    Path(r"D:\coding\memory_system\src"),
+):
+    if _cand_ms is not None and _cand_ms.exists() and str(_cand_ms) not in sys.path:
+        sys.path.insert(0, str(_cand_ms))
+        break
 
 from memory_system.api import _BUILTIN_EXPERIENCE_TEMPLATES
 from memory_system.core.experience_rules import (

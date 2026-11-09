@@ -210,6 +210,37 @@ def apply_record_and_time_stub_fallbacks(
                     "source_ref": "derived",
                 }
             segs = [("new", {"timestamp": _ts})]
+    elif (
+        not merged_prev
+        and len(segs) == 1
+        and isinstance(segs[0][1], dict)
+        and not segs[0][1].get("application_name")
+        and not segs[0][1].get("timestamp")
+        and time_ev is not None
+        and time_ev.start is not None
+        and time_ev.end is not None
+        and not time_ev.has_contradiction
+        and not time_ev.has_candidate
+    ):
+        _ts2: dict[str, Any] = {
+            "start_timestamp": {
+                "value": _tex._fmt(time_ev.start),
+                "source_type": "Turn",
+                "source_ref": "derived",
+            },
+            "end_timestamp": {
+                "value": _tex._fmt(time_ev.end),
+                "source_type": "Turn",
+                "source_ref": "derived",
+            },
+        }
+        if time_ev.duration_min is not None:
+            _ts2["duration"] = {
+                "value": f"{time_ev.duration_min}min",
+                "source_type": "Turn",
+                "source_ref": "derived",
+            }
+        segs[0][1]["timestamp"] = _ts2
     return segs
 
 

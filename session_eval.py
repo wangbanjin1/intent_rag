@@ -318,10 +318,11 @@ def run_session(
     if mem_bridge is not None:
         from bridge_working import synthesize_predicted_agent_reply
 
+    is_external = (session.get("session_meta") or {}).get("memory_tier") == "external_distractor"
     for t in turns:
         if not t["utterance"].strip():
             continue
-        if mem_bridge is not None:
+        if mem_bridge is not None and not is_external:
             t = dict(t)
             t["prev_agent_reply"] = synth_prev_reply
         prev_states, prev_statuses, turn_entry = _evaluate_single_turn(

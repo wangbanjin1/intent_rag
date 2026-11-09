@@ -33,7 +33,10 @@ _MEMORY_TRIGGER_RE = re.compile(
 _QUOTED_SLANG_RE = re.compile(
     r"(画质|清晰度|分辨率|时延|延迟)(?:标准|档位)?(?:只要|就按|先按|都按|要|按|用)?[‘'“\"]([^’'”\"]+)[’'”\"]"
 )
-_EXPLICIT_RES_RE = re.compile(r"\b(360p|480p|540p|720p|1080p|2160p|2k|4k)\b", re.IGNORECASE)
+_EXPLICIT_RES_RE = re.compile(
+    r"\b(360p|480p|540p|720p|1080p|2160p|2k|4k)\b|超清|高清|标清|蓝光|流畅",
+    re.IGNORECASE,
+)
 _EXPLICIT_RTT_RE = re.compile(r"\b(\d+)\s*(?:ms|毫秒)\b", re.IGNORECASE)
 
 _APP_CN_MAP: dict[str, str] = {
@@ -96,9 +99,11 @@ def anchor_time_window_to_ref(time_window: str, reference_time: str) -> tuple[st
         return None
     h1, min1 = int(m1.group(1)), int(m1.group(2))
     h2, min2 = int(m2.group(1)), int(m2.group(2))
-    start_dt = ref_dt.replace(hour=h1, minute=min1, second=0, microsecond=0)
-    end_dt = ref_dt.replace(hour=h2, minute=min2, second=0, microsecond=0)
-    if end_dt <= start_dt:
+    start_dt = ref_dt.replace(hour=0 if h1 == 24 else h1, minute=min1, second=0, microsecond=0)
+    if h1 == 24:
+        start_dt += timedelta(days=1)
+    end_dt = ref_dt.replace(hour=0 if h2 == 24 else h2, minute=min2, second=0, microsecond=0)
+    if h2 == 24 or end_dt <= start_dt:
         end_dt += timedelta(days=1)
     dur_min = int((end_dt - start_dt).total_seconds() // 60)
     return start_dt.strftime(DT_FMT), end_dt.strftime(DT_FMT), f"{dur_min}min"
@@ -255,6 +260,7 @@ def _enrich_single_param_hit(
     res_val = c.get("resolution")
     rtt_val = c.get("latency") or c.get("rtt")
     anchored = anchor_time_window_to_ref(tw, reference_time) if tw else None
+    dur_val = c.get("default_duration") or (anchored[2] if anchored else None) or c.get("duration")
     enriched = dict(h)
     enriched["paired_periodic_key"] = (paired_pp or {}).get("memory_key") or ""
     enriched["resolved_slots"] = {
@@ -266,18 +272,28 @@ def _enrich_single_param_hit(
         "scene": sc_val,
         "start_timestamp": anchored[0] if anchored else None,
         "end_timestamp": anchored[1] if anchored else None,
-        "duration": anchored[2] if anchored else None,
+        "duration": dur_val,
     }
     return enriched
 
 
 def _select_best_major_hit(
-    major_hits: list[dict[str, Any]], utterance: str
+    major_hits: list[dict[str, Any]], utterance: str, fallback_app: str | None = None
 ) -> dict[str, Any] | None:
     """按话语明说的应用、业务、场景过滤并按激活态与检索得分选出最佳主干事实记忆。"""
     if not major_hits:
         return None
     candidates = list(major_hits)
+    app_mentioned = _mentioned_app(utterance) or fallback_app
+    if app_mentioned:
+        app_matches = [
+            m for m in candidates
+            if m["resolved_slots"].get("application_name") == app_mentioned
+        ]
+        if not app_matches:
+            return None
+        candidates = app_matches
+
     for slot_key in ("application_name", "service_name", "scene"):
         explicit_matches = [
             m for m in candidates
@@ -302,10 +318,24 @@ def _build_user_context_dict(
     major_hits: list[dict[str, Any]],
     all_working_records: list[dict[str, Any]],
     known_aliases: dict[str, dict[str, Any]],
+    utterance: str = "",
+    fallback_app: str | None = None,
 ) -> dict[str, Any]:
     """根据最佳事实记忆、历史工单与个性化表述映射组装 user_context。"""
     recent_records: list[dict[str, Any]] = []
-    for wr in all_working_records[-5:]:
+    app_mentioned = _mentioned_app(utterance) or fallback_app
+    is_rec_query = ("记录" in (utterance or "")) or ("历史" in (utterance or ""))
+    indexed_wrs = list(enumerate(all_working_records))
+
+    def _wr_priority(item: tuple[int, dict[str, Any]]) -> tuple[int, int, int]:
+        idx, wr = item
+        app_hit = 1 if (app_mentioned and wr.get("application_name") == app_mentioned) else 0
+        preseed_hit = 1 if (is_rec_query and wr.get("is_preseed_record")) else 0
+        order_key = -idx if not wr.get("is_preseed_record") else -int(wr.get("preseed_order", idx))
+        return (app_hit, preseed_hit, order_key)
+
+    sorted_wrs = [wr for _, wr in sorted(indexed_wrs, key=_wr_priority, reverse=True)]
+    for wr in sorted_wrs[:12]:
         recent_records.append(
             {
                 "application_name": wr.get("application_name"),
@@ -315,10 +345,16 @@ def _build_user_context_dict(
                 "start_timestamp": wr.get("start_timestamp"),
                 "end_timestamp": wr.get("end_timestamp"),
                 "duration": wr.get("duration"),
-                "completed_at": f"working_record:{wr.get('record_id', '')}",
+                "completed_at": str(
+                    wr.get("completed_at")
+                    or wr.get("created_at")
+                    or f"working_record:{wr.get('record_id', '')}"
+                ),
             }
         )
     for m in major_hits[:5]:
+        if (m.get("content") or {}).get("declaration_mode") == "preseed_profile":
+            continue
         rs = m["resolved_slots"]
         recent_records.append(
             {
@@ -370,6 +406,7 @@ def enrich_factual_hits(
     utterance: str,
     reference_time: str,
     is_temp_fn: Any,
+    fallback_app: str | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None, dict[str, Any]]:
     """将检索到的参数偏好与周期时间窗配对补全, 并构造 user_context。"""
     ref_dt_now = _tex.parse_reference_time(reference_time)
@@ -382,9 +419,10 @@ def enrich_factual_hits(
         )
         for h in param_hits
     ]
-    best_major = _select_best_major_hit(major_hits, utterance)
+    best_major = _select_best_major_hit(major_hits, utterance, fallback_app=fallback_app)
     user_context = _build_user_context_dict(
-        best_major, major_hits, all_working_records, known_aliases
+        best_major, major_hits, all_working_records, known_aliases,
+        utterance=utterance, fallback_app=fallback_app,
     )
     return major_hits, best_major, user_context
 
@@ -469,6 +507,8 @@ def _collect_cold_start_and_slang_rules(
     if (
         turn_index == 1
         and not has_trigger
+        and "记录" not in (utterance or "")
+        and "历史" not in (utterance or "")
         and not _EXPLICIT_RES_RE.search(utterance)
         and not _EXPLICIT_RTT_RE.search(utterance)
     ):
@@ -504,10 +544,17 @@ def render_factual_and_cold_start_rules(
     """渲染 Tier 1 事实记忆触发规则、非触发冷启动规则及多轮微调/确认规则。"""
     hint_lines: list[str] = []
     filled_memory: dict[str, Any] | None = None
+    is_preseed_profile = bool(
+        best_major and (best_major.get("content") or {}).get("declaration_mode") == "preseed_profile"
+    )
+    if is_preseed_profile:
+        return session_memory_triggered, None, hint_lines
 
     if (
         turn_index == 1
         and has_trigger
+        and "记录" not in (utterance or "")
+        and "历史" not in (utterance or "")
         and best_major is not None
         and not session_wr_mode
         and not exp_applied
